@@ -20,6 +20,7 @@ python agentic_syftbox/server.py
 
 
 # Run docker
+or in docker (pure python is recommended currently)
 ```
 docker build -t mcp-server -f mcp_server.dockerfile .
 docker run -p 8000:8000 -v ./data:/app/data -e ANTHROPIC_API_KEY $ANTROPIC_API_KEY mcp-server
