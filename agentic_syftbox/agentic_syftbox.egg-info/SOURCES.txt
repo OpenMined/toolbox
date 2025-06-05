@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+src/server.py
+src/agentic_syftbox.egg-info/PKG-INFO
+src/agentic_syftbox.egg-info/SOURCES.txt
+src/agentic_syftbox.egg-info/dependency_links.txt
+src/agentic_syftbox.egg-info/top_level.txt
