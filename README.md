@@ -25,3 +25,10 @@ docker build -t mcp-server -f mcp_server.dockerfile .
 docker run -p 8000:8000 -v ./data:/app/data -e ANTHROPIC_API_KEY $ANTROPIC_API_KEY mcp-server
 ```
 
+# Demo flow
+With this setup, you should be able to do something like this
+
+- User: Give me the meeting notes from my latest meeting
+- Claude desktop: 1) gets meeting files, 2) gets notes for latest file
+- User: Make a github ticket for each of them in koenvanderveen/syftbox-mcp
+
