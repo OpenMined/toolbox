@@ -1,5 +1,5 @@
 from mcp.server.fastmcp import FastMCP
-from agentic_syftbox.meeting_utils import get_all_meeting_notes, get_todos
+from notes_mcp.meeting_utils import get_all_meeting_notes, get_todos
 
 import sqlite3
 import os
@@ -29,10 +29,9 @@ def get_meeting_notes_metadata() -> list[dict[str, str]]:
     When returning meeting note metadata, as a client always make sure to show the metadata to the user so they can see what is going on."""
     # all_meeting_notes: list[str] = get_all_meeting_notes(conn)
     return [{"filename": "google_meeting_123.txt", "datetime": "2025-06-04T15:30:00Z"}]
-    
 
 @mcp.tool()
-def get_meeting_notes_by_filename(filename: str) -> str:
+def get_meeting_todos_from_filename(filename: str) -> str:
     """Get todos from the meeting notes for a given filename."""
     all_meeting_notes: list[str] = get_all_meeting_notes(conn)
     # TODO: get the right meeting from all meeting_notes

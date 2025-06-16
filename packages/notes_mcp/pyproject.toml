@@ -1,0 +1,41 @@
+[project]
+dependencies = [
+    "anthropic>=0.52.2",
+    "mcp>=1.9.2",
+]
+
+name = "notes_mcp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4"]
+
+[dependency-groups]
+dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]
+
+[tool.mypy]
+python_version = "3.12"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+disable_error_code = ["import-untyped"]
+
+[tool.hatch.metadata]
+allow-direct-references = true
