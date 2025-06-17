@@ -1,15 +1,12 @@
 <p align="center">
   <picture>
-    <img alt="Hugging Face Transformers Library" src="https://huggingface.co/datasets/huggingface/documentation-images/raw/main/transformers-logo-light.svg" width="352" height="59" style="max-width: 100%;">
+    <img alt="Hugging Face Transformers Library" src="https://raw.githubusercontent.com/OpenMined/agentic-syftbox/refs/heads/main/packages/toolbox/assets/ToolBox.svg" width="352" height="59" style="max-width: 100%;">
   </picture>
   <br/>
-  <h7>
-  Toolbox
-  </h7>
   <br/>
 </p>
 
-
+<p align="center">A privacy-first tool to install local and remote mcp mcp servers for your personal data.</p>
 
 # Install
 ```
