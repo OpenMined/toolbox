@@ -1,53 +1,34 @@
+<p align="center">
+<img alt="Hugging Face Transformers Library" src="https://raw.githubusercontent.com/OpenMined/agentic-syftbox/refs/heads/main/packages/toolbox/assets/ToolBox.svg" width="352" height="59" style="max-width: 100%;">
+  <br/>
+  <br/>
+</p>
 
+<p align="center"><b>A privacy-first tool to install local and remote mcp servers for your personal data</b></p>
 
 # Install
-## Screenpipe with deepgram
-Download screenpipe from [here](https://web.crabnebula.cloud/mediar/screenpipe/releases), and run it. Make sure to give it access to your microphone and screen. It will store the data in `~/.screenpipe`, in there, there will be a `/data` folder with the raw screenshots and audio recordings. There will also be a sqlite file with transcriptions and ocr results. This is under `~/.screenpipe/db.sqlite`. When you run the app, under settings you can use a better transcriber, we recommend deepgram. You can make a free account [here](https://console.deepgram.com/signup) and paste the key in the app settings tab. You can try transcriptions by just talking to yourself for a minute, acting as if you are in a meeting.
-
-## MCP servers
-now we can set up our MCP servers for Claude Desktop. First we can [create a new github personal access token](https://github.com/settings/personal-access-tokens/new), which we use for our github mcp server
 ```
-export GITHUB_PERSONAL_ACCESS_TOKEN=<my_acces_token>
-python scripts/add_mcps_claude_desktop_config.py
+uv pip install -e .
 ```
 
-## Run
-Lastly we run our mcp server:
+# Installing apps
+To list installed apps
 ```
-pip install -e .
-python agentic_syftbox/server.py
+tb list
+``` 
+To install a new app
 ```
-
-# Demo flow
-With this setup, you should be able to do something like this
-
-- User: Give me the meeting notes from my latest meeting
-- Claude desktop: 1) gets meeting files, 2) gets notes for latest file
-- User: Make a github ticket for each of them in koenvanderveen/syftbox-mcp
-
-# Alternative ways of running
-
-## Screenpipe as a crate (instead of an app)
-you can also start screenpipe as a crate, you have to use 
-```
-curl -fsSL get.screenpi.pe/cli | sh
-```
-and then
-```
-screenpipe
-```
-Notable you can add
-```
-screenpipe --disable-vision -a deepgram --deepgram-api-key <my-key>
-```
-To disable vision (useful on Intel macs), and to use deepgram for higher quality STT.
-
-## Run mcp server in docker 
-you can also run agentic syftbox in docker. (pure python is recommended currently)
-```
-docker build -t mcp-server -f mcp_server.dockerfile .
-docker run -p 8000:8000 -v ./data:/app/data -e ANTHROPIC_API_KEY $ANTROPIC_API_KEY mcp-server
+tb install <app_name>
 ```
 
 
+# Store
+
+
+| Name | Clients | Default Deployment | Read Access | Write Access | Install |
+|------|--------|------------|-------------|--------------|-------|
+| github-mcp | claude | stdio | Issues, PRs, Settings | Issues, PRs, Settings | `tb install github-mcp` |
+| meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
+| screen-recording-syncer | claude | proxy-to-local | Apple Audio Recordings | Apple Audio Recordings over syftbox | `tb install screen-recording-syncer` |
+| screen-recording-mcp | claude | app | Apple-mic-input, Apple-video-input | Apple Audio Recordings, Apple Video Recordings | `tb install screen-recording-mcp`|
 
