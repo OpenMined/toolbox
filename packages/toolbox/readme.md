@@ -4,7 +4,7 @@
   <br/>
 </p>
 
-<p align="center">A privacy-first tool to install local and remote mcp mcp servers for your personal data.</p>
+<p align="center">A privacy-first tool to install local and remote mcp servers for your personal data.</p>
 
 # Install
 ```
