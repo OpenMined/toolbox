@@ -1,4 +1,5 @@
 from mcp.server.fastmcp import FastMCP
+from notes_mcp import db
 from notes_mcp.meeting_utils import get_all_meeting_notes, get_todos
 
 import sqlite3
@@ -19,7 +20,7 @@ conn.row_factory = sqlite3.Row
 client = Anthropic(api_key=ANTHROPIC_KEY)
 
 # Create FastMCP instance
-mcp = FastMCP("Meeting Notes MCP service")
+mcp = FastMCP("Meeting Notes MCP service", stateless_http=True)
 
 
 @mcp.tool()
@@ -28,14 +29,18 @@ def get_meeting_notes_metadata() -> list[dict[str, str]]:
     {"filename": "filenname2", "datetime": "datetime2"}, ...].
     When returning meeting note metadata, as a client always make sure to show the metadata to the user so they can see what is going on."""
     # all_meeting_notes: list[str] = get_all_meeting_notes(conn)
-    return [{"filename": "google_meeting_123.txt", "datetime": "2025-06-04T15:30:00Z"}]
+    return db.get_meeting_meta(conn)
+    # return [{"filename": "google_meeting_123.txt", "datetime": "2025-06-04T15:30:00Z"}]
 
 @mcp.tool()
 def get_meeting_todos_from_filename(filename: str) -> str:
     """Get todos from the meeting notes for a given filename."""
-    all_meeting_notes: list[str] = get_all_meeting_notes(conn)
-    # TODO: get the right meeting from all meeting_notes
-    meeting_notes = all_meeting_notes[0]
+    
+    #     all_meeting_notes: list[str] = get_all_meeting_notes(conn)
+    #     # TODO: get the right meeting from all meeting_notes
+    #     meeting_notes = all_meeting_notes[0]
+
+    meeting_notes: str = db.get_meeting_notes_by_filename(conn, filename)
     todos: str = get_todos(client, meeting_notes)
     return todos
 
@@ -55,9 +60,13 @@ def get_meeting_todos_from_filename(filename: str) -> str:
 #     return f"The weather in {city} is sunny with 72°F"
 
 
+
+
 if __name__ == "__main__":
     # For FastMCP 1.0
-    mcp.run(transport="streamable-http", mount_path="/mcp")
+    
+    pass
+    # mcp.run(transport="streamable-http", mount_path="/mcp")
     # mcp.run(transport="sse", mount_path="/mcp")
     
     # For latest fastMCP

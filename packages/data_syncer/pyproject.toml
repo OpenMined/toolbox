@@ -1,11 +1,8 @@
 [project]
 dependencies = [
-    "anthropic>=0.52.2",
-    "fastapi>=0.115.12",
-    "mcp>=1.9.2",
 ]
 
-name = "notes_mcp"
+name = "data_syncer"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
