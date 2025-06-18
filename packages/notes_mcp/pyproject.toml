@@ -22,6 +22,9 @@ dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4"]
 [dependency-groups]
 dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]
 
+[tool.ruff.lint]
+extend-select = ["I"]
+
 [tool.mypy]
 python_version = "3.12"
 warn_return_any = true

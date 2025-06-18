@@ -6,7 +6,8 @@ from notes_mcp.models.audio import AudioChunk
 
 HOME = Path.home()
 
-MEETINGS_DB_PATH = HOME / ".meeting-notes-mcp" / "db.sqlite"
+MEETINGS_DB_PATH = HOME / ".screenpipe" / "db.sqlite"
+# MEETINGS_DB_PATH = HOME / ".meeting-notes-mcp" / "db.sqlite"
 MEETINGS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 # Connect to the SQLite database
@@ -33,7 +34,7 @@ def create_tables(conn):
         );
     """)
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS meeting_chunks (
+        CREATE TABLE IF NOT EXISTS meeting_audio_chunks (
             meeting_id INTEGER,
             chunkid INTEGER,  
             FOREIGN KEY (meeting_id) REFERENCES meeting_meta(meeting_id),
@@ -83,9 +84,9 @@ def insert_audio_chunk(
 
 def get_transcription_chunks(conn) -> tuple[list[AudioChunk], list[bool]]:
     cursor = conn.cursor()
-    cursor.execute("""SELECT audio_transcriptions.*, meeting_chunks.chunkid is NOT NULL as indexed  
+    cursor.execute("""SELECT audio_transcriptions.*, meeting_audio_chunks.chunkid is NOT NULL as indexed  
                    FROM audio_transcriptions
-                   LEFT JOIN meeting_chunks on audio_transcriptions.audio_chunk_id = meeting_chunks.chunkid""")
+                   LEFT JOIN meeting_audio_chunks on audio_transcriptions.audio_chunk_id = meeting_audio_chunks.chunkid""")
     rows = cursor.fetchall()
     chunks = [AudioChunk.from_sql_row(row) for row in rows]
     indexed = [row["indexed"] for row in rows]
@@ -109,7 +110,7 @@ def insert_meeting(conn, filename: str, chunks_ids: list[int]):
     for chunk_id in chunks_ids:
         cursor.execute(
             """
-            INSERT INTO meeting_chunks (meeting_id, chunkid)
+            INSERT INTO meeting_audio_chunks (meeting_id, chunkid)
             VALUES (?, ?)
         """,
             (meeting_id, chunk_id),
@@ -164,7 +165,7 @@ WITH meetings AS (
     mm.filename,
     MIN(at.timestamp) AS datetime,
   FROM (
-    SELECT * FROM meeting_chunks ORDER BY chunkid
+    SELECT * FROM meeting_audio_chunks ORDER BY chunkid
   ) mc
   JOIN meeting_meta mm ON mc.meeting_id = mm.meeting_id
   JOIN audio_transcriptions at ON mc.chunkid = at.audio_chunk_id
@@ -189,7 +190,7 @@ WITH meetings AS (
     MAX(at.timestamp) AS end_date,
     GROUP_CONCAT(at.transcription, ' ') AS full_text
   FROM (
-    SELECT * FROM meeting_chunks ORDER BY chunkid
+    SELECT * FROM meeting_audio_chunks ORDER BY chunkid
   ) mc
   JOIN meeting_meta mm ON mc.meeting_id = mm.meeting_id
   JOIN audio_transcriptions at ON mc.chunkid = at.audio_chunk_id
@@ -215,7 +216,7 @@ WITH meetings AS (
     MAX(at.timestamp) AS end_date,
     GROUP_CONCAT(at.transcription, ' ') AS full_text
   FROM (
-    SELECT * FROM meeting_chunks ORDER BY chunkid
+    SELECT * FROM meeting_audio_chunks ORDER BY chunkid
   ) mc
   JOIN meeting_meta mm ON mc.meeting_id = mm.meeting_id
   JOIN audio_transcriptions at ON mc.chunkid = at.audio_chunk_id
