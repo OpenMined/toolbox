@@ -22,7 +22,7 @@ dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4"]
 
 [tool.uv.sources]
 syft-http-bridge = { git = "https://github.com/OpenMined/syft-extras.git", subdirectory = "packages/syft-http-bridge", rev = "main" }
-fast-syftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "simple-client" }
+fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "simple-client" }
 
 [dependency-groups]
 dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]
