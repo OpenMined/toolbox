@@ -2,12 +2,15 @@ from __future__ import annotations
 
 import os
 
-from packages.toolbox.toolbox.mcp_installer.mcp_installer import (
+from toolbox.mcp_installer.mcp_installer import (
     check_uv_installed,
     init_venv_uv,
     install_package_from_git,
     make_mcp_installation_dir,
+    pkill_f,
+    process_exists,
     run_python_mcp,
+    should_kill_existing_process,
 )
 from pydantic import BaseModel
 
@@ -119,4 +122,16 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
         )
 
         print("Run syftbox_queryengine.app mcp module")
-        run_python_mcp(installation_dir, "syftbox_queryengine.app")
+        module = "syftbox_queryengine.app"
+        start_process = True
+        if process_exists(module):
+            kill_process = should_kill_existing_process(module)
+            if kill_process:
+                print(f"Killing process {module}")
+                pkill_f(module)
+
+            else:
+                start_process = False
+
+        if start_process:
+            run_python_mcp(installation_dir, module)

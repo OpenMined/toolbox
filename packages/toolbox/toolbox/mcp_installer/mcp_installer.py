@@ -1,6 +1,9 @@
+import re
 import subprocess
 import sys
 from pathlib import Path
+
+import psutil
 
 HOME = Path.home()
 
@@ -58,6 +61,43 @@ def install_package_from_git(
         print(f"Failed to install package: {result.stderr}")
         raise Exception(f"Failed to install package: {result.stderr}")
     print("ABCs")
+
+
+def process_exists(pattern):
+    regex = re.compile(pattern)
+    for proc in psutil.process_iter(["pid", "cmdline"]):
+        try:
+            cmdline = " ".join(proc.info["cmdline"])
+            if regex.search(cmdline):
+                return True
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+    return False
+
+
+def pkill_f(pattern):
+    regex = re.compile(pattern)
+    for proc in psutil.process_iter(["pid", "cmdline"]):
+        try:
+            cmdline = " ".join(
+                proc.info["cmdline"]
+            )  # Join list into full command string
+            if regex.search(cmdline):
+                proc.kill()
+                print(f"Killed PID {proc.pid}: {cmdline}")
+        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+            pass
+
+
+def should_kill_existing_process(module: str):
+    should_kill = input(f"Process {module} already running. Kill it? (y/n)")
+    if should_kill in ["y", "Y"]:
+        return True
+    elif should_kill in ["n", "N"]:
+        return False
+    else:
+        print("Invalid input. Please enter y or n.")
+        return should_kill_existing_process(module)
 
 
 def run_python_mcp(installation_dir: Path, mcp_module: str):
