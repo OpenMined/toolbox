@@ -2,6 +2,7 @@ from pydantic import BaseModel
 
 from toolbox.store.callbacks.callback import (
     Callback,
+    InstallSyftboxQueryengineMCPCallback,
     SyftboxAuthCallback,
     TextInputEnvRequestedSecretCallback,
 )
@@ -18,7 +19,10 @@ class NotesMCP(StoreElement):
 
 class SyftboxQueryengineMCP(StoreElement):
     name: str = "syftbox-queryengine-mcp"
-    callbacks: list[Callback] = [SyftboxAuthCallback()]
+    callbacks: list[Callback] = [
+        SyftboxAuthCallback(),
+        InstallSyftboxQueryengineMCPCallback(),
+    ]
 
 
 class GithubMCP(StoreElement):

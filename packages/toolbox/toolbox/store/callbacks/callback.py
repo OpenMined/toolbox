@@ -30,7 +30,7 @@ class Callback(BaseModel):
     def on_input(self, context: InstallationContext):
         pass
 
-    def on_install_init(self, context: InstallationContext):
+    def on_install_init(self, context: InstallationContext, json_body: dict):
         pass
 
     def on_install_init_finished(self, context: InstallationContext):
@@ -113,7 +113,9 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
 
         install_package_from_git(
             installation_dir,
-            "https://github.com/OpenMined/syftbox-queryengine-mcp",
+            package_url="https://github.com/OpenMined/agentic-syftbox",
+            subdirectory="packages/syftbox_queryengine",
+            branch="main",
         )
 
         print("Run syftbox_queryengine.app mcp module")
