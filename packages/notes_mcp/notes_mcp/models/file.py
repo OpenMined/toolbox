@@ -1,9 +1,10 @@
 from pydantic import BaseModel
 
 
+# TODO: this is defined twice now, fix
 class FileToSync(BaseModel):
     filename: str
-    id: int
+    chunk_id: int
     encoded_bts: str
     timestamp: str
     device: str

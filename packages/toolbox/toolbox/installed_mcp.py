@@ -41,6 +41,7 @@ class InstalledMCP(BaseModel):
     verified: bool
     json_body: dict | None = None
     deployment_method: str
+    has_client_json: bool = True
 
     @property
     def client_config_file(self) -> str:
@@ -101,28 +102,32 @@ class InstalledMCP(BaseModel):
         if deployment_method is None:
             deployment_method = get_default_setting(name, client, "deployment_method")
 
-        json_bodies_for_client_for_deployment_method = STORE[name][
-            "json_bodies_for_client_for_deployment_method"
-        ]
-        if "all" in json_bodies_for_client_for_deployment_method:
-            jsons_bodies_for_deployment_methods = (
-                json_bodies_for_client_for_deployment_method["all"]
-            )
-        elif client in json_bodies_for_client_for_deployment_method:
-            jsons_bodies_for_deployment_methods = (
-                json_bodies_for_client_for_deployment_method[client]
-            )
+        has_mcp = STORE[name].get("has_client_json", True)
+        if not has_mcp:
+            json_body = {}
         else:
-            raise ValueError(
-                f"{client} is not a valid client, valid clients are: {list(json_bodies_for_client_for_deployment_method.keys())}"
-            )
+            json_bodies_for_client_for_deployment_method = STORE[name][
+                "json_bodies_for_client_for_deployment_method"
+            ]
+            if "all" in json_bodies_for_client_for_deployment_method:
+                jsons_bodies_for_deployment_methods = (
+                    json_bodies_for_client_for_deployment_method["all"]
+                )
+            elif client in json_bodies_for_client_for_deployment_method:
+                jsons_bodies_for_deployment_methods = (
+                    json_bodies_for_client_for_deployment_method[client]
+                )
+            else:
+                raise ValueError(
+                    f"{client} is not a valid client, valid clients are: {list(json_bodies_for_client_for_deployment_method.keys())}"
+                )
 
-        if deployment_method not in jsons_bodies_for_deployment_methods:
-            raise ValueError(
-                f"The chosen deployment method is not available for {client}"
-            )
+            if deployment_method not in jsons_bodies_for_deployment_methods:
+                raise ValueError(
+                    f"The chosen deployment method is not available for {client}"
+                )
 
-        json_body = jsons_bodies_for_deployment_methods[deployment_method]
+            json_body = jsons_bodies_for_deployment_methods[deployment_method]
 
         context.on_install_init(json_body)
 

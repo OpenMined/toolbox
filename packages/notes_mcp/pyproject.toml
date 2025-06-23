@@ -3,6 +3,7 @@ dependencies = [
     "anthropic>=0.52.2",
     "fastapi>=0.115.12",
     "mcp>=1.9.2",
+    "email-validator>=2.0.0",
 ]
 
 name = "notes_mcp"

@@ -1,20 +1,27 @@
+import contextlib
 from datetime import datetime
 from pathlib import Path
 import sqlite3
 
 from notes_mcp.models.audio import AudioChunk
+from packages.notes_mcp.notes_mcp import DEV_MODE
+from packages.notes_mcp.notes_mcp.models.user import User
 
 HOME = Path.home()
 
 MEETINGS_DB_PATH = HOME / ".meeting-notes-mcp" / "db.sqlite"
 MEETINGS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+DEV_EMAIL = "dev@openmined.org"
+DEV_ACCESS_TOKEN = "dev_mode"
+
 # Connect to the SQLite database
 conn = sqlite3.connect(MEETINGS_DB_PATH)
 conn.row_factory = sqlite3.Row
 
 
-def get_db():
+@contextlib.contextmanager
+def get_meetings_db():
     try:
         conn = sqlite3.connect(MEETINGS_DB_PATH)
         conn.row_factory = sqlite3.Row
@@ -27,203 +34,61 @@ def get_db():
 def create_tables(conn):
     cursor = conn.cursor()
     cursor.execute("""
-        CREATE TABLE IF NOT EXISTS meeting_meta (
-            meeting_id INTEGER PRIMARY KEY AUTOINCREMENT,
-            filename TEXT NOT NULL
-        );
-    """)
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS meeting_chunks (
-            meeting_id INTEGER,
-            chunkid INTEGER,  
-            FOREIGN KEY (meeting_id) REFERENCES meeting_meta(meeting_id),
-            PRIMARY KEY (meeting_id, chunkid)
-        );
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS audio_transcriptions (
+    CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    audio_chunk_id INTEGER NOT NULL,
-    offset_index INTEGER NOT NULL,
-    timestamp TEXT NOT NULL,
-    transcription TEXT NOT NULL,
-    device TEXT NOT NULL DEFAULT '',
-    is_input_device BOOLEAN NOT NULL DEFAULT TRUE,
-    speaker_id INTEGER,
-    transcription_engine TEXT NOT NULL DEFAULT 'Whisper',
-    start_time REAL,
-    end_time REAL,
-    text_length INTEGER)
-""")
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS audio_chunks (
-    id INTEGER PRIMARY KEY,
-    file_path TEXT NOT NULL,
-    timestamp TEXT NOT NULL,
-    user_email TEXT NOT NULL)
+    email TEXT UNIQUE NOT NULL,
+    access_token TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
 """)
     conn.commit()
 
 
-def insert_audio_chunk(
-    conn, chunk_id: int, file_path: str, timestamp: datetime, user_email: str
-):
+def insert_user(conn, email: str, access_token: str) -> int:
+    """Insert a new user into the database and return the user ID."""
     cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO audio_chunks (id, file_path, timestamp, user_email)
-        VALUES (?, ?, ?, ?)
-    """,
-        (chunk_id, file_path, timestamp, user_email),
-    )
-    conn.commit()
-
-
-def get_transcription_chunks(conn) -> tuple[list[AudioChunk], list[bool]]:
-    cursor = conn.cursor()
-    cursor.execute("""SELECT audio_transcriptions.*, meeting_chunks.chunkid is NOT NULL as indexed  
-                   FROM audio_transcriptions
-                   LEFT JOIN meeting_chunks on audio_transcriptions.audio_chunk_id = meeting_chunks.chunkid""")
-    rows = cursor.fetchall()
-    chunks = [AudioChunk.from_sql_row(row) for row in rows]
-    indexed = [row["indexed"] for row in rows]
-    return chunks, indexed
-
-
-def insert_meeting(conn, filename: str, chunks_ids: list[int]):
-    """
-    Insert meeting notes into the database.
-    """
-    cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO meeting_meta (filename)
-        VALUES (?)
-    """,
-        (filename,),
-    )
-    meeting_id = cursor.lastrowid
-    conn.commit()
-    for chunk_id in chunks_ids:
+    try:
         cursor.execute(
             """
-            INSERT INTO meeting_chunks (meeting_id, chunkid)
+            INSERT INTO users (email, access_token)
             VALUES (?, ?)
         """,
-            (meeting_id, chunk_id),
+            (email, access_token),
         )
-    conn.commit()
+        user_id = cursor.lastrowid
+        conn.commit()
+        return user_id
+    except sqlite3.IntegrityError:
+        # User already exists, update the access token
+        cursor.execute(
+            """
+            UPDATE users SET access_token = ? WHERE email = ?
+        """,
+            (access_token, email),
+        )
+        conn.commit()
+        # Get the user ID
+        cursor.execute("SELECT id FROM users WHERE email = ?", (email,))
+        return cursor.fetchone()["id"]
 
 
-def insert_transcription(
-    conn,
-    transcription_id: int,
-    audio_chunk_id: int,
-    offset_index: int,
-    timestamp: datetime,
-    transcription: str,
-    device: str,
-    is_input_device: bool,
-    speaker_id: int,
-    transcription_engine: str,
-    start_time: float,
-    end_time: float,
-    text_length: int,
-):
+def get_user_by_email(conn, email: str):
+    """Get user by email address."""
     cursor = conn.cursor()
-    cursor.execute(
-        """
-        INSERT INTO audio_transcriptions (id, audio_chunk_id, offset_index, timestamp, transcription, device, is_input_device, speaker_id, transcription_engine, start_time, end_time, text_length)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """,
-        (
-            transcription_id,
-            audio_chunk_id,
-            offset_index,
-            timestamp,
-            transcription,
-            device,
-            is_input_device,
-            speaker_id,
-            transcription_engine,
-            start_time,
-            end_time,
-            text_length,
-        ),
-    )
-    conn.commit()
+    cursor.execute("SELECT * FROM users WHERE email = ?", (email,))
+    return cursor.fetchone()
 
 
-def get_meeting_meta(conn) -> list[dict[str, str]]:
+def get_user_by_id(conn, user_id: int):
+    """Get user by ID."""
     cursor = conn.cursor()
-    get_all_meeting_notes_query = """
-WITH meetings AS (
-  SELECT
-    mm.filename,
-    MIN(at.timestamp) AS datetime,
-  FROM (
-    SELECT * FROM meeting_chunks ORDER BY chunkid
-  ) mc
-  JOIN meeting_meta mm ON mc.meeting_id = mm.meeting_id
-  JOIN audio_transcriptions at ON mc.chunkid = at.audio_chunk_id
-  GROUP BY mc.meeting_id
-  ORDER BY at.timestamp
-)
-SELECT *
-FROM meetings;
-"""
-    cursor.execute(get_all_meeting_notes_query)
-    return [dict(row) for row in cursor.fetchall()]
+    cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
+    return cursor.fetchone()
 
 
-def get_meeting_notes_by_filename(conn, filename: str):
-    cursor = conn.cursor()
-    get_meeting_notes_by_filename_query = """
-WITH meetings AS (
-  SELECT
-    mc.meeting_id,
-    mm.filename,
-    MIN(at.timestamp) AS start_date,
-    MAX(at.timestamp) AS end_date,
-    GROUP_CONCAT(at.transcription, ' ') AS full_text
-  FROM (
-    SELECT * FROM meeting_chunks ORDER BY chunkid
-  ) mc
-  JOIN meeting_meta mm ON mc.meeting_id = mm.meeting_id
-  JOIN audio_transcriptions at ON mc.chunkid = at.audio_chunk_id
-  WHERE mm.filename = ?
-  GROUP BY mc.meeting_id
-  ORDER BY at.timestamp
-)
-SELECT *
-FROM meetings;
-"""
-    cursor.execute(get_meeting_notes_by_filename_query, (filename,))
-    return cursor.fetchone()["fulltext"]
-
-
-def get_all_meeting_notes(conn):
-    cursor = conn.cursor()
-    get_all_meeting_notes_query = """
-WITH meetings AS (
-  SELECT
-    mc.meeting_id,
-    mm.filename,
-    MIN(at.timestamp) AS start_date,
-    MAX(at.timestamp) AS end_date,
-    GROUP_CONCAT(at.transcription, ' ') AS full_text
-  FROM (
-    SELECT * FROM meeting_chunks ORDER BY chunkid
-  ) mc
-  JOIN meeting_meta mm ON mc.meeting_id = mm.meeting_id
-  JOIN audio_transcriptions at ON mc.chunkid = at.audio_chunk_id
-  GROUP BY mc.meeting_id
-  ORDER BY at.timestamp
-)
-SELECT *
-FROM meetings;
-"""
-    cursor.execute(get_all_meeting_notes_query)
-    return cursor.fetchall()
+def get_users(conn) -> list[User]:
+    if DEV_MODE:
+        return [User(id=1, email=DEV_EMAIL, access_token=DEV_ACCESS_TOKEN)]
+    else:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM users")
+        return [User.model_validate(row) for row in cursor.fetchall()]

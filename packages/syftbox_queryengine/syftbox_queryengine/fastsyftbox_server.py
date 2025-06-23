@@ -1,0 +1,146 @@
+import base64
+import random
+from datetime import datetime
+from pathlib import Path
+
+import uvicorn
+from fastapi import Depends
+from fastapi.responses import HTMLResponse
+from fastsyftbox import FastSyftBox
+from fastsyftbox.simple_client import DEV_DEFAULT_OWNER_EMAIL, default_dev_data_dir
+from syft_core import SyftClientConfig
+
+from packages.syftbox_queryengine.syftbox_queryengine.auth import authenticate
+from syftbox_queryengine import db
+from syftbox_queryengine.db import (
+    get_query_engine_connection,
+    get_screenpipe_connection,
+    mark_file_as_synced,
+)
+from syftbox_queryengine.models import (
+    AudioChunkDB,
+    FilesToSyncResponse,
+    FileToSync,
+    MeetingModel,
+    SubmitResult,
+    TranscriptionChunksResult,
+    TranscriptionStoreRequest,
+)
+from syftbox_queryengine.sync import get_files_to_sync
+
+APP_NAME = "data-syncer"
+DEV_MODE = True
+
+if DEV_MODE:
+    config = SyftClientConfig(
+        client_url=8002,  # random
+        path="",  # random
+        data_dir=default_dev_data_dir(APP_NAME),
+        email=DEV_DEFAULT_OWNER_EMAIL,
+    )
+else:
+    config = SyftClientConfig.load()
+
+
+app = FastSyftBox(
+    app_name="data-syncer",
+    syftbox_config=config,
+    syftbox_endpoint_tags=[
+        "syftbox"
+    ],  # endpoints with this tag are also available via Syft RPC
+    include_syft_openapi=True,  # Create OpenAPI endpoints for syft-rpc routes
+)
+
+
+# normal fastapi
+@app.get("/", response_class=HTMLResponse)
+def root():
+    return HTMLResponse("<html><body><h1>Welcome to abc</h1>")
+
+
+@app.post("/get_latest_file_to_sync", tags=["syftbox"])
+def get_latest_file_to_sync(current_user_email: str = Depends(authenticate)):
+    with get_query_engine_connection() as conn:
+        audio_chunks: list[AudioChunkDB] = get_files_to_sync(conn)  # noqa: F821
+        if len(audio_chunks) == 0:
+            result = FilesToSyncResponse(file=None)
+        else:
+            audio_chunk = audio_chunks[0]
+            file_data = Path(audio_chunk.file_path)
+            bts = open(file_data, "rb").read()
+            timestamp = datetime.fromtimestamp(file_data.stat().st_mtime)
+            print("timestamp", timestamp)
+            audio_chunk = FileToSync(
+                filename=file_data.name,
+                chunk_id=audio_chunk.chunk_id,
+                encoded_bts=base64.b64encode(bts).decode("utf-8"),
+                timestamp=str(timestamp),
+                device="MacBook Pro Microphone",
+                user_email=config.email,
+            )
+            result = FilesToSyncResponse(file=audio_chunk)
+        return result.model_dump_json()
+
+
+# syft://{datasite}/app_data/{app_name}/rpc/submit_transcription
+@app.post("/submit_transcription", tags=["syftbox"])
+def submit_transcription(
+    transcription_req: TranscriptionStoreRequest,
+    current_user_email: str = Depends(authenticate),
+):
+    with get_screenpipe_connection() as conn:
+        transcription_id = random.randint(0, 1000000)
+        db.insert_transcription(
+            conn,
+            transcription_id=transcription_id,
+            audio_chunk_id=transcription_req.audio_chunk_id,
+            offset_index=0,
+            timestamp=transcription_req.timestamp,
+            transcription=transcription_req.transcription,
+            device=transcription_req.device,
+            is_input_device=True,
+            speaker_id=0,
+            transcription_engine="deepgram",
+            start_time=0,
+            end_time=0,
+            text_length=len(transcription_req.transcription),
+        )
+        audio_chunk = db.get_audio_chunk_by_id(conn, transcription_req.audio_chunk_id)
+
+    with get_query_engine_connection() as conn:
+        mark_file_as_synced(conn, audio_chunk)
+
+        response = SubmitResult(message="success")
+        return response.model_dump_json()
+
+
+@app.post("/query_transcription_chunks", tags=["syftbox"])
+def query_transcription_chunks(
+    current_user_email: str = Depends(authenticate),
+):
+    with get_screenpipe_connection() as conn:
+        transcription_chunks, indexed = db.get_transcription_chunks(conn)
+    print("transcription_chunks", transcription_chunks[0])
+    response = TranscriptionChunksResult(
+        transcription_chunks=transcription_chunks, indexed=indexed
+    )
+
+    return response.model_dump_json()
+
+
+@app.post("/submit_meetings", tags=["syftbox"])
+def submit_meetings(
+    meetings: list[MeetingModel],
+    current_user_email: str = Depends(authenticate),
+):
+    with get_screenpipe_connection() as conn:
+        print("Found", len(meetings), "meetings")
+        for meeting in meetings:
+            print("Inserting new meeting", meeting.filename)
+            db.insert_meeting(conn, meeting.filename, meeting.chunks_ids)
+
+
+if __name__ == "__main__":
+    with get_query_engine_connection() as conn:
+        db.create_tables(conn)
+    uvicorn.run(app, host="0.0.0.0", port=8002)

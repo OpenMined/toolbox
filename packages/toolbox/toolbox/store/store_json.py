@@ -1,5 +1,7 @@
 import platform
 
+from packages.toolbox.toolbox.store.store_code import STORE_ELEMENTS
+
 DEFAULT_LOCAL_MACHINE_NAME = platform.node()
 MANAGED_BY_INHERIT_CLIENT = "INHERIT_CLIENT"
 
@@ -49,6 +51,19 @@ STORE = {
         },
     },
     "meeting-notes-mcp": {
+        "has_client_json": False,
+        "requirements": ["syftbox-queryengine-mcp"],
+        "default_settings": {
+            "default_read_access": ["Apple Audio Recordings"],
+            "default_write_access": ["Meeting Notes"],
+            "default_model": None,
+            "default_proxy": "mcp-remote",
+            "default_host": "OM enclave",
+            "default_managed_by": "OM enclave",
+            "default_deployment_method": "proxy-to-om-enclave",
+        },
+    },
+    "syftbox-queryengine-mcp": {
         "json_bodies_for_client_for_deployment_method": {
             "all": {
                 "proxy-to-om-enclave": {
@@ -57,6 +72,7 @@ STORE = {
                 }
             }
         },
+        "mcp_deployment_methods": {"all": "infered"},
         "default_settings": {
             "default_read_access": ["Apple Audio Recordings"],
             "default_write_access": ["Meeting Notes"],
@@ -84,5 +100,7 @@ def get_default_setting(name: str, client: str, key: str):
 
 def check_name(name: str):
     if name not in STORE:
+        raise ValueError(f"MCP with name {name} does not exist")
+    if name not in STORE_ELEMENTS:
         raise ValueError(f"MCP with name {name} does not exist")
     return name

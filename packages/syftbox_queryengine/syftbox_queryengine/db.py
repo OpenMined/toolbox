@@ -1,31 +1,56 @@
+import os
+import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
-import sqlite3
 
-from notes_mcp.models.audio import AudioChunk
+from packages.notes_mcp.notes_mcp import DEV_MODE
+from syftbox_queryengine.models import AudioChunkDB, AudioChunk
 
 HOME = Path.home()
 
-MEETINGS_DB_PATH = HOME / ".screenpipe" / "db.sqlite"
-# MEETINGS_DB_PATH = HOME / ".meeting-notes-mcp" / "db.sqlite"
-MEETINGS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+QUERY_ENGINE_DB_PATH = HOME / ".query-engine-mcp" / "data.db"
+QUERY_ENGINE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# Connect to the SQLite database
-conn = sqlite3.connect(MEETINGS_DB_PATH)
-conn.row_factory = sqlite3.Row
+SCREENPIPE_DB_DIR = HOME / ".screenpipe"
+SCREENPIPE_DB_PATH = SCREENPIPE_DB_DIR / "db.sqlite"
 
 
-def get_db():
+@contextmanager
+def get_screenpipe_connection():
+    conn = sqlite3.connect(SCREENPIPE_DB_DIR / "db.sqlite")
+    conn.row_factory = sqlite3.Row
+    create_tables_screenpipe(conn)
     try:
-        conn = sqlite3.connect(MEETINGS_DB_PATH)
-        conn.row_factory = sqlite3.Row
-        create_tables(conn)
         yield conn
     finally:
         conn.close()
 
 
-def create_tables(conn):
+@contextmanager
+def get_query_engine_connection():
+    conn = sqlite3.connect(QUERY_ENGINE_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    create_queryengine_tables(conn)
+    try:
+        yield conn
+    finally:
+        conn.close()
+
+
+def create_queryengine_tables(conn):
+    cursor = conn.cursor()
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS synced_files (
+            file_path TEXT PRIMARY KEY,
+            chunk_id INTEGER
+        )
+    """)
+
+    conn.commit()
+
+
+def create_tables_screenpipe(conn):
     cursor = conn.cursor()
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS meeting_meta (
@@ -41,30 +66,60 @@ def create_tables(conn):
             PRIMARY KEY (meeting_id, chunkid)
         );
     """)
+    conn.commit()
+    # cursor.execute("""
+    # CREATE TABLE IF NOT EXISTS audio_transcriptions (
+    # id INTEGER PRIMARY KEY AUTOINCREMENT,
+    # audio_chunk_id INTEGER NOT NULL,
+    # offset_index INTEGER NOT NULL,
+    # timestamp TEXT NOT NULL,
+    # transcription TEXT NOT NULL,
+    # device TEXT NOT NULL DEFAULT '',
+    # is_input_device BOOLEAN NOT NULL DEFAULT TRUE,
+    # speaker_id INTEGER,
+    # transcription_engine TEXT NOT NULL DEFAULT 'Whisper',
+    # start_time REAL,
+    # end_time REAL,
+    # text_length INTEGER)
+    # """)
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS audio_transcriptions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    audio_chunk_id INTEGER NOT NULL,
-    offset_index INTEGER NOT NULL,
-    timestamp TEXT NOT NULL,
-    transcription TEXT NOT NULL,
-    device TEXT NOT NULL DEFAULT '',
-    is_input_device BOOLEAN NOT NULL DEFAULT TRUE,
-    speaker_id INTEGER,
-    transcription_engine TEXT NOT NULL DEFAULT 'Whisper',
-    start_time REAL,
-    end_time REAL,
-    text_length INTEGER)
-""")
+    # cursor.execute("""
+    # CREATE TABLE IF NOT EXISTS audio_chunks (
+    # id INTEGER PRIMARY KEY,
+    # file_path TEXT NOT NULL,
+    # timestamp TEXT NOT NULL,
+    # user_email TEXT NOT NULL)
+    # """)
+    # conn.commit()
 
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS audio_chunks (
-    id INTEGER PRIMARY KEY,
-    file_path TEXT NOT NULL,
-    timestamp TEXT NOT NULL,
-    user_email TEXT NOT NULL)
-""")
+
+def get_synced_audio_chunks(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT file_path, chunk_id FROM synced_files")
+    return [AudioChunkDB.from_sqlite_row(row) for row in cursor.fetchall()]
+
+
+def get_all_audio_chunks(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT file_path, id as chunk_id FROM audio_chunks")
+    return [AudioChunkDB.from_sqlite_row(row) for row in cursor.fetchall()]
+
+
+def get_audio_chunk_by_id(conn, chunk_id: int) -> AudioChunkDB:
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT file_path, id as chunk_id FROM audio_chunks WHERE id = ?",
+        (chunk_id,),
+    )
+    return AudioChunkDB.from_sqlite_row(cursor.fetchone())
+
+
+def mark_file_as_synced(conn, audio_chunk: AudioChunkDB):
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO synced_files (file_path, chunk_id) VALUES (?, ?)",
+        (audio_chunk.file_path, audio_chunk.chunk_id),
+    )
     conn.commit()
 
 

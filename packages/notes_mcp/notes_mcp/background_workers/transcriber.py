@@ -3,12 +3,16 @@ import os
 import random
 import threading
 import time
+import traceback
 from datetime import datetime
 
 import requests
 from fastsyftbox.simple_client import SimpleRPCClient
 
-from notes_mcp import db
+from notes_mcp import DEV_MODE, db
+from notes_mcp.client import create_authenticated_client
+from notes_mcp.fastapi_server import executor
+from notes_mcp.models.audio import TranscriptionStoreRequest
 from notes_mcp.models.file import FilesToSyncResponse, FileToSync
 
 DEEPGRAM_API_KEY = os.environ["DEEPGRAM_API_KEY"]
@@ -48,47 +52,65 @@ def add_transcription_to_db(
 
 def poll_for_new_audio_chunks(stop_event: threading.Event):
     while not stop_event.is_set():
-        client = SimpleRPCClient(app_name="data-syncer", dev_mode=True)
-        print("Polling for new audio chunks")
-        try:
-            result = client.post("/get_latest_file_to_sync")
-            result.raise_for_status()
-            file = FilesToSyncResponse.model_validate_json(result.json()).file
-            if file is not None:
-                print("Got file to transcribe and upload", file)
-                bts = base64.b64decode(file.encoded_bts)
-                transcript = transcribe(bts)
-                print("transcription succesful, uploading to data-syncer")
-                upload_transcription_to_data_syncer(client, transcript, file)
-            else:
-                print("No file to sync")
-
-        except Exception as e:
-            print(
-                f"Could not reach user {client.app_owner} on {client.app_name}/get_latest_file_to_sync: {e}"
-            )
-
-        time.sleep(10)
+        with db.get_meetings_db() as conn:
+            for user in db.get_users(conn):
+                executor.submit(
+                    _poll_for_new_audio_chunks, user.email, user.access_token
+                )
+            time.sleep(10)
 
 
-def upload_transcription_to_data_syncer(
+def _poll_for_new_audio_chunks(email: str, access_token: str):
+    client = create_authenticated_client(
+        app_name="data-syncer",
+        dev_mode=True,
+        user_email=email,
+        access_token=access_token,
+    )
+    print("Polling for new audio chunks")
+    try:
+        result = client.post("/get_latest_file_to_sync")
+        result.raise_for_status()
+        file = FilesToSyncResponse.model_validate_json(result.json()).file
+        if file is not None:
+            print("Got file to transcribe and upload", file)
+            bts = base64.b64decode(file.encoded_bts)
+            transcript = transcribe(bts)
+            print("transcription succesful, uploading to data-syncer")
+            upload_transcription_to_queryengine(client, transcript, file)
+        else:
+            print("No file to sync")
+
+    except Exception:
+        print(
+            f"Failed calling {client.app_name} on {client.app_owner}/get_latest_file_to_sync: {traceback.format_exc()}"
+        )
+
+    time.sleep(10)
+
+
+def upload_transcription_to_queryengine(
     client: SimpleRPCClient, transcription: str, file: FileToSync
 ):
-    # Prepare the payload for the data_syncer API
-    payload = {
-        "transcription": transcription,  # No transcription yet, just the audio chunk info
-        "id": file.id,
-        "timestamp": file.timestamp,
-        "user_email": file.user_email,
-        "device": file.device,
-    }
+    # Prepare the payload for the query engine API
+    transcription_request = TranscriptionStoreRequest(
+        transcription=transcription,
+        audio_chunk_id=file.chunk_id,
+        timestamp=file.timestamp,
+        user_email=file.user_email,
+        device=file.device,
+    )
 
-    res = client.post("/submit_transcription", json=payload)
+    res = client.post("/submit_transcription", json=transcription_request.model_dump())
     print("sucesffully uploaded to data-syncer")
     res.raise_for_status()
 
 
 def transcribe(bytes_data: bytes):
+    if DEV_MODE:
+        print("using test transcription")
+        return "This is a test transcription"
+
     response = requests.post(
         "https://api.deepgram.com/v1/listen",
         headers={

@@ -14,7 +14,7 @@ from toolbox.installed_mcp import (
 )
 from toolbox.store.installation_context import InstallationContext
 from toolbox.store.store_code import STORE_ELEMENTS
-from toolbox.store.store_json import check_name
+from toolbox.store.store_json import STORE, check_name
 
 CLAUDE_CONFIG_FILE = (
     f"{HOME}/Library/Application Support/Claude/claude_desktop_config.json"
@@ -50,6 +50,22 @@ def get_claude_config_items() -> list[MCPConfigItem]:
     return res
 
 
+def install_requirements(
+    conn: sqlite3.Connection,
+    name: str,
+    context: InstallationContext,
+    clients: list[str],
+):
+    store_json = STORE[name]
+    if "requirements" in store_json:
+        for requirement in store_json["requirements"]:
+            print(f"{name} requires {requirement}, installing...")
+            context.context_apps.append(requirement)
+            context.current_app = requirement
+            install_mcp(conn, requirement, clients=clients, context=context)
+            context.current_app = name
+
+
 def install_mcp(
     conn: sqlite3.Connection,
     name: str,
@@ -61,19 +77,26 @@ def install_mcp(
     managed_by: str | None = None,
     proxy: str | None = None,
     verified: bool = False,
+    context: InstallationContext | None = None,
 ):
     if clients is None or isinstance(clients, list) and len(clients) == 0:
         print("no clients provided, installing to claude desktop by default\n")
         clients = ["claude"]
 
+    check_name(name)
+    store_element = STORE_ELEMENTS[name]
+
+    callbacks = store_element.callbacks
+
+    if context is None:
+        context = InstallationContext(
+            callbacks=callbacks, context_dict={}, current_app=name, context_apps=[name]
+        )
+
+    install_requirements(conn, name, context, clients)
+    context.on_input()
+
     for client in clients:
-        check_name(name)
-
-        store_element = STORE_ELEMENTS[name]
-        callbacks = store_element.callbacks
-        context = InstallationContext(callbacks=callbacks, values={})
-        context.on_input()
-
         mcp = InstalledMCP.from_cli_args(
             name=name,
             client=client,
@@ -87,7 +110,9 @@ def install_mcp(
         )
 
         if client == "claude":
-            add_mcp_to_claude_desktop_config(mcp)
+            if mcp.has_client_json:
+                add_mcp_to_claude_desktop_config(mcp)
+            context.on_install_init_finished()
             db_upsert_mcp(conn, mcp)
         else:
             print(f"skipping mcp for {client}, not supported yet")

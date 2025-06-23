@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.9"
-dependencies = ["toolbox", "notes_mcp"]
+dependencies = ["toolbox", "notes_mcp", "syftbox_queryengine"]
 
 [build-system]
 requires = ["hatchling"]
@@ -13,6 +13,7 @@ build-backend = "hatchling.build"
 [tool.uv.sources]
 toolbox = { workspace = true }
 notes_mcp = { workspace = true }
+syftbox_queryengine = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*"]

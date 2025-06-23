@@ -18,13 +18,13 @@ class FileToSync(BaseModel):
 
 class AudioChunkDB(BaseModel):
     chunk_id: int
-    file_name: str
+    file_path: str
 
     @classmethod
     def from_sqlite_row(cls, row):
         return cls(
             chunk_id=row["chunk_id"],
-            file_name=row["file_name"],
+            file_path=row["file_path"],
         )
 
 

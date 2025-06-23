@@ -1,6 +1,13 @@
-
 from datetime import datetime
 from pydantic import BaseModel
+
+
+class TranscriptionStoreRequest(BaseModel):
+    transcription: str
+    audio_chunk_id: int
+    timestamp: str
+    user_email: str
+    device: str = "MacBook Pro Microphone"
 
 
 class AudioChunk(BaseModel):
@@ -15,11 +22,11 @@ class AudioChunk(BaseModel):
     start_time: float
     end_time: float
     text_length: int
-    
+
     @property
     def datetime(self):
         return datetime.fromisoformat(self.timestamp)
-    
+
     @classmethod
     def from_sql_row(cls, row):
         return cls(
@@ -35,4 +42,8 @@ class AudioChunk(BaseModel):
             end_time=row["end_time"],
             text_length=row["text_length"],
         )
-        
+
+
+class TranscriptionChunksResult(BaseModel):
+    transcription_chunks: list[AudioChunk]
+    indexed: list[bool]

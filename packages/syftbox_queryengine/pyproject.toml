@@ -1,8 +1,9 @@
 [project]
 dependencies = [
+    "requests>=2.32.4",
 ]
 
-name = "data_syncer"
+name = "syftbox_queryengine"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
