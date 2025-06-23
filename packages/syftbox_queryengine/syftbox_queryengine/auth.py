@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import Header
 
-from syftbox_queryengine.fastsyftbox_server import DEV_MODE
+from syftbox_queryengine.settings import settings
 
 SYFTBOX_EMAIL_KEY = "SYFTBOX_EMAIL"
 SYFTBOX_ACCESS_TOKEN_KEY = "SYFTBOX_ACCESS_TOKEN"
@@ -14,7 +14,7 @@ DEV_ACCESS_TOKEN = "dev_mode"
 
 def get_syftbox_credentials():
     syftbox_email = os.environ.get(SYFTBOX_EMAIL_KEY)
-    if syftbox_email is None and DEV_MODE:
+    if syftbox_email is None and settings.dev_mode:
         syftbox_email = DEV_EMAIL
         syftbox_access_token = os.environ.get(
             SYFTBOX_ACCESS_TOKEN_KEY, DEV_ACCESS_TOKEN
@@ -27,7 +27,7 @@ def get_syftbox_credentials():
 
 
 def authenticate(x_access_token: Optional[str] = Header(None)):
-    if x_access_token is None and not DEV_MODE:
+    if x_access_token is None and not settings.dev_mode:
         raise ValueError("X-Access-Token is not for authentication")
 
     email, syftbox_access_token = get_syftbox_credentials()

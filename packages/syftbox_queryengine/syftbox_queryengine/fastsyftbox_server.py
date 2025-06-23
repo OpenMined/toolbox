@@ -26,12 +26,12 @@ from syftbox_queryengine.models import (
     TranscriptionChunksResult,
     TranscriptionStoreRequest,
 )
+from syftbox_queryengine.settings import settings
 from syftbox_queryengine.sync import get_files_to_sync
 
 APP_NAME = "data-syncer"
-DEV_MODE = True
 
-if DEV_MODE:
+if settings.dev_mode:
     config = SyftClientConfig(
         client_url=8002,  # random
         path="",  # random
