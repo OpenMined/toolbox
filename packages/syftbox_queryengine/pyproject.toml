@@ -1,6 +1,8 @@
 [project]
 dependencies = [
     "requests>=2.32.4",
+    "uvicorn>=0.43.3"
+    "fastapi>=0.115.13"
 ]
 
 name = "syftbox_queryengine"
