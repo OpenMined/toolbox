@@ -3,7 +3,8 @@ dependencies = [
     "requests>=2.32.4",
     "uvicorn>=0.34.3",
     "fastapi>=0.115.13",
-    "fastsyftbox"
+    "pydantic-settings>=2.10.0",
+    "fastsyftbox",
 ]
 
 name = "syftbox_queryengine"
