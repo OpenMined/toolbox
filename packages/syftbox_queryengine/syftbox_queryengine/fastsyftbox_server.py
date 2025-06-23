@@ -11,6 +11,7 @@ from fastsyftbox.simple_client import DEV_DEFAULT_OWNER_EMAIL, default_dev_data_
 from syft_core import SyftClientConfig
 
 from syftbox_queryengine import db
+from syftbox_queryengine.auth import authenticate
 from syftbox_queryengine.db import (
     get_query_engine_connection,
     get_screenpipe_connection,
@@ -25,7 +26,6 @@ from syftbox_queryengine.models import (
     TranscriptionChunksResult,
     TranscriptionStoreRequest,
 )
-from syftbox_queryengine.syftbox_queryengine.auth import authenticate
 from syftbox_queryengine.sync import get_files_to_sync
 
 APP_NAME = "data-syncer"
