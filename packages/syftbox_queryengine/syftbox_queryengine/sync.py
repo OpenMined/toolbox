@@ -1,9 +1,4 @@
-import base64
-from datetime import datetime
 from pathlib import Path
-import sqlite3
-from time import sleep
-from contextlib import contextmanager
 
 from syftbox_queryengine.db import (
     get_all_audio_chunks,
@@ -11,9 +6,7 @@ from syftbox_queryengine.db import (
     get_screenpipe_connection,
     get_synced_audio_chunks,
 )
-from syftbox_queryengine.models import AudioChunk, AudioChunkDB
-import requests
-
+from syftbox_queryengine.models import AudioChunkDB
 
 URL = "http://localhost:8000"
 HOME = Path.home()

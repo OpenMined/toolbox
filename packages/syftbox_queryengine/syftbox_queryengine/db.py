@@ -1,11 +1,9 @@
-import os
 import sqlite3
 from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
-from packages.notes_mcp.notes_mcp import DEV_MODE
-from syftbox_queryengine.models import AudioChunkDB, AudioChunk
+from syftbox_queryengine.models import AudioChunk, AudioChunkDB
 
 HOME = Path.home()
 

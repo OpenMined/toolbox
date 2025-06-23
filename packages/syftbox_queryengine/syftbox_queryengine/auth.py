@@ -3,7 +3,7 @@ from typing import Optional
 
 from fastapi import Header
 
-from packages.notes_mcp.notes_mcp import DEV_MODE
+from syftbox_queryengine.syftbox_queryengine.fastsyftbox_server import DEV_MODE
 
 SYFTBOX_EMAIL_KEY = "SYFTBOX_EMAIL"
 SYFTBOX_ACCESS_TOKEN_KEY = "SYFTBOX_ACCESS_TOKEN"
