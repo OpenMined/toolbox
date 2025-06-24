@@ -12,6 +12,7 @@ class InstallationContext(BaseModel):
     context_apps: list[str] = []
     callbacks: list[Callback]
     context_dict: dict[str, Any]
+    context_settings: dict[str, Any] = {}
 
     def __getattr__(self, item: str) -> Any:
         return self.context_dict[item]

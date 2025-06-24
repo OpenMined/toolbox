@@ -40,7 +40,6 @@ def start_background_workers():
 async def lifespan(app: FastAPI):
     async with contextlib.AsyncExitStack() as stack:
         await stack.enter_async_context(mcp.session_manager.run())
-
         poll_meetings_producer, poll_transcriber_producer = start_background_workers()
 
         yield

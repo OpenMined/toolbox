@@ -1,5 +1,6 @@
 import sqlite3
 from concurrent.futures import ThreadPoolExecutor
+import traceback
 
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException
@@ -36,17 +37,20 @@ class StartWorkersRequest(BaseModel):
 
 @app.post("/register_user", response_model=UserResponse)
 def register_user(
-    request: UserRegistration, conn: sqlite3.Connection = Depends(get_meetings_db)
+    request: UserRegistration,
+    conn_manager: sqlite3.Connection = Depends(get_meetings_db),
 ):
     """Register a new user or update existing user's access token."""
     try:
-        user_id = insert_user(conn, request.email, request.access_token)
-        return UserResponse(
-            id=user_id, email=request.email, message="User registered successfully"
-        )
+        with conn_manager as conn:
+            user_id = insert_user(conn, request.email, request.access_token)
+            return UserResponse(
+                id=user_id, email=request.email, message="User registered successfully"
+            )
     except Exception as e:
+        print(traceback.format_exc())
         raise HTTPException(
-            status_code=500, detail=f"Failed to register user: {str(e)}"
+            status_code=500, detail=f"Failed to register user: {traceback.format_exc()}"
         )
 
 

@@ -31,6 +31,7 @@ from syftbox_queryengine.sync import get_files_to_sync
 
 APP_NAME = "data-syncer"
 
+print("settings.dev_mode", settings.dev_mode)
 if settings.dev_mode:
     config = SyftClientConfig(
         client_url=8002,  # random
@@ -40,6 +41,8 @@ if settings.dev_mode:
     )
 else:
     config = SyftClientConfig.load()
+
+print("config", config)
 
 
 app = FastSyftBox(
@@ -138,6 +141,13 @@ def submit_meetings(
         for meeting in meetings:
             print("Inserting new meeting", meeting.filename)
             db.insert_meeting(conn, meeting.filename, meeting.chunks_ids)
+
+
+app.enable_debug_tool(
+    endpoint="/get_latest_file_to_sync",
+    example_request=str({}),
+    publish=True,
+)
 
 
 if __name__ == "__main__":

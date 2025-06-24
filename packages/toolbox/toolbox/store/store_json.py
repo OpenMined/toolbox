@@ -53,6 +53,9 @@ STORE = {
     "meeting-notes-mcp": {
         "has_client_json": False,
         "requirements": ["syftbox-queryengine-mcp"],
+        "context_settings": {
+            "notes_mcp_url": "http://127.0.0.1:8000/mcp",
+        },
         "default_settings": {
             "default_read_access": ["Apple Audio Recordings"],
             "default_write_access": ["Meeting Notes"],
@@ -66,7 +69,7 @@ STORE = {
     "syftbox-queryengine-mcp": {
         "json_bodies_for_client_for_deployment_method": {
             "all": {
-                "proxy-to-om-enclave": {
+                "proxy-to-local-http": {
                     "args": ["mcp-remote", "http://127.0.0.1:8000/mcp"],
                     "command": "npx",
                 }
@@ -80,7 +83,7 @@ STORE = {
             "default_proxy": "mcp-remote",
             "default_host": "OM enclave",
             "default_managed_by": "OM enclave",
-            "default_deployment_method": "proxy-to-om-enclave",
+            "default_deployment_method": "proxy-to-local-http",
         },
     },
 }

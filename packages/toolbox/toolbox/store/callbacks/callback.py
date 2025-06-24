@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 
+import requests
 from toolbox.mcp_installer.mcp_installer import (
     check_uv_installed,
     init_venv_uv,
@@ -22,6 +23,7 @@ HOME = Path.home()
 
 INHERIT_SECRET_FROM_ENV = True
 REQUEST_REUSE = False
+AUTOMATIC_REUSE = True
 
 from typing import TYPE_CHECKING  # noqa: E402
 
@@ -79,18 +81,22 @@ class SyftboxAuthCallback(Callback):
     def on_input(self, context: InstallationContext):
         request_email = True
         if "syftbox_email" in context.context_dict:
+            if AUTOMATIC_REUSE:
+                request_email = False
             if REQUEST_REUSE:
                 reuse = request_reuse("syftbox email and access token")
                 if reuse:
                     request_email = False
 
         if request_email:
-            email = input("""Fill in your syftbox email, if you already have one, enter it, if not you can regsiter by
-                going to http://172.172.234.167:7000/syftbox/login and get your access token (store it).
-                syfbox email: """)
+            email = input("""\nFill in your syftbox email, if you already have one, enter it, if not you can regsiter by
+going to http://172.172.234.167:7000/syftbox/login and get your access token (store it).
+syfbox email: """)
             context.context_dict["syftbox_email"] = email
             access_token = input("syftbox access token: ")
             context.context_dict["syftbox_access_token"] = access_token
+        else:
+            print("Reusing syftbox email and access token")
 
         if "syftbox_access_token" not in context.context_dict:
             access_token = input("syftbox access token: ")
@@ -101,6 +107,24 @@ class SyftboxAuthCallback(Callback):
             json_body["env"] = {}
         for key in self.keys:
             json_body["env"][key] = context.context_dict[key]
+
+
+class RegisterNotesMCPCallback(Callback):
+    def on_install_init(self, context: InstallationContext, json_body: dict):
+        payload = {
+            "email": context.context_dict["syftbox_email"],
+            "access_token": context.context_dict["syftbox_access_token"],
+        }
+        try:
+            response = requests.post(
+                "http://127.0.0.1:8000/register_user", json=payload
+            )
+            response.raise_for_status()
+            print("Succesfully registered account for meeting notes MCP")
+
+        except Exception as e:
+            print(f"Error registering user: {e}")
+            raise e
 
 
 class InstallSyftboxQueryengineMCPCallback(Callback):
@@ -127,9 +151,7 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
         if process_exists(module):
             kill_process = should_kill_existing_process(module)
             if kill_process:
-                print(f"Killing process {module}")
                 pkill_f(module)
-
             else:
                 start_process = False
 

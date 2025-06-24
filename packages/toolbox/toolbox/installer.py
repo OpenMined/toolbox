@@ -5,7 +5,7 @@ import sqlite3
 from pydantic import BaseModel
 from tabulate import tabulate
 
-from toolbox.db import db_get_mcps, db_upsert_mcp
+from toolbox.db import db_get_mcps, db_get_mcps_by_name, db_upsert_mcp
 from toolbox.installed_mcp import (
     HOME,
     INSTALLED_HEADERS,
@@ -60,10 +60,20 @@ def install_requirements(
     if "requirements" in store_json:
         for requirement in store_json["requirements"]:
             print(f"{name} requires {requirement}, installing...")
+
+            store_element = STORE_ELEMENTS[requirement]
+
+            callbacks = store_element.callbacks
+            requirement_context = InstallationContext(
+                callbacks=callbacks,
+                context_dict=context.context_dict,
+                current_app=requirement,
+                context_apps=context.context_apps + [requirement],
+                context_settings=store_json.get("context_settings", {}),
+            )
+            install_mcp(conn, requirement, clients=clients, context=requirement_context)
+            context.context_dict.update(requirement_context.context_dict)
             context.context_apps.append(requirement)
-            context.current_app = requirement
-            install_mcp(conn, requirement, clients=clients, context=context)
-            context.current_app = name
 
 
 def install_mcp(
@@ -85,12 +95,17 @@ def install_mcp(
 
     check_name(name)
     store_element = STORE_ELEMENTS[name]
+    store_json = STORE[name]
 
     callbacks = store_element.callbacks
 
     if context is None:
         context = InstallationContext(
-            callbacks=callbacks, context_dict={}, current_app=name, context_apps=[name]
+            callbacks=callbacks,
+            context_dict={},
+            current_app=name,
+            context_apps=[name],
+            context_settings=store_json.get("context_settings", {}),
         )
 
     install_requirements(conn, name, context, clients)
@@ -118,7 +133,7 @@ def install_mcp(
             print(f"skipping mcp for {client}, not supported yet")
 
     print(f"Successfully installed '{name}' for {', '.join(clients)}")
-    print(f"Config files: {CLAUDE_CONFIG_FILE}")
+    print(f"Config files: {CLAUDE_CONFIG_FILE}\n")
 
     # launch mcp server. 3 options:
     # 1. local mcp server over stdio
@@ -143,6 +158,17 @@ def list_installed(conn: sqlite3.Connection):
 Clients:
 [1]: {create_clickable_file_link(CLAUDE_CONFIG_FILE)}
 """)
+
+
+def show_mcp(conn: sqlite3.Connection, name: str):
+    mcps = db_get_mcps_by_name(conn, name)
+    if len(mcps) == 0:
+        print("No MCPs found for", name)
+    elif len(mcps) == 1:
+        mcp = mcps[0]
+        mcp.show()
+    else:
+        raise ValueError(f"Multiple MCPs found for {name}")
 
 
 def add_mcp_to_claude_desktop_config(mcp: InstalledMCP):

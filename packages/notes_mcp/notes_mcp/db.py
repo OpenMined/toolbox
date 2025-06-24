@@ -1,11 +1,11 @@
 import contextlib
+import sqlite3
 from datetime import datetime
 from pathlib import Path
-import sqlite3
 
 from notes_mcp.models.audio import AudioChunk
-from packages.notes_mcp.notes_mcp import DEV_MODE
-from packages.notes_mcp.notes_mcp.models.user import User
+from notes_mcp.models.user import User
+from notes_mcp.settings import settings
 
 HOME = Path.home()
 
@@ -49,7 +49,7 @@ def insert_user(conn, email: str, access_token: str) -> int:
     try:
         cursor.execute(
             """
-            INSERT INTO users (email, access_token)
+            INSERT OR REPLACE INTO users (email, access_token)
             VALUES (?, ?)
         """,
             (email, access_token),
@@ -86,9 +86,9 @@ def get_user_by_id(conn, user_id: int):
 
 
 def get_users(conn) -> list[User]:
-    if DEV_MODE:
+    if settings.create_dev_user:
         return [User(id=1, email=DEV_EMAIL, access_token=DEV_ACCESS_TOKEN)]
     else:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users")
-        return [User.model_validate(row) for row in cursor.fetchall()]
+        return [User(**dict(row)) for row in cursor.fetchall()]

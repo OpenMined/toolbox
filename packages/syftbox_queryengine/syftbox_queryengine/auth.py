@@ -14,6 +14,9 @@ DEV_ACCESS_TOKEN = "dev_mode"
 
 def get_syftbox_credentials():
     syftbox_email = os.environ.get(SYFTBOX_EMAIL_KEY)
+    if settings.skip_auth:
+        return DEV_EMAIL, DEV_ACCESS_TOKEN
+
     if syftbox_email is None and settings.dev_mode:
         syftbox_email = DEV_EMAIL
         syftbox_access_token = os.environ.get(
@@ -27,8 +30,12 @@ def get_syftbox_credentials():
 
 
 def authenticate(x_access_token: Optional[str] = Header(None)):
-    if x_access_token is None and not settings.dev_mode:
+    print("settings.skip_auth", settings.skip_auth)
+    if x_access_token is None and not (settings.dev_mode or settings.skip_auth):
         raise ValueError("X-Access-Token is not for authentication")
+
+    if settings.skip_auth:
+        return "dev@openmined.org"
 
     email, syftbox_access_token = get_syftbox_credentials()
     if x_access_token[:5] != syftbox_access_token[:5]:

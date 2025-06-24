@@ -1,18 +1,22 @@
 import sqlite3
-from typing import Optional, Dict
+from typing import Dict, Optional
 
 from fastsyftbox.simple_client import SimpleRPCClient
 
 from notes_mcp import db
+from notes_mcp.settings import settings
 
 
 def create_authenticated_client(
     app_name: str = "data-syncer",
-    dev_mode: bool = True,
     user_email: Optional[str] = None,
     access_token: Optional[str] = None,
 ) -> SimpleRPCClient:
     """Create a SimpleRPCClient with authentication headers."""
     headers = {"X-User-Email": user_email, "X-Access-Token": access_token}
-    client = SimpleRPCClient(app_name=app_name, dev_mode=dev_mode, headers=headers)
-    return client
+    if settings.dev_mode:
+        return SimpleRPCClient.for_local_transport(app_name=app_name, headers=headers)
+    else:
+        return SimpleRPCClient.for_syftbox_transport(
+            app_owner="koen@openmined.org", app_name=app_name
+        )

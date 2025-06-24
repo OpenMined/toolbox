@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 from pydantic import BaseModel
 
 from toolbox.store.store_json import STORE, get_default_setting
+from toolbox.utils.utils import DEFAULT_LOG_FILE, installation_dir_from_name
 
 if TYPE_CHECKING:
     from toolbox.store.store_code import InstallationContext
@@ -49,6 +50,14 @@ class InstalledMCP(BaseModel):
             return "[1]"
         else:
             raise ValueError(f"Client {self.client} not supported")
+
+    @property
+    def installation_dir(self) -> Path:
+        return installation_dir_from_name(self.name)
+
+    @property
+    def log_file(self) -> Path:
+        return self.installation_dir / DEFAULT_LOG_FILE
 
     def format_as_tabulate_row(self) -> list[str]:
         return [
@@ -154,6 +163,13 @@ class InstalledMCP(BaseModel):
         row["json_body"] = json.loads(row["json_body"])
         row["deployment_method"] = row["deployment_method"]
         return cls(**row)
+
+    def show(self):
+        print(self.name)
+        if self.log_file.exists():
+            print(f"Log file: {self.log_file}")
+            with open(self.log_file, "r") as f:
+                print(f.read())
 
 
 def create_clickable_file_link(file_path, link_text="LINK"):

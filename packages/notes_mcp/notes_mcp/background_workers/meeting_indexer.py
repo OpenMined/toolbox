@@ -6,10 +6,10 @@ import traceback
 from fastsyftbox.simple_client import SimpleRPCClient
 
 from notes_mcp import db
-from notes_mcp.client import create_authenticated_client
 from notes_mcp.fastapi_server import executor
 from notes_mcp.models.audio import AudioChunk, TranscriptionChunksResult
 from notes_mcp.models.meeting import Meeting
+from notes_mcp.syftbox_client import create_authenticated_client
 
 POLL_INTERVAL = 10
 
@@ -23,17 +23,20 @@ def log_error(future):
 def poll_for_new_meetings(stop_event: threading.Event):
     while not stop_event.is_set():
         with db.get_meetings_db() as conn:
-            for user in db.get_users(conn):
+            users = db.get_users(conn)
+            for user in users:
                 print("Polling for new meetings")
                 future = executor.submit(index_meetings, user.email, user.access_token)
                 future.add_done_callback(log_error)
+            if len(users) == 0:
+                print("No users found to index meetings")
+
             time.sleep(POLL_INTERVAL)
 
 
 def index_meetings(user_email: str, access_token: str):
     client = create_authenticated_client(
         app_name="data-syncer",
-        dev_mode=True,
         user_email=user_email,
         access_token=access_token,
     )
@@ -54,11 +57,14 @@ def extract_and_upload_meetings(client: SimpleRPCClient):
     transcription_chunks = res.transcription_chunks
     indexed = res.indexed
 
-    print("Found", len(transcription_chunks), "chunks")
     meetings = []
     current_meeting_chunks = []
     if len(transcription_chunks) > 0:
-        print("Found", len(transcription_chunks), "chunks")
+        print(
+            "Found",
+            len(transcription_chunks),
+            "new transcription chunks to index for meetings",
+        )
 
         previous_start_date = transcription_chunks[0].datetime
 
@@ -86,7 +92,7 @@ def extract_and_upload_meetings(client: SimpleRPCClient):
             )
             meetings.append(meeting)
     else:
-        print("No new chunks found")
+        print("No new transcription chunks found to index for meetings")
 
     if len(meetings) > 0:
         payload = [meeting.model_dump() for meeting in meetings]

@@ -9,14 +9,12 @@ from datetime import datetime
 import requests
 from fastsyftbox.simple_client import SimpleRPCClient
 
-from notes_mcp import DEV_MODE, db
-from notes_mcp.client import create_authenticated_client
+from notes_mcp import db
 from notes_mcp.fastapi_server import executor
 from notes_mcp.models.audio import TranscriptionStoreRequest
 from notes_mcp.models.file import FilesToSyncResponse, FileToSync
-
-DEEPGRAM_API_KEY = os.environ["DEEPGRAM_API_KEY"]
-
+from notes_mcp.settings import settings
+from notes_mcp.syftbox_client import create_authenticated_client
 
 # file_path = HOME / ".screenpipe" / "data" / "MacBook Pro Microphone (input)_2025-06-03_14-30-45.mp4"
 # FILE_PATH = 'path/to/your/audio.wav'  # Local WAV file (16kHz sample rate)
@@ -53,23 +51,27 @@ def add_transcription_to_db(
 def poll_for_new_audio_chunks(stop_event: threading.Event):
     while not stop_event.is_set():
         with db.get_meetings_db() as conn:
-            for user in db.get_users(conn):
+            users = db.get_users(conn)
+            for user in users:
+                print("Polling for new audio chunks for user", user.email)
                 executor.submit(
                     _poll_for_new_audio_chunks, user.email, user.access_token
                 )
+            if len(users) == 0:
+                print("No users found to transcribe")
             time.sleep(10)
+    print("DONE")
 
 
 def _poll_for_new_audio_chunks(email: str, access_token: str):
     client = create_authenticated_client(
         app_name="data-syncer",
-        dev_mode=True,
         user_email=email,
         access_token=access_token,
     )
     print("Polling for new audio chunks")
     try:
-        result = client.post("/get_latest_file_to_sync")
+        result = client.post("get_latest_file_to_sync/")
         result.raise_for_status()
         file = FilesToSyncResponse.model_validate_json(result.json()).file
         if file is not None:
@@ -79,7 +81,7 @@ def _poll_for_new_audio_chunks(email: str, access_token: str):
             print("transcription succesful, uploading to data-syncer")
             upload_transcription_to_queryengine(client, transcript, file)
         else:
-            print("No file to sync")
+            print("No files to transcribe")
 
     except Exception:
         print(
@@ -107,14 +109,14 @@ def upload_transcription_to_queryengine(
 
 
 def transcribe(bytes_data: bytes):
-    if DEV_MODE:
+    if settings.use_mock_transcription:
         print("using test transcription")
         return "This is a test transcription"
 
     response = requests.post(
         "https://api.deepgram.com/v1/listen",
         headers={
-            "Authorization": f"Token {DEEPGRAM_API_KEY}",
+            "Authorization": f"Token {settings.deepgram_api_key}",
             "Content-Type": "audio/wav",
         },
         params={"model": "nova-2", "smart_format": "true", "sample_rate": "16000"},
