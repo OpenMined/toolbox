@@ -5,23 +5,17 @@ from fastapi import Header
 
 from syftbox_queryengine.settings import settings
 
-SYFTBOX_EMAIL_KEY = "SYFTBOX_EMAIL"
-SYFTBOX_ACCESS_TOKEN_KEY = "SYFTBOX_ACCESS_TOKEN"
 
-DEV_EMAIL = "dev@openmined.org"
-DEV_ACCESS_TOKEN = "dev_mode"
 
 
 def get_syftbox_credentials():
-    syftbox_email = os.environ.get(SYFTBOX_EMAIL_KEY)
+    syftbox_email = settings.syftbox_email
     if settings.skip_auth:
-        return DEV_EMAIL, DEV_ACCESS_TOKEN
+        return settings.dev_email, settings.dev_access_token
 
     if syftbox_email is None and settings.dev_mode:
-        syftbox_email = DEV_EMAIL
-        syftbox_access_token = os.environ.get(
-            SYFTBOX_ACCESS_TOKEN_KEY, DEV_ACCESS_TOKEN
-        )
+        syftbox_email = settings.dev_email
+        syftbox_access_token = settings.dev_access_token
 
     if syftbox_email is None:
         raise ValueError("SYFTBOX_EMAIL is not set")

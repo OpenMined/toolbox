@@ -1,5 +1,10 @@
 from pydantic import BaseModel
+from typing import TYPE_CHECKING
 
+import requests
+
+if TYPE_CHECKING:
+    from toolbox.installed_mcp import InstalledMCP
 from toolbox.store.callbacks.callback import (
     Callback,
     InstallSyftboxQueryengineMCPCallback,
@@ -12,6 +17,9 @@ from toolbox.store.callbacks.callback import (
 class StoreElement(BaseModel):
     name: str
 
+    def healthcheck(self) -> bool:
+        raise NotImplementedError("Healthcheck not implemented")
+
 
 class NotesMCP(StoreElement):
     name: str = "meeting-notes-mcp"
@@ -19,6 +27,12 @@ class NotesMCP(StoreElement):
         SyftboxAuthCallback(),
         RegisterNotesMCPCallback(),
     ]
+
+    def healthcheck(self, mcp: "InstalledMCP") -> bool:
+        url = mcp.settings["notes_webserver_url"]
+        res = requests.post(f"{url}/healthcheck")
+        print(res.content)
+        return res.json()["status"] == "ok"
 
 
 class SyftboxQueryengineMCP(StoreElement):

@@ -55,6 +55,7 @@ STORE = {
         "requirements": ["syftbox-queryengine-mcp"],
         "context_settings": {
             "notes_mcp_url": "http://127.0.0.1:8000/mcp",
+            "notes_webserver_url": "http://127.0.0.1:8000/",
         },
         "default_settings": {
             "default_read_access": ["Apple Audio Recordings"],
@@ -76,13 +77,17 @@ STORE = {
             }
         },
         "mcp_deployment_methods": {"all": "infered"},
+        "deployment": {
+            "type": "python",
+            "module": "syftbox_queryengine.app",
+        },
         "default_settings": {
             "default_read_access": ["Apple Audio Recordings"],
             "default_write_access": ["Meeting Notes"],
             "default_model": None,
             "default_proxy": "mcp-remote",
-            "default_host": "OM enclave",
-            "default_managed_by": "OM enclave",
+            "default_host": "local",
+            "default_managed_by": "toolbox (local)",
             "default_deployment_method": "proxy-to-local-http",
         },
     },

@@ -8,11 +8,13 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
+from toolbox.mcp_installer.mcp_installer import process_exists
 from toolbox.store.store_json import STORE, get_default_setting
+from toolbox.utils.healthcheck import HealthStatus, healthcheck
 from toolbox.utils.utils import DEFAULT_LOG_FILE, installation_dir_from_name
 
 if TYPE_CHECKING:
-    from toolbox.store.store_code import InstallationContext
+    from toolbox.store.installation_context import InstallationContext
 
 HOME = Path.home()
 INSTALLED_HEADERS = [
@@ -21,7 +23,6 @@ INSTALLED_HEADERS = [
     "DEPLOYMENT",
     "READ ACCESS",
     "WRITE ACCESS",
-    "MODEL",
     "HOST",
     "MANAGED BY",
     "PROXY",
@@ -43,6 +44,8 @@ class InstalledMCP(BaseModel):
     json_body: dict | None = None
     deployment_method: str
     has_client_json: bool = True
+    deployment: dict
+    settings: dict
 
     @property
     def client_config_file(self) -> str:
@@ -50,6 +53,30 @@ class InstalledMCP(BaseModel):
             return "[1]"
         else:
             raise ValueError(f"Client {self.client} not supported")
+
+    @property
+    def is_running(self) -> bool:
+        module = self.deployment.get("module", None)
+        if module is None:
+            return False
+        return process_exists(module)
+
+    @property
+    def status_icon(self) -> str:
+        if self.managed_by.lower() == "claude":
+            return "🟢"
+        if len(self.deployment) == 0:
+            healthy = healthcheck(self)
+            if healthy == HealthStatus.HEALTHY:
+                return "🟢"
+            elif healthy == HealthStatus.UNHEALTHY:
+                return "🔴"
+            else:
+                return "🟠"
+        elif self.is_running:
+            return "🟢"
+        else:
+            return "🟠"
 
     @property
     def installation_dir(self) -> Path:
@@ -61,14 +88,13 @@ class InstalledMCP(BaseModel):
 
     def format_as_tabulate_row(self) -> list[str]:
         return [
-            self.name,
+            f"{self.name}",
             self.client,
             self.deployment_method,
             ",\n".join(self.read_access),
             ",\n".join(self.write_access),
-            self.model if self.model is not None else "",
             self.host,
-            self.managed_by,
+            f"{self.managed_by} {self.status_icon}",
             self.proxy if self.proxy is not None else "",
             "✓" if self.verified else "",
             self.client_config_file,
@@ -111,6 +137,8 @@ class InstalledMCP(BaseModel):
         if deployment_method is None:
             deployment_method = get_default_setting(name, client, "deployment_method")
 
+        deployment = STORE[name].get("deployment", {})
+
         has_mcp = STORE[name].get("has_client_json", True)
         if not has_mcp:
             json_body = {}
@@ -152,6 +180,8 @@ class InstalledMCP(BaseModel):
             verified=verified,
             json_body=json_body,
             deployment_method=deployment_method,
+            deployment=deployment,
+            settings=context.context_settings,
         )
 
     @classmethod
@@ -162,6 +192,8 @@ class InstalledMCP(BaseModel):
         row["write_access"] = json.loads(row["write_access"])
         row["json_body"] = json.loads(row["json_body"])
         row["deployment_method"] = row["deployment_method"]
+        row["deployment"] = json.loads(row["deployment"])
+        row["settings"] = json.loads(row["settings"])
         return cls(**row)
 
     def show(self):

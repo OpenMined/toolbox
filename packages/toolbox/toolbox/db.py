@@ -17,7 +17,7 @@ conn.row_factory = sqlite3.Row
 def create_table(conn: sqlite3.Connection):
     curr = conn.cursor()
     curr.execute("""CREATE TABLE IF NOT EXISTS mcps (name TEXT, client TEXT, read_access TEXT, write_access TEXT, model TEXT, host TEXT,
-                 managed_by TEXT, proxy TEXT, verified TEXT, json_body TEXT, deployment_method TEXT,
+                 managed_by TEXT, proxy TEXT, verified TEXT, json_body TEXT, deployment_method TEXT, deployment TEXT, settings TEXT,
                  PRIMARY KEY (name, client))""")
 
 
@@ -25,8 +25,8 @@ def db_upsert_mcp(conn: sqlite3.Connection, mcp: InstalledMCP):
     curr = conn.cursor()
     curr.execute(
         """
-        INSERT INTO mcps (name, client, read_access, write_access, model, host, managed_by, proxy, verified, json_body, deployment_method)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO mcps (name, client, read_access, write_access, model, host, managed_by, proxy, verified, json_body, deployment_method, deployment, settings)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (name, client) DO UPDATE SET
             read_access = excluded.read_access,
             write_access = excluded.write_access,
@@ -36,7 +36,9 @@ def db_upsert_mcp(conn: sqlite3.Connection, mcp: InstalledMCP):
             proxy = excluded.proxy,
             verified = excluded.verified,
             json_body = excluded.json_body,
-            deployment_method = excluded.deployment_method
+            deployment_method = excluded.deployment_method,
+            deployment = excluded.deployment,
+            settings = excluded.settings
     """,
         (
             mcp.name,
@@ -50,6 +52,8 @@ def db_upsert_mcp(conn: sqlite3.Connection, mcp: InstalledMCP):
             mcp.verified,
             json.dumps(mcp.json_body),
             mcp.deployment_method,
+            json.dumps(mcp.deployment),
+            json.dumps(mcp.settings),
         ),
     )
     conn.commit()

@@ -4,6 +4,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
+from toolbox.installed_mcp import InstalledMCP
 from toolbox.store.callbacks.callback import Callback
 
 
@@ -13,6 +14,7 @@ class InstallationContext(BaseModel):
     callbacks: list[Callback]
     context_dict: dict[str, Any]
     context_settings: dict[str, Any] = {}
+    mcp: InstalledMCP | None = None
 
     def __getattr__(self, item: str) -> Any:
         return self.context_dict[item]
@@ -25,6 +27,6 @@ class InstallationContext(BaseModel):
         for callback in self.callbacks:
             callback.on_install_init(self, json_body)
 
-    def on_install_init_finished(self):
+    def on_install_init_finished(self, *args, **kwargs):
         for callback in self.callbacks:
-            callback.on_install_init_finished(self)
+            callback.on_install_init_finished(self, *args, **kwargs)

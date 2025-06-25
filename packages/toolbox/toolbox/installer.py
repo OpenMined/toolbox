@@ -123,6 +123,7 @@ def install_mcp(
             proxy=proxy,
             context=context,
         )
+        context.mcp = mcp
 
         if client == "claude":
             if mcp.has_client_json:

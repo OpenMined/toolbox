@@ -105,11 +105,14 @@ def should_kill_existing_process(module: str):
         return should_kill_existing_process(module)
 
 
-def run_python_mcp(installation_dir: Path, mcp_module: str):
+def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict = None):
+    print("env", env)
+        
     subprocess.Popen(
         f"source .venv/bin/activate && uv run python -m {mcp_module} > {DEFAULT_LOG_FILE} 2>&1",
         shell=True,
         cwd=installation_dir,
         text=True,
         executable="/bin/bash",
+        env=env,
     )

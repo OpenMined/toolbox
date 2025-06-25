@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
+from pathlib import Path
 
 import requests
+from pydantic import BaseModel
+
 from toolbox.mcp_installer.mcp_installer import (
     check_uv_installed,
     init_venv_uv,
@@ -13,11 +18,6 @@ from toolbox.mcp_installer.mcp_installer import (
     run_python_mcp,
     should_kill_existing_process,
 )
-from pydantic import BaseModel
-
-import subprocess
-import sys
-from pathlib import Path
 
 HOME = Path.home()
 
@@ -92,15 +92,20 @@ class SyftboxAuthCallback(Callback):
             email = input("""\nFill in your syftbox email, if you already have one, enter it, if not you can regsiter by
 going to http://172.172.234.167:7000/syftbox/login and get your access token (store it).
 syfbox email: """)
+            # TODO: maybe only have one
             context.context_dict["syftbox_email"] = email
+            context.context_settings["SYFTBOX_EMAIL"] = email
+
             access_token = input("syftbox access token: ")
             context.context_dict["syftbox_access_token"] = access_token
+            context.context_settings["SYFTBOX_ACCESS_TOKEN"] = access_token
         else:
             print("Reusing syftbox email and access token")
 
         if "syftbox_access_token" not in context.context_dict:
             access_token = input("syftbox access token: ")
             context.context_dict["syftbox_access_token"] = access_token
+            context.context_settings["SYFTBOX_ACCESS_TOKEN"] = access_token
 
     def on_install_init(self, context: InstallationContext, json_body: dict):
         if "env" not in json_body:
@@ -116,9 +121,8 @@ class RegisterNotesMCPCallback(Callback):
             "access_token": context.context_dict["syftbox_access_token"],
         }
         try:
-            response = requests.post(
-                "http://127.0.0.1:8000/register_user", json=payload
-            )
+            url = context.context_settings["notes_webserver_url"]
+            response = requests.post(f"{url}/register_user", json=payload)
             response.raise_for_status()
             print("Succesfully registered account for meeting notes MCP")
 
@@ -129,6 +133,7 @@ class RegisterNotesMCPCallback(Callback):
 
 class InstallSyftboxQueryengineMCPCallback(Callback):
     def on_install_init_finished(self, context: InstallationContext):
+        mcp = context.mcp
         print("Install syftbox-queryengine-mcp")
         print("Check if uv is installed")
         check_uv_installed()
@@ -146,7 +151,8 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
         )
 
         print("Run syftbox_queryengine.app mcp module")
-        module = "syftbox_queryengine.app"
+
+        module = mcp.deployment["module"]
         start_process = True
         if process_exists(module):
             kill_process = should_kill_existing_process(module)
@@ -154,6 +160,8 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
                 pkill_f(module)
             else:
                 start_process = False
+                
+        
 
         if start_process:
-            run_python_mcp(installation_dir, module)
+            run_python_mcp(installation_dir, module, env=context.context_settings)
