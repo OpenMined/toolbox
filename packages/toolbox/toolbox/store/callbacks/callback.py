@@ -8,10 +8,12 @@ from pathlib import Path
 import requests
 from pydantic import BaseModel
 
+from toolbox.settings import settings
 from toolbox.mcp_installer.mcp_installer import (
     check_uv_installed,
     init_venv_uv,
     install_package_from_git,
+    install_package_from_local_path,
     make_mcp_installation_dir,
     pkill_f,
     process_exists,
@@ -134,6 +136,9 @@ class RegisterNotesMCPCallback(Callback):
 class InstallSyftboxQueryengineMCPCallback(Callback):
     def on_install_init_finished(self, context: InstallationContext):
         mcp = context.mcp
+        mcp.settings["syftbox_queryengine_port"] = "8002"
+        context.context_settings["SYFTBOX_QUERYENGINE_PORT"] = "8002"
+        
         print("Install syftbox-queryengine-mcp")
         print("Check if uv is installed")
         check_uv_installed()
@@ -143,12 +148,16 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
         init_venv_uv(installation_dir)
         print("Install syftbox-queryengine-mcp from git")
 
-        install_package_from_git(
-            installation_dir,
-            package_url="https://github.com/OpenMined/agentic-syftbox",
-            subdirectory="packages/syftbox_queryengine",
-            branch="main",
-        )
+        if settings.use_local_packages:
+            # TODO: read from configuration
+            install_package_from_local_path(installation_dir, "~/workspace/agentic-syftbox/packages/syftbox_queryengine")
+        else:
+            install_package_from_git(
+                installation_dir,
+                package_url="https://github.com/OpenMined/agentic-syftbox",
+                subdirectory="packages/syftbox_queryengine",
+                branch="main",
+            )
 
         print("Run syftbox_queryengine.app mcp module")
 

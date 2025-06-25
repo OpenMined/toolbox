@@ -1,6 +1,9 @@
 import json
 import platform
 import sqlite3
+import shutil
+from pathlib import Path
+    
 
 from pydantic import BaseModel
 from tabulate import tabulate
@@ -170,6 +173,14 @@ def show_mcp(conn: sqlite3.Connection, name: str):
         mcp.show()
     else:
         raise ValueError(f"Multiple MCPs found for {name}")
+    
+def reset_mcp():
+    """Reset MCP installation by removing the toolbox directory and clearing database."""
+    # Remove the toolbox directory
+    toolbox_dir = Path.home() / ".toolbox"
+    if toolbox_dir.exists():
+        shutil.rmtree(toolbox_dir, ignore_errors=True)
+        print(f"Removed toolbox directory: {toolbox_dir}")
 
 
 def add_mcp_to_claude_desktop_config(mcp: InstalledMCP):

@@ -10,6 +10,7 @@ from syftbox_queryengine.settings import settings
 
 def get_syftbox_credentials():
     syftbox_email = settings.syftbox_email
+    syftbox_access_token = settings.syftbox_access_token
     if settings.skip_auth:
         return settings.dev_email, settings.dev_access_token
 
@@ -34,5 +35,5 @@ def authenticate(x_access_token: Optional[str] = Header(None)):
     email, syftbox_access_token = get_syftbox_credentials()
     if x_access_token[:5] != syftbox_access_token[:5]:
         print("Invalid credentials", x_access_token[:5], syftbox_access_token[:5])
-        raise ValueError("Invalid credentials")
+        raise ValueError(f"Invalid credentials {x_access_token[:5]} != {syftbox_access_token[:5]}")
     return email

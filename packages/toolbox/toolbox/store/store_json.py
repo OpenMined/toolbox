@@ -1,6 +1,7 @@
 import platform
 
 from packages.toolbox.toolbox.store.store_code import STORE_ELEMENTS
+from toolbox.settings import settings
 
 DEFAULT_LOCAL_MACHINE_NAME = platform.node()
 MANAGED_BY_INHERIT_CLIENT = "INHERIT_CLIENT"
@@ -92,6 +93,10 @@ STORE = {
         },
     },
 }
+
+if settings.use_local_deployments:
+    STORE["meeting-notes-mcp"]["context_settings"]["notes_mcp_url"] = "http://127.0.0.1:8000/mcp"
+    STORE["meeting-notes-mcp"]["context_settings"]["notes_webserver_url"] = "http://127.0.0.1:8000/"
 
 
 def get_default_setting(name: str, client: str, key: str):

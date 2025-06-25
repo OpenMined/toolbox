@@ -30,7 +30,23 @@ def init_venv_uv(installation_dir: Path):
         cwd=installation_dir,
         check=True,
     )
-
+    
+    
+def install_package_from_local_path(installation_dir: Path, package_path: Path):
+    print(f"Installing package from local path: {package_path}")
+    result = subprocess.run(
+        f"source .venv/bin/activate && uv pip install -e {package_path}",
+        cwd=installation_dir,
+        executable="/bin/bash",
+        shell=True,
+        capture_output=True,
+        check=True,
+        text=True,
+    )
+    print(result.stdout, result.stderr)
+    if result.returncode != 0:
+        print(f"Failed to install package: {result.stderr}")
+        raise Exception(f"Failed to install package: {result.stderr}")
 
 def install_package_from_git(
     installation_dir: Path,
@@ -50,14 +66,6 @@ def install_package_from_git(
         capture_output=True,
         text=True,
     )
-    # result = subprocess.run(
-    #     "source .venv/bin/activate",
-    #     # ["source", ".venv/bin/activate", "&&", "uv", "pip", "install", "-U", url],
-    #     shell=True,
-    #     cwd=installation_dir,
-    #     capture_output=True,
-    #     text=True,
-    # )
 
     if result.returncode != 0:
         print(f"Failed to install package: {result.stderr}")
@@ -107,8 +115,8 @@ def should_kill_existing_process(module: str):
 
 def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict = None):
     print("env", env)
-        
-    subprocess.Popen(
+    
+    proc = subprocess.Popen(
         f"source .venv/bin/activate && uv run python -m {mcp_module} > {DEFAULT_LOG_FILE} 2>&1",
         shell=True,
         cwd=installation_dir,
@@ -116,3 +124,13 @@ def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict = None):
         executable="/bin/bash",
         env=env,
     )
+    
+    # try:
+    #     stdout, stderr = proc.communicate(timeout=5)
+    #     if proc.returncode != 0:
+    #         print(f"Process finished with error within 5 seconds (code {proc.returncode}):")
+    #         raise Exception(stderr.decode())
+    # except subprocess.TimeoutExpired:
+    #     return
+    
+    # return stdout.decode()

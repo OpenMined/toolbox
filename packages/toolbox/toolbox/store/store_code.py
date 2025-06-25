@@ -31,7 +31,7 @@ class NotesMCP(StoreElement):
     def healthcheck(self, mcp: "InstalledMCP") -> bool:
         url = mcp.settings["notes_webserver_url"]
         res = requests.post(f"{url}/healthcheck")
-        print(res.content)
+        # print(res.content)
         return res.json()["status"] == "ok"
 
 
@@ -41,6 +41,11 @@ class SyftboxQueryengineMCP(StoreElement):
         SyftboxAuthCallback(),
         InstallSyftboxQueryengineMCPCallback(),
     ]
+    
+    def healthcheck(self, mcp: "InstalledMCP") -> bool:
+        port = mcp.settings["syftbox_queryengine_port"]
+        res = requests.post(f"http://localhost:{port}/healthcheck")
+        return res.json()["status"] == "ok"
 
 
 class GithubMCP(StoreElement):

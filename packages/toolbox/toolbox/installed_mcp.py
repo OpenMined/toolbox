@@ -30,6 +30,12 @@ INSTALLED_HEADERS = [
     "CLIENT CONFIG",
 ]
 
+HEALTH_STATUS_ICON = {
+    HealthStatus.HEALTHY: "🟢",
+    HealthStatus.UNHEALTHY: "🔴",
+    HealthStatus.UNKNOWN: "🟠",
+}
+
 
 class InstalledMCP(BaseModel):
     name: str
@@ -65,18 +71,9 @@ class InstalledMCP(BaseModel):
     def status_icon(self) -> str:
         if self.managed_by.lower() == "claude":
             return "🟢"
-        if len(self.deployment) == 0:
-            healthy = healthcheck(self)
-            if healthy == HealthStatus.HEALTHY:
-                return "🟢"
-            elif healthy == HealthStatus.UNHEALTHY:
-                return "🔴"
-            else:
-                return "🟠"
-        elif self.is_running:
-            return "🟢"
-        else:
-            return "🟠"
+        
+        healthy = healthcheck(self)
+        return HEALTH_STATUS_ICON[healthy]
 
     @property
     def installation_dir(self) -> Path:
@@ -197,11 +194,20 @@ class InstalledMCP(BaseModel):
         return cls(**row)
 
     def show(self):
-        print(self.name)
+        print(self.name, self.status_icon)
+        print()
+        MAX_LOG_LINES = 5
         if self.log_file.exists():
-            print(f"Log file: {self.log_file}")
+            print(f"LOG FILE: {self.log_file}")
+            print("LOGS:\n")
             with open(self.log_file, "r") as f:
-                print(f.read())
+                logs = f.read()
+            if logs.count("\n") > MAX_LOG_LINES:
+                last_lines = logs.split("\n")[-MAX_LOG_LINES:]
+                last_lines_str = "\n".join(last_lines)
+                print(f"...(cut off)\n{last_lines_str}")
+            else:
+                print(logs)
 
 
 def create_clickable_file_link(file_path, link_text="LINK"):

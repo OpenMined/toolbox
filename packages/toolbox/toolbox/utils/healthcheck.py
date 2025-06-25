@@ -22,7 +22,4 @@ def healthcheck(mcp: "InstalledMCP") -> HealthStatus:
     except NotImplementedError:
         return HealthStatus.UNKNOWN
     except Exception:
-        import traceback
-
-        traceback.print_exc()
         return HealthStatus.UNHEALTHY

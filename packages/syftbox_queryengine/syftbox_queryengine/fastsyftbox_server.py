@@ -60,6 +60,11 @@ app = FastSyftBox(
 def root():
     return HTMLResponse("<html><body><h1>Welcome to abc</h1>")
 
+# normal fastapi
+@app.post("/healthcheck")
+def healthcheck():
+    return {"status": "ok"}
+
 
 @app.post("/get_latest_file_to_sync", tags=["syftbox"])
 def get_latest_file_to_sync(current_user_email: str = Depends(authenticate)):

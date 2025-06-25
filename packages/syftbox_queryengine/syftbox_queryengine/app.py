@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 
 from syftbox_queryengine.fastsyftbox_server import app
+from syftbox_queryengine.settings import settings
 
 
 # @asynccontextmanager
@@ -16,4 +17,4 @@ from syftbox_queryengine.fastsyftbox_server import app
 
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8002)
+    uvicorn.run(app, host="0.0.0.0", port=settings.syftbox_queryengine_port)
