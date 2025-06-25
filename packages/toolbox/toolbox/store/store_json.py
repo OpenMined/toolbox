@@ -55,8 +55,8 @@ STORE = {
         "has_client_json": False,
         "requirements": ["syftbox-queryengine-mcp"],
         "context_settings": {
-            "notes_mcp_url": "http://127.0.0.1:8000/mcp",
-            "notes_webserver_url": "http://127.0.0.1:8000/",
+            "notes_mcp_url": "http://20.224.153.50:8000/mcp",
+            "notes_webserver_url": "http://20.224.153.50:8000/",
         },
         "default_settings": {
             "default_read_access": ["Apple Audio Recordings"],

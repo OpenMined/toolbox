@@ -4,7 +4,9 @@ dependencies = [
     "fastapi>=0.115.12",
     "mcp>=1.9.2",
     "email-validator>=2.0.0",
-    "uvicorn>=0.34.3"
+    "uvicorn>=0.34.3",
+    "requests>=2.32.4",
+    "fastsyftbox"
 ]
 
 name = "notes_mcp"
@@ -20,6 +22,10 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4"]
+
+[tool.uv.sources]
+fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "simple-client" }
+
 
 [dependency-groups]
 dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]

@@ -437,6 +437,7 @@ dependencies = [
     { name = "email-validator" },
     { name = "fastapi" },
     { name = "mcp" },
+    { name = "requests" },
     { name = "uvicorn" },
 ]
 
@@ -453,6 +454,7 @@ requires-dist = [
     { name = "email-validator", specifier = ">=2.0.0" },
     { name = "fastapi", specifier = ">=0.115.12" },
     { name = "mcp", specifier = ">=1.9.2" },
+    { name = "requests", specifier = ">=2.32.4" },
     { name = "uvicorn", specifier = ">=0.34.3" },
 ]
 
