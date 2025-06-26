@@ -1,9 +1,8 @@
 import json
 import platform
-import sqlite3
 import shutil
+import sqlite3
 from pathlib import Path
-    
 
 from pydantic import BaseModel
 from tabulate import tabulate
@@ -15,42 +14,17 @@ from toolbox.installed_mcp import (
     InstalledMCP,
     create_clickable_file_link,
 )
+from toolbox.mcp_clients.mcp_clients import (
+    CLAUDE_CONFIG_FILE,
+    check_mcp_client_installation,
+    current_claude_desktop_config,
+)
 from toolbox.store.installation_context import InstallationContext
 from toolbox.store.store_code import STORE_ELEMENTS
 from toolbox.store.store_json import STORE, check_name
+from toolbox.settings import settings
+from toolbox.toolbox_requirements import has_npx, has_uv
 
-CLAUDE_CONFIG_FILE = (
-    f"{HOME}/Library/Application Support/Claude/claude_desktop_config.json"
-)
-
-
-class MCPConfigItem(BaseModel):
-    name: str
-    json_body: dict
-    client: str
-
-
-def current_claude_desktop_config():
-    if platform.system() != "Darwin":
-        raise RuntimeError("Currently only macOS is supported")
-    with open(
-        f"{HOME}/Library/Application Support/Claude/claude_desktop_config.json", "r"
-    ) as f:
-        return json.load(f)
-
-
-def get_claude_config_items() -> list[MCPConfigItem]:
-    full_json = current_claude_desktop_config()
-    res = []
-    for name, json_body in full_json["mcpServers"].items():
-        res.append(
-            MCPConfigItem(
-                name=name,
-                json_body=json_body,
-                client="claude",
-            )
-        )
-    return res
 
 
 def install_requirements(
@@ -77,7 +51,21 @@ def install_requirements(
             install_mcp(conn, requirement, clients=clients, context=requirement_context)
             context.context_dict.update(requirement_context.context_dict)
             context.context_apps.append(requirement)
+            
+def check_external_dependencies(conn: sqlite3.Connection, name: str, context: InstallationContext, clients: list[str]):
+    store_element = STORE_ELEMENTS[name]
+    for callback in store_element.callbacks:
+        callback.on_external_dependency_check(context)
 
+def check_toolbox_requirements():
+    if not has_uv():
+        res = input("uv is not installed. Please install uv first. Continue? (y/n)")
+        if res != "y":
+            exit(1)
+    if not has_npx():
+        res = input("npx is not installed. Please install npx first. Continue? (y/n)")
+        if res != "y":
+            exit(1)
 
 def install_mcp(
     conn: sqlite3.Connection,
@@ -95,6 +83,8 @@ def install_mcp(
     if clients is None or isinstance(clients, list) and len(clients) == 0:
         print("no clients provided, installing to claude desktop by default\n")
         clients = ["claude"]
+    for client in clients:
+        check_mcp_client_installation(client)
 
     check_name(name)
     store_element = STORE_ELEMENTS[name]
@@ -110,8 +100,16 @@ def install_mcp(
             context_apps=[name],
             context_settings=store_json.get("context_settings", {}),
         )
+    if settings.insert_syftbox_login:
+        print("INSERTING SYFTBOX LOGIN")
+        context.context_dict["syftbox_email"] = "koen@openmined.org"
+        context.context_dict["syftbox_access_token"] = "12345"
+        context.context_settings["SYFTBOX_EMAIL"] = "koen@openmined.org"
+        context.context_settings["SYFTBOX_ACCESS_TOKEN"] = "12345"
+
 
     install_requirements(conn, name, context, clients)
+    check_external_dependencies(conn, name, context, clients)
     context.on_input()
 
     for client in clients:
@@ -129,6 +127,7 @@ def install_mcp(
         context.mcp = mcp
 
         if client == "claude":
+            print("HAS CLIENT JSON", mcp.has_client_json)
             if mcp.has_client_json:
                 add_mcp_to_claude_desktop_config(mcp)
             context.on_install_init_finished()
@@ -164,19 +163,54 @@ Clients:
 """)
 
 
+def list_apps_in_store():
+    store_data = []
+    for name, store_json in STORE.items():
+        store_data.append(
+            [name, store_json["default_settings"]["default_deployment_method"]]
+        )
+
+    print(
+        tabulate(
+            store_data,
+            headers=["Name", "Description"],
+            maxcolwidths=[30, 50],
+            maxheadercolwidths=[30, 50],
+        )
+    )
+
+
 def show_mcp(conn: sqlite3.Connection, name: str):
     mcps = db_get_mcps_by_name(conn, name)
     if len(mcps) == 0:
-        print("No MCPs found for", name)
+
+        mcps = db_get_mcps(conn)
+        matches = []
+        for mcp in mcps:
+            if name in mcp.name:
+                matches.append(mcp)
+        if len(matches) == 0:
+            raise ValueError(f"No MCPs found for {name}")
+        elif len(matches) == 1:
+            mcp = matches[0]
+            mcp.show()
+        else:
+            print(f"Multiple MCPs found for {name}:")
+            raise ValueError(f"Multiple MCPs found for {name}")
+
     elif len(mcps) == 1:
         mcp = mcps[0]
         mcp.show()
     else:
         raise ValueError(f"Multiple MCPs found for {name}")
-    
-def reset_mcp():
+
+
+def reset_mcp(conn: sqlite3.Connection):
     """Reset MCP installation by removing the toolbox directory and clearing database."""
     # Remove the toolbox directory
+    
+    for mcp in db_get_mcps(conn):
+        mcp.delete(conn)
     toolbox_dir = Path.home() / ".toolbox"
     if toolbox_dir.exists():
         shutil.rmtree(toolbox_dir, ignore_errors=True)
@@ -186,6 +220,8 @@ def reset_mcp():
 def add_mcp_to_claude_desktop_config(mcp: InstalledMCP):
     claude_desktop_config = current_claude_desktop_config()
     if mcp.json_body is not None:
+        if "mcpServers" not in claude_desktop_config:
+            claude_desktop_config["mcpServers"] = {}
         claude_desktop_config["mcpServers"][mcp.name] = mcp.json_body
         with open(CLAUDE_CONFIG_FILE, "w") as f:
             json.dump(claude_desktop_config, f, indent=4)

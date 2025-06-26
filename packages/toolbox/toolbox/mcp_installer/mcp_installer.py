@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 import psutil
+import os
 
 from toolbox.utils.utils import DEFAULT_LOG_FILE, installation_dir_from_name
 
@@ -23,15 +24,14 @@ def make_mcp_installation_dir(name: str):
     installation_dir.mkdir(parents=True, exist_ok=True)
     return installation_dir
 
-
 def init_venv_uv(installation_dir: Path):
     subprocess.run(
         ["uv", "venv", "--python", "3.12"],
         cwd=installation_dir,
         check=True,
     )
-    
-    
+
+
 def install_package_from_local_path(installation_dir: Path, package_path: Path):
     print(f"Installing package from local path: {package_path}")
     result = subprocess.run(
@@ -47,6 +47,7 @@ def install_package_from_local_path(installation_dir: Path, package_path: Path):
     if result.returncode != 0:
         print(f"Failed to install package: {result.stderr}")
         raise Exception(f"Failed to install package: {result.stderr}")
+
 
 def install_package_from_git(
     installation_dir: Path,
@@ -114,17 +115,19 @@ def should_kill_existing_process(module: str):
 
 
 def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict = None):
-    print("env", env)
+    SHELL = os.environ.get("SHELL", "/bin/sh")
     
+    cmd = f'{SHELL} -c "source .venv/bin/activate && uv run python -m {mcp_module} > {DEFAULT_LOG_FILE} 2>&1"'
+    print("cmd", cmd)
     proc = subprocess.Popen(
-        f"source .venv/bin/activate && uv run python -m {mcp_module} > {DEFAULT_LOG_FILE} 2>&1",
+        cmd,
         shell=True,
         cwd=installation_dir,
         text=True,
-        executable="/bin/bash",
+        executable=SHELL,
         env=env,
     )
-    
+
     # try:
     #     stdout, stderr = proc.communicate(timeout=5)
     #     if proc.returncode != 0:
@@ -132,5 +135,5 @@ def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict = None):
     #         raise Exception(stderr.decode())
     # except subprocess.TimeoutExpired:
     #     return
-    
+
     # return stdout.decode()

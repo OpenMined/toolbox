@@ -72,7 +72,7 @@ STORE = {
         "json_bodies_for_client_for_deployment_method": {
             "all": {
                 "proxy-to-local-http": {
-                    "args": ["mcp-remote", "http://127.0.0.1:8000/mcp"],
+                    "args": ["mcp-remote", "http://127.0.0.1:8002/mcp/mcp"],
                     "command": "npx",
                 }
             }
@@ -95,8 +95,12 @@ STORE = {
 }
 
 if settings.use_local_deployments:
-    STORE["meeting-notes-mcp"]["context_settings"]["notes_mcp_url"] = "http://127.0.0.1:8000/mcp"
-    STORE["meeting-notes-mcp"]["context_settings"]["notes_webserver_url"] = "http://127.0.0.1:8000/"
+    STORE["meeting-notes-mcp"]["context_settings"]["notes_mcp_url"] = (
+        "http://127.0.0.1:8000/mcp"
+    )
+    STORE["meeting-notes-mcp"]["context_settings"]["notes_webserver_url"] = (
+        "http://127.0.0.1:8000/"
+    )
 
 
 def get_default_setting(name: str, client: str, key: str):

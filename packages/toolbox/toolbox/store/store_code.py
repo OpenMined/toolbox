@@ -9,7 +9,9 @@ from toolbox.store.callbacks.callback import (
     Callback,
     InstallSyftboxQueryengineMCPCallback,
     RegisterNotesMCPCallback,
+    ScreenpipeExternalDependencyCallback,
     SyftboxAuthCallback,
+    SyftboxExternalDependencyCallback,
     TextInputEnvRequestedSecretCallback,
 )
 
@@ -26,6 +28,8 @@ class NotesMCP(StoreElement):
     callbacks: list[Callback] = [
         SyftboxAuthCallback(),
         RegisterNotesMCPCallback(),
+        ScreenpipeExternalDependencyCallback(),
+        SyftboxExternalDependencyCallback(),
     ]
 
     def healthcheck(self, mcp: "InstalledMCP") -> bool:
@@ -40,6 +44,8 @@ class SyftboxQueryengineMCP(StoreElement):
     callbacks: list[Callback] = [
         SyftboxAuthCallback(),
         InstallSyftboxQueryengineMCPCallback(),
+        ScreenpipeExternalDependencyCallback(),
+        SyftboxExternalDependencyCallback(),
     ]
     
     def healthcheck(self, mcp: "InstalledMCP") -> bool:

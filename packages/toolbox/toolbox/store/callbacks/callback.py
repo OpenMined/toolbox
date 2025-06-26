@@ -7,7 +7,15 @@ from pathlib import Path
 
 import requests
 from pydantic import BaseModel
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from toolbox.installed_mcp import InstalledMCP
+from toolbox.external_dependencies.external_depenencies import (
+    screenpipe_installed,
+    syftbox_installed,
+    syftbox_running,
+)
 from toolbox.settings import settings
 from toolbox.mcp_installer.mcp_installer import (
     check_uv_installed,
@@ -37,10 +45,16 @@ class Callback(BaseModel):
     def on_input(self, context: InstallationContext):
         pass
 
+    def on_external_dependency_check(self, context: InstallationContext):
+        return {}
+
     def on_install_init(self, context: InstallationContext, json_body: dict):
         pass
 
     def on_install_init_finished(self, context: InstallationContext):
+        pass
+
+    def on_external_dependency_status_check(self, mcp: "InstalledMCP"):
         pass
 
 
@@ -77,6 +91,55 @@ def request_reuse(key: str) -> bool:
         return request_reuse(key)
 
 
+class SyftboxExternalDependencyCallback(Callback):
+    def on_external_dependency_check(self, context: InstallationContext):
+        if not syftbox_installed():
+            input(
+                """
+Syftbox is not installed. Please install it from https://github.com/OpenMined/syftbox and run it.
+Press Enter to continue."""
+            )
+        elif not syftbox_running():
+            input(
+                """
+Syftbox is not running. Please install it from https://github.com/OpenMined/syftbox and run it.
+Press Enter to continue."""
+            )
+
+    def on_external_dependency_status_check(self, mcp: "InstalledMCP") -> dict:
+        running = syftbox_running()
+        installed = syftbox_installed()
+        if running:
+            return {
+                "syftbox": "🟢",
+            }
+        elif installed:
+            return {
+                "syftbox": "🟠 (not running)",
+            }
+        else:
+            return {
+                "syftbox": "🔴",
+            }
+
+
+class ScreenpipeExternalDependencyCallback(Callback):
+    def on_external_dependency_check(self, context: InstallationContext):
+        if not screenpipe_installed():
+            input(
+                """
+Screenpipe is not installed. Please run it using `curl -fsSL get.screenpi.pe/cli | sh`. or by using `screenpipe` if already installed
+Press Enter to continue."""
+            )
+
+    def on_external_dependency_status_check(self, mcp: "InstalledMCP") -> dict:
+        installed = screenpipe_installed()
+        installed_icon = "🟢" if installed else "🔴"
+        return {
+            "screenpipe": installed_icon,
+        }
+
+
 class SyftboxAuthCallback(Callback):
     keys: list[str] = ["syftbox_email", "syftbox_access_token"]
 
@@ -93,7 +156,7 @@ class SyftboxAuthCallback(Callback):
         if request_email:
             email = input("""\nFill in your syftbox email, if you already have one, enter it, if not you can regsiter by
 going to http://172.172.234.167:7000/syftbox/login and get your access token (store it).
-syfbox email: """)
+syftbox email: """)
             # TODO: maybe only have one
             context.context_dict["syftbox_email"] = email
             context.context_settings["SYFTBOX_EMAIL"] = email
@@ -126,11 +189,13 @@ class RegisterNotesMCPCallback(Callback):
             url = context.context_settings["notes_webserver_url"]
             response = requests.post(f"{url}/register_user", json=payload)
             response.raise_for_status()
-            print("Succesfully registered account for meeting notes MCP")
+            print(
+                f"Succesfully registered account for meeting notes MCP {context.context_dict['syftbox_access_token']}"
+            )
 
         except Exception as e:
-            print(f"Error registering user: {e}")
-            raise e
+            # print(e)
+            raise Exception(f"Error registering user for NotesMCP, could not connect to {url}") from e
 
 
 class InstallSyftboxQueryengineMCPCallback(Callback):
@@ -138,7 +203,7 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
         mcp = context.mcp
         mcp.settings["syftbox_queryengine_port"] = "8002"
         context.context_settings["SYFTBOX_QUERYENGINE_PORT"] = "8002"
-        
+
         print("Install syftbox-queryengine-mcp")
         print("Check if uv is installed")
         check_uv_installed()
@@ -149,9 +214,14 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
         print("Install syftbox-queryengine-mcp from git")
 
         if settings.use_local_packages:
+            print("\n\n\nUsing local packages!!!!\n\n\n")
             # TODO: read from configuration
-            install_package_from_local_path(installation_dir, "~/workspace/agentic-syftbox/packages/syftbox_queryengine")
+            install_package_from_local_path(
+                installation_dir,
+                "~/workspace/agentic-syftbox/packages/syftbox_queryengine",
+            )
         else:
+            print("\n\n\nUsing remote packages!!!!\n\n\n")
             install_package_from_git(
                 installation_dir,
                 package_url="https://github.com/OpenMined/agentic-syftbox",
@@ -169,8 +239,6 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
                 pkill_f(module)
             else:
                 start_process = False
-                
-        
 
         if start_process:
             run_python_mcp(installation_dir, module, env=context.context_settings)

@@ -216,7 +216,7 @@ def get_meeting_meta(conn) -> list[dict[str, str]]:
 WITH meetings AS (
   SELECT
     mm.filename,
-    MIN(at.timestamp) AS datetime,
+    MIN(at.timestamp) AS datetime
   FROM (
     SELECT * FROM meeting_audio_chunks ORDER BY chunkid
   ) mc
@@ -255,7 +255,7 @@ SELECT *
 FROM meetings;
 """
     cursor.execute(get_meeting_notes_by_filename_query, (filename,))
-    return cursor.fetchone()["fulltext"]
+    return cursor.fetchone()["full_text"]
 
 
 def get_all_meeting_notes(conn):

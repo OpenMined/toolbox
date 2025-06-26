@@ -76,6 +76,11 @@ def db_get_mcps_by_name(conn: sqlite3.Connection, name: str):
     rows = curr.fetchall()
     return [InstalledMCP.from_db_row(row) for row in rows]
 
+def db_delete_mcp(conn: sqlite3.Connection, name: str):
+    curr = conn.cursor()
+    curr.execute("DELETE FROM mcps WHERE name = ?", (name,))
+    conn.commit()
+
 
 create_table(conn)
 # conn.close()

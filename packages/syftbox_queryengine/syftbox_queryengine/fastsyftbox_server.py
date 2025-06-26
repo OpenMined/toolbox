@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import uvicorn
-from fastapi import Depends
+from fastapi import Depends, APIRouter
 from fastapi.responses import HTMLResponse
 from fastsyftbox import FastSyftBox
 from fastsyftbox.simple_client import DEV_DEFAULT_OWNER_EMAIL, default_dev_data_dir
@@ -45,28 +45,22 @@ else:
 print("config", config)
 
 
-app = FastSyftBox(
-    app_name="data-syncer",
-    syftbox_config=config,
-    syftbox_endpoint_tags=[
-        "syftbox"
-    ],  # endpoints with this tag are also available via Syft RPC
-    include_syft_openapi=True,  # Create OpenAPI endpoints for syft-rpc routes
-)
+
+router = APIRouter()
 
 
 # normal fastapi
-@app.get("/", response_class=HTMLResponse)
+@router.get("/", response_class=HTMLResponse)
 def root():
     return HTMLResponse("<html><body><h1>Welcome to abc</h1>")
 
 # normal fastapi
-@app.post("/healthcheck")
+@router.post("/healthcheck")
 def healthcheck():
     return {"status": "ok"}
 
 
-@app.post("/get_latest_file_to_sync", tags=["syftbox"])
+@router.post("/get_latest_file_to_sync", tags=["syftbox"])
 def get_latest_file_to_sync(current_user_email: str = Depends(authenticate)):
     with get_query_engine_connection() as conn:
         audio_chunks: list[AudioChunkDB] = get_files_to_sync(conn)  # noqa: F821
@@ -91,7 +85,7 @@ def get_latest_file_to_sync(current_user_email: str = Depends(authenticate)):
 
 
 # syft://{datasite}/app_data/{app_name}/rpc/submit_transcription
-@app.post("/submit_transcription", tags=["syftbox"])
+@router.post("/submit_transcription", tags=["syftbox"])
 def submit_transcription(
     transcription_req: TranscriptionStoreRequest,
     current_user_email: str = Depends(authenticate),
@@ -122,7 +116,7 @@ def submit_transcription(
         return response.model_dump_json()
 
 
-@app.post("/query_transcription_chunks", tags=["syftbox"])
+@router.post("/query_transcription_chunks", tags=["syftbox"])
 def query_transcription_chunks(
     current_user_email: str = Depends(authenticate),
 ):
@@ -136,7 +130,7 @@ def query_transcription_chunks(
     return response.model_dump_json()
 
 
-@app.post("/submit_meetings", tags=["syftbox"])
+@router.post("/submit_meetings", tags=["syftbox"])
 def submit_meetings(
     meetings: list[MeetingModel],
     current_user_email: str = Depends(authenticate),
@@ -147,7 +141,15 @@ def submit_meetings(
             print("Inserting new meeting", meeting.filename)
             db.insert_meeting(conn, meeting.filename, meeting.chunks_ids)
 
-
+app = FastSyftBox(
+    app_name="data-syncer",
+    syftbox_config=config,
+    syftbox_endpoint_tags=[
+        "syftbox"
+    ],  # endpoints with this tag are also available via Syft RPC
+    include_syft_openapi=True,  # Create OpenAPI endpoints for syft-rpc routes
+)
+app.include_router(router)
 app.enable_debug_tool(
     endpoint="/get_latest_file_to_sync",
     example_request=str({}),
@@ -156,6 +158,7 @@ app.enable_debug_tool(
 
 
 if __name__ == "__main__":
+
     with get_query_engine_connection() as conn:
-        db.create_tables(conn)
+        db.create_queryengine_tables(conn)
     uvicorn.run(app, host="0.0.0.0", port=8002)

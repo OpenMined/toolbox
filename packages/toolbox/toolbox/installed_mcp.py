@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sqlite3
 import urllib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+from toolbox import db
 from pydantic import BaseModel
 
+from toolbox.mcp_clients.mcp_clients import current_claude_desktop_config, write_claude_desktop_config
 from toolbox.mcp_installer.mcp_installer import process_exists
+from toolbox.store.store_code import STORE_ELEMENTS
 from toolbox.store.store_json import STORE, get_default_setting
 from toolbox.utils.healthcheck import HealthStatus, healthcheck
 from toolbox.utils.utils import DEFAULT_LOG_FILE, installation_dir_from_name
@@ -74,6 +78,15 @@ class InstalledMCP(BaseModel):
         
         healthy = healthcheck(self)
         return HEALTH_STATUS_ICON[healthy]
+    
+    
+    @property
+    def status_str(self) -> str:
+        icon = self.status_icon
+        if icon == "🟢":
+            return icon
+        else:
+            return f"{icon} (unreachable)"
 
     @property
     def installation_dir(self) -> Path:
@@ -179,7 +192,23 @@ class InstalledMCP(BaseModel):
             deployment_method=deployment_method,
             deployment=deployment,
             settings=context.context_settings,
+            has_client_json=has_mcp,
         )
+        
+    def delete(self, conn: sqlite3.Connection):
+        if self.installation_dir.exists():
+            shutil.rmtree(self.installation_dir, ignore_errors=True)
+        db.db_delete_mcp(conn, self.name)
+        self.remove_from_client_config()
+        
+    def remove_from_client_config(self) -> str:
+        if self.client == "claude":
+            client_config = current_claude_desktop_config()
+            if self.name in client_config["mcpServers"]:
+                del client_config["mcpServers"][self.name]
+                write_claude_desktop_config(client_config)
+        else:
+            raise ValueError(f"Client {self.client} not supported")
 
     @classmethod
     def from_db_row(cls, row: sqlite3.Row):
@@ -192,22 +221,53 @@ class InstalledMCP(BaseModel):
         row["deployment"] = json.loads(row["deployment"])
         row["settings"] = json.loads(row["settings"])
         return cls(**row)
-
-    def show(self):
-        print(self.name, self.status_icon)
-        print()
+    
+    def external_dependency_status_checks(self) -> dict:
+        status_dict = {}
+        for callback in STORE_ELEMENTS[self.name].callbacks:
+            res = callback.on_external_dependency_status_check(self)
+            if res is not None:
+                status_dict.update(res)
+        return status_dict
+    
+    def external_dependency_check_str(self) -> str:
+        status_dict = self.external_dependency_status_checks()
+        status_str =  "\n".join([f"{key}: {value}" for key, value in status_dict.items()])
+        if status_str == "":
+            return ""
+        else:
+            return f"""
+EXTERNAL DEPENDENCY STATUS:
+{status_str}
+"""
+    
+    def logs_str(self) -> str:
         MAX_LOG_LINES = 5
         if self.log_file.exists():
-            print(f"LOG FILE: {self.log_file}")
-            print("LOGS:\n")
             with open(self.log_file, "r") as f:
                 logs = f.read()
             if logs.count("\n") > MAX_LOG_LINES:
                 last_lines = logs.split("\n")[-MAX_LOG_LINES:]
                 last_lines_str = "\n".join(last_lines)
-                print(f"...(cut off)\n{last_lines_str}")
-            else:
-                print(logs)
+                logs = f"...(cut off)\n{last_lines_str}"
+        else:
+            logs = "No logs available"
+        return f"""        
+LOG FILE: {self.log_file}
+LOGS:
+{logs}
+"""
+
+    def show(self):
+        print(f"""
+========================================
+{self.name} {self.status_str}
+========================================
+{self.external_dependency_check_str()}
+{self.logs_str()}
+""")
+        
+
 
 
 def create_clickable_file_link(file_path, link_text="LINK"):
