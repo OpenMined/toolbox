@@ -1,3 +1,4 @@
+from toolbox.store.store_json import STORE
 import typer
 
 from toolbox.db import conn
@@ -21,22 +22,26 @@ def install(
     use_local_packages: bool = typer.Option(
         False, "--use-local-packages", "-lp", help="Use local packages"
     ),
-    insert_syftbox_login: bool = typer.Option(
-        False, "--insert-syftbox-login", "-il", help="Insert syftbox login"
+    request_syftbox_login: bool = typer.Option(
+        False, "--request-syftbox-login", "-rl", help="Request syftbox login"
     ),
     clients: list[str] = typer.Option(
         [], "--client", "-c", help="Client to install for"
     ),
 ):
     if use_local_deployments:
+        # TOOD: FIX
         settings.use_local_deployments = True
+        STORE["meeting-notes-mcp"]["context_settings"]["notes_webserver_url"] = (
+            "http://localhost:8000/"
+        )
         print("USING LOCAL DEPLOYMENTS")
     if use_local_packages:
         settings.use_local_packages = True
         print("USING LOCAL PACKAGES")
-    if insert_syftbox_login:
-        settings.insert_syftbox_login = True
-        print("INSERTING SYFTBOX LOGIN")
+    if request_syftbox_login:
+        settings.request_syftbox_login = True
+        print("REQUESTING SYFTBOX LOGIN")
     install_mcp(conn, name, clients=clients)
 
 

@@ -195,7 +195,34 @@ class RegisterNotesMCPCallback(Callback):
 
         except Exception as e:
             # print(e)
-            raise Exception(f"Error registering user for NotesMCP, could not connect to {url}") from e
+            raise Exception(
+                f"Error registering user for NotesMCP, could not connect to {url}"
+            ) from e
+
+
+class RegisterNotesMCPAppHeartbeatMCPCallback(Callback):
+    def on_install_init(self, context: InstallationContext, json_body: dict):
+        try:
+            port = context.context_settings["SYFTBOX_QUERYENGINE_PORT"]
+            url = f"http://localhost:{port}"
+            response = requests.post(
+                f"{url}/register_app_healthcheck",
+                json={
+                    "app_name": "notes_mcp",
+                    "email": context.context_dict["syftbox_email"],
+                    "url": url,
+                },
+            )
+            response.raise_for_status()
+            print("Succesfully registered app heartbeat for meeting notes MCP ")
+        except KeyError:
+            raise Exception(
+                "Could not find SYFTBOX_QUERYENGINE_PORT in context.context_settings"
+            )
+        except Exception as e:
+            raise Exception(
+                f"Error registering user for NotesMCP, could not connect to {url}"
+            ) from e
 
 
 class InstallSyftboxQueryengineMCPCallback(Callback):

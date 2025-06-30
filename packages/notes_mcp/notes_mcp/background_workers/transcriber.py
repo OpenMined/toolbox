@@ -10,7 +10,7 @@ import requests
 from fastsyftbox.simple_client import SimpleRPCClient
 
 from notes_mcp import db
-from notes_mcp.fastapi_server import executor
+from notes_mcp.remote_fastapi_server import executor
 from notes_mcp.models.audio import TranscriptionStoreRequest
 from notes_mcp.models.file import FilesToSyncResponse, FileToSync
 from notes_mcp.settings import settings
@@ -18,6 +18,7 @@ from notes_mcp.syftbox_client import create_authenticated_client
 
 # file_path = HOME / ".screenpipe" / "data" / "MacBook Pro Microphone (input)_2025-06-03_14-30-45.mp4"
 # FILE_PATH = 'path/to/your/audio.wav'  # Local WAV file (16kHz sample rate)
+ACTIVITY_THRESHOLD_SECONDS = 10
 
 
 def add_transcription_to_db(
@@ -50,13 +51,18 @@ def add_transcription_to_db(
 
 def poll_for_new_audio_chunks(stop_event: threading.Event):
     while not stop_event.is_set():
-        with db.get_meetings_db() as conn:
+        with db.get_notes_db() as conn:
             users = db.get_users(conn)
             for user in users:
-                print("Polling for new audio chunks for user", user.email)
-                executor.submit(
-                    _poll_for_new_audio_chunks, user.email, user.access_token
-                )
+                if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
+                    print("Polling for new audio chunks for user", user.email)
+                    executor.submit(
+                        _poll_for_new_audio_chunks, user.email, user.access_token
+                    )
+                else:
+                    print(
+                        f"User {user.email} has not been active for {ACTIVITY_THRESHOLD_SECONDS} seconds, skipping"
+                    )
             if len(users) == 0:
                 print("No users found to transcribe")
             time.sleep(10)

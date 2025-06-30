@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 import requests
 
@@ -23,3 +24,9 @@ def syftbox_running(syftbox_port: int = 7938):
     except Exception:
         return False
     return response.status_code == 200
+
+
+def get_syftbox_email(syftbox_config_path: Path | str = DEFAULT_SYFTBOX_CONFIG_PATH):
+    with open(syftbox_config_path, "r") as f:
+        config = json.load(f)
+    return config["email"]

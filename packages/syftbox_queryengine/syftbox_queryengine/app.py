@@ -1,26 +1,32 @@
-from contextlib import asynccontextmanager
 import contextlib
+from contextlib import asynccontextmanager
+from threading import Thread
 
 import uvicorn
 from fastapi import FastAPI
 from fastsyftbox import FastSyftBox
-from syftbox_queryengine.fastsyftbox_server import config
-from syftbox_queryengine.fastsyftbox_server import router
 
-from syftbox_queryengine.fastsyftbox_server import app
-from syftbox_queryengine.settings import settings
+from syftbox_queryengine.fastsyftbox_server import app, config, router
+from syftbox_queryengine.heartbeat import (
+    heartbeat_loop,
+    stop_event as heartbeat_stop_event,
+)
 from syftbox_queryengine.mcp_server import mcp
+from syftbox_queryengine.settings import settings
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with contextlib.AsyncExitStack() as stack:
+        thread = Thread(target=heartbeat_loop)
+        thread.start()
         await stack.enter_async_context(mcp.session_manager.run())
         yield
+        heartbeat_stop_event.set()
+        thread.join()
 
 
 # app.router.lifespan_context = lifespan
-
 
 
 if __name__ == "__main__":

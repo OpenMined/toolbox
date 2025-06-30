@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 
-from syftbox_queryengine.models import AudioChunk, AudioChunkDB
+from syftbox_queryengine.models import AudioChunk, AudioChunkDB, HeartbeatEntry
 
 HOME = Path.home()
 
@@ -42,6 +42,15 @@ def create_queryengine_tables(conn):
         CREATE TABLE IF NOT EXISTS synced_files (
             file_path TEXT PRIMARY KEY,
             chunk_id INTEGER
+        )
+    """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS heartbeat_entries (
+            app_name TEXT PRIMARY KEY,
+            email TEXT,
+            url TEXT,
+            healthy BOOLEAN
         )
     """)
 
@@ -281,3 +290,32 @@ FROM meetings;
 """
     cursor.execute(get_all_meeting_notes_query)
     return cursor.fetchall()
+
+
+def is_healthy(conn, app_name: str):
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT healthy FROM heartbeat_entries WHERE app_name = ?", (app_name,)
+    )
+    return cursor.fetchone()["healthy"]
+
+
+def get_all_heartbeat_entries(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM heartbeat_entries")
+    return [HeartbeatEntry.from_sqlite_row(row) for row in cursor.fetchall()]
+
+
+def insert_heartbeat_entry(
+    conn,
+    app_name: str,
+    email: str,
+    url: str,
+    healthy: bool,
+):
+    cursor = conn.cursor()
+    cursor.execute(
+        "INSERT INTO heartbeat_entries (app_name, email, url, healthy) VALUES (?, ?, ?, ?)",
+        (app_name, email, url, healthy),
+    )
+    conn.commit()

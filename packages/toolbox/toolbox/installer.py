@@ -1,5 +1,6 @@
 import json
 import platform
+import secrets
 import shutil
 import sqlite3
 from pathlib import Path
@@ -8,6 +9,7 @@ from pydantic import BaseModel
 from tabulate import tabulate
 
 from toolbox.db import db_get_mcps, db_get_mcps_by_name, db_upsert_mcp
+from toolbox.external_dependencies.external_depenencies import get_syftbox_email
 from toolbox.installed_mcp import (
     HOME,
     INSTALLED_HEADERS,
@@ -24,7 +26,6 @@ from toolbox.store.store_code import STORE_ELEMENTS
 from toolbox.store.store_json import STORE, check_name
 from toolbox.settings import settings
 from toolbox.toolbox_requirements import has_npx, has_uv
-
 
 
 def install_requirements(
@@ -50,12 +51,20 @@ def install_requirements(
             )
             install_mcp(conn, requirement, clients=clients, context=requirement_context)
             context.context_dict.update(requirement_context.context_dict)
+            context.context_settings.update(requirement_context.context_settings)
             context.context_apps.append(requirement)
-            
-def check_external_dependencies(conn: sqlite3.Connection, name: str, context: InstallationContext, clients: list[str]):
+
+
+def check_external_dependencies(
+    conn: sqlite3.Connection,
+    name: str,
+    context: InstallationContext,
+    clients: list[str],
+):
     store_element = STORE_ELEMENTS[name]
     for callback in store_element.callbacks:
         callback.on_external_dependency_check(context)
+
 
 def check_toolbox_requirements():
     if not has_uv():
@@ -66,6 +75,7 @@ def check_toolbox_requirements():
         res = input("npx is not installed. Please install npx first. Continue? (y/n)")
         if res != "y":
             exit(1)
+
 
 def install_mcp(
     conn: sqlite3.Connection,
@@ -100,13 +110,15 @@ def install_mcp(
             context_apps=[name],
             context_settings=store_json.get("context_settings", {}),
         )
-    if settings.insert_syftbox_login:
+    if not settings.request_syftbox_login:
+        email = get_syftbox_email()
+        # use a random secret here
         print("INSERTING SYFTBOX LOGIN")
-        context.context_dict["syftbox_email"] = "koen@openmined.org"
-        context.context_dict["syftbox_access_token"] = "12345"
-        context.context_settings["SYFTBOX_EMAIL"] = "koen@openmined.org"
-        context.context_settings["SYFTBOX_ACCESS_TOKEN"] = "12345"
-
+        syftbox_access_token = secrets.token_hex(8)
+        context.context_dict["syftbox_email"] = email
+        context.context_dict["syftbox_access_token"] = syftbox_access_token
+        context.context_settings["SYFTBOX_EMAIL"] = email
+        context.context_settings["SYFTBOX_ACCESS_TOKEN"] = syftbox_access_token
 
     install_requirements(conn, name, context, clients)
     check_external_dependencies(conn, name, context, clients)
@@ -183,7 +195,6 @@ def list_apps_in_store():
 def show_mcp(conn: sqlite3.Connection, name: str):
     mcps = db_get_mcps_by_name(conn, name)
     if len(mcps) == 0:
-
         mcps = db_get_mcps(conn)
         matches = []
         for mcp in mcps:
@@ -208,7 +219,7 @@ def show_mcp(conn: sqlite3.Connection, name: str):
 def reset_mcp(conn: sqlite3.Connection):
     """Reset MCP installation by removing the toolbox directory and clearing database."""
     # Remove the toolbox directory
-    
+
     for mcp in db_get_mcps(conn):
         mcp.delete(conn)
     toolbox_dir = Path.home() / ".toolbox"

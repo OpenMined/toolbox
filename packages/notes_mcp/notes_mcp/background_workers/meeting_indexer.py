@@ -6,12 +6,14 @@ import traceback
 from fastsyftbox.simple_client import SimpleRPCClient
 
 from notes_mcp import db
-from notes_mcp.fastapi_server import executor
+from notes_mcp.remote_fastapi_server import executor
 from notes_mcp.models.audio import AudioChunk, TranscriptionChunksResult
 from notes_mcp.models.meeting import Meeting
 from notes_mcp.syftbox_client import create_authenticated_client
 
 POLL_INTERVAL = 10
+
+ACTIVITY_THRESHOLD_SECONDS = 10
 
 
 def log_error(future):
@@ -22,12 +24,19 @@ def log_error(future):
 
 def poll_for_new_meetings(stop_event: threading.Event):
     while not stop_event.is_set():
-        with db.get_meetings_db() as conn:
+        with db.get_notes_db() as conn:
             users = db.get_users(conn)
             for user in users:
-                print("Polling for new meetings")
-                future = executor.submit(index_meetings, user.email, user.access_token)
-                future.add_done_callback(log_error)
+                if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
+                    print("Polling for new meetings")
+                    future = executor.submit(
+                        index_meetings, user.email, user.access_token
+                    )
+                    future.add_done_callback(log_error)
+                else:
+                    print(
+                        f"User {user.email} has not been active for {ACTIVITY_THRESHOLD_SECONDS} seconds, skipping"
+                    )
             if len(users) == 0:
                 print("No users found to index meetings")
 

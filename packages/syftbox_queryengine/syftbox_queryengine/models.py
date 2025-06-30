@@ -16,6 +16,22 @@ class FileToSync(BaseModel):
     user_email: str
 
 
+class HeartbeatEntry(BaseModel):
+    app_name: str
+    email: str
+    url: str
+    healthy: bool
+
+    @classmethod
+    def from_sqlite_row(cls, row):
+        return cls(
+            app_name=row["app_name"],
+            email=row["email"],
+            url=row["url"],
+            healthy=row["healthy"],
+        )
+
+
 class AudioChunkDB(BaseModel):
     chunk_id: int
     file_path: str

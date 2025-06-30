@@ -4,7 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 import uvicorn
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastsyftbox import FastSyftBox
 from fastsyftbox.simple_client import DEV_DEFAULT_OWNER_EMAIL, default_dev_data_dir
@@ -15,7 +15,13 @@ from syftbox_queryengine.auth import authenticate
 from syftbox_queryengine.db import (
     get_query_engine_connection,
     get_screenpipe_connection,
+    insert_heartbeat_entry,
     mark_file_as_synced,
+)
+from syftbox_queryengine.heartbeat import (
+    send_heartbeat,
+    heartbeat_entries,
+    heartbeat_lock,
 )
 from syftbox_queryengine.models import (
     AudioChunkDB,
@@ -31,6 +37,7 @@ from syftbox_queryengine.sync import get_files_to_sync
 
 APP_NAME = "data-syncer"
 
+
 print("settings.dev_mode", settings.dev_mode)
 if settings.dev_mode:
     config = SyftClientConfig(
@@ -45,7 +52,6 @@ else:
 print("config", config)
 
 
-
 router = APIRouter()
 
 
@@ -54,10 +60,27 @@ router = APIRouter()
 def root():
     return HTMLResponse("<html><body><h1>Welcome to abc</h1>")
 
+
 # normal fastapi
 @router.post("/healthcheck")
 def healthcheck():
     return {"status": "ok"}
+
+
+@router.post("/register_app_healthcheck")
+def register_app_healthcheck(app_name: str, email: str, url: str):
+    with get_query_engine_connection() as conn:
+        send_heartbeat(app_name, email, url)
+        insert_heartbeat_entry(conn, app_name, email, url, True)
+
+
+@router.post("/app_heartbeat_healthy")
+def app_healthcheck(app_name: str):
+    with get_query_engine_connection() as conn:
+        healthy = db.is_healthy(conn, app_name)
+        if healthy is None:
+            return HTTPException(status_code=400, detail="App not found")
+        return healthy
 
 
 @router.post("/get_latest_file_to_sync", tags=["syftbox"])
@@ -141,6 +164,7 @@ def submit_meetings(
             print("Inserting new meeting", meeting.filename)
             db.insert_meeting(conn, meeting.filename, meeting.chunks_ids)
 
+
 app = FastSyftBox(
     app_name="data-syncer",
     syftbox_config=config,
@@ -158,7 +182,6 @@ app.enable_debug_tool(
 
 
 if __name__ == "__main__":
-
     with get_query_engine_connection() as conn:
         db.create_queryengine_tables(conn)
     uvicorn.run(app, host="0.0.0.0", port=8002)

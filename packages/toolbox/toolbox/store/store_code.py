@@ -9,6 +9,7 @@ from toolbox.store.callbacks.callback import (
     Callback,
     InstallSyftboxQueryengineMCPCallback,
     RegisterNotesMCPCallback,
+    RegisterNotesMCPAppHeartbeatMCPCallback,
     ScreenpipeExternalDependencyCallback,
     SyftboxAuthCallback,
     SyftboxExternalDependencyCallback,
@@ -28,12 +29,14 @@ class NotesMCP(StoreElement):
     callbacks: list[Callback] = [
         SyftboxAuthCallback(),
         RegisterNotesMCPCallback(),
+        RegisterNotesMCPAppHeartbeatMCPCallback(),
         ScreenpipeExternalDependencyCallback(),
         SyftboxExternalDependencyCallback(),
     ]
 
     def healthcheck(self, mcp: "InstalledMCP") -> bool:
         url = mcp.settings["notes_webserver_url"]
+        print(url)
         res = requests.post(f"{url}/healthcheck")
         # print(res.content)
         return res.json()["status"] == "ok"
@@ -47,7 +50,7 @@ class SyftboxQueryengineMCP(StoreElement):
         ScreenpipeExternalDependencyCallback(),
         SyftboxExternalDependencyCallback(),
     ]
-    
+
     def healthcheck(self, mcp: "InstalledMCP") -> bool:
         port = mcp.settings["syftbox_queryengine_port"]
         res = requests.post(f"http://localhost:{port}/healthcheck")

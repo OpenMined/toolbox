@@ -3,13 +3,14 @@ from concurrent.futures import ThreadPoolExecutor
 import traceback
 
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, APIRouter
 from pydantic import BaseModel
 
 from notes_mcp import PROJECT_ROOT
 from notes_mcp.db import (
-    get_meetings_db,
+    get_notes_db,
     insert_user,
+    set_heartbeat,
 )
 from notes_mcp.models import UserRegistration, UserResponse
 
@@ -17,7 +18,7 @@ BASE_DATA_DIR = PROJECT_ROOT / "data"
 N_WORKERS = 2
 
 
-app = FastAPI()
+main_router = APIRouter()
 
 
 executor = ThreadPoolExecutor(max_workers=N_WORKERS)
@@ -35,10 +36,10 @@ class StartWorkersRequest(BaseModel):
     user_email: str
 
 
-@app.post("/register_user", response_model=UserResponse)
+@main_router.post("/register_user", response_model=UserResponse)
 def register_user(
     request: UserRegistration,
-    conn_manager: sqlite3.Connection = Depends(get_meetings_db),
+    conn_manager: sqlite3.Connection = Depends(get_notes_db),
 ):
     """Register a new user or update existing user's access token."""
     try:
@@ -54,10 +55,19 @@ def register_user(
         )
 
 
-@app.post("/healthcheck")
+@main_router.post("/healthcheck")
 def healthcheck():
     return {"status": "ok"}
 
 
+@main_router.post("/heartbeat")
+def heartbeat(email: str):
+    with get_notes_db() as conn:
+        set_heartbeat(conn, email)
+    return {"status": "ok"}
+
+
 if __name__ == "__main__":
+    app = FastAPI()
+    app.include_router(main_router)
     uvicorn.run(app, host="0.0.0.0", port=8000, debug=True)

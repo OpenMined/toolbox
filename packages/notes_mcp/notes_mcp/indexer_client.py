@@ -12,6 +12,12 @@ class IndexerClient(httpx.Client):
             json={"email": user_email, "access_token": access_token},
         )
 
+    def healthcheck(self, email: str) -> httpx.Response:
+        return self.post("/healthcheck", json={"user_email": email})
+
+    def heartbeat(self, email: str) -> httpx.Response:
+        return self.post("/heartbeat", json={"user_email": email})
+
 
 if __name__ == "__main__":
     print("registering user")

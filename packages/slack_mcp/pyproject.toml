@@ -1,15 +1,8 @@
 [project]
 dependencies = [
-    "requests>=2.32.4",
-    "uvicorn>=0.34.3",
-    "fastapi>=0.115.13",
-    "pydantic-settings>=2.10.0",
-    "mcp==1.10.0",
-    "fastsyftbox",
-    "httpx==0.28.1"
 ]
 
-name = "syftbox_queryengine"
+name = "slack_mcp"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -22,10 +15,6 @@ build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4"]
-
-[tool.uv.sources]
-syft-http-bridge = { git = "https://github.com/OpenMined/syft-extras.git", subdirectory = "packages/syft-http-bridge", rev = "main" }
-fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "fix-startup" }
 
 [dependency-groups]
 dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]

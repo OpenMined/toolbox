@@ -24,6 +24,7 @@ def make_mcp_installation_dir(name: str):
     installation_dir.mkdir(parents=True, exist_ok=True)
     return installation_dir
 
+
 def init_venv_uv(installation_dir: Path):
     subprocess.run(
         ["uv", "venv", "--python", "3.12"],
@@ -34,15 +35,22 @@ def init_venv_uv(installation_dir: Path):
 
 def install_package_from_local_path(installation_dir: Path, package_path: Path):
     print(f"Installing package from local path: {package_path}")
-    result = subprocess.run(
-        f"source .venv/bin/activate && uv pip install -e {package_path}",
-        cwd=installation_dir,
-        executable="/bin/bash",
-        shell=True,
-        capture_output=True,
-        check=True,
-        text=True,
-    )
+    try:
+        cmd = f"source .venv/bin/activate && uv pip install -q -e {package_path}"
+        result = subprocess.run(
+            cmd,
+            cwd=installation_dir,
+            executable="/bin/bash",
+            shell=True,
+            capture_output=True,
+            check=True,
+            text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        raise Exception(
+            f"Failed to install package using running:\n{cmd} in {installation_dir}:\n{e.stderr}\n "
+        ) from e
+
     print(result.stdout, result.stderr)
     if result.returncode != 0:
         print(f"Failed to install package: {result.stderr}")
@@ -116,7 +124,7 @@ def should_kill_existing_process(module: str):
 
 def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict = None):
     SHELL = os.environ.get("SHELL", "/bin/sh")
-    
+
     cmd = f'{SHELL} -c "source .venv/bin/activate && uv run python -m {mcp_module} > {DEFAULT_LOG_FILE} 2>&1"'
     print("cmd", cmd)
     proc = subprocess.Popen(

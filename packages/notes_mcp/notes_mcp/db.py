@@ -1,6 +1,6 @@
 import contextlib
 import sqlite3
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from notes_mcp.models.audio import AudioChunk
@@ -9,21 +9,21 @@ from notes_mcp.settings import settings
 
 HOME = Path.home()
 
-MEETINGS_DB_PATH = HOME / ".meeting-notes-mcp" / "db.sqlite"
-MEETINGS_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+NOTES_DB_PATH = HOME / ".meeting-notes-mcp" / "db.sqlite"
+NOTES_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 DEV_EMAIL = "dev@openmined.org"
 DEV_ACCESS_TOKEN = "dev_mode"
 
 # Connect to the SQLite database
-conn = sqlite3.connect(MEETINGS_DB_PATH)
+conn = sqlite3.connect(NOTES_DB_PATH)
 conn.row_factory = sqlite3.Row
 
 
 @contextlib.contextmanager
-def get_meetings_db():
+def get_notes_db():
     try:
-        conn = sqlite3.connect(MEETINGS_DB_PATH)
+        conn = sqlite3.connect(NOTES_DB_PATH)
         conn.row_factory = sqlite3.Row
         create_tables(conn)
         yield conn
@@ -38,7 +38,8 @@ def create_tables(conn):
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     email TEXT UNIQUE NOT NULL,
     access_token TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    last_heartbeat TIMESTAMP DEFAULT CURRENT_TIMESTAMP)
 """)
     conn.commit()
 
@@ -92,3 +93,27 @@ def get_users(conn) -> list[User]:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM users")
         return [User(**dict(row)) for row in cursor.fetchall()]
+
+
+def set_heartbeat(conn, email: str):
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET last_heartbeat = CURRENT_TIMESTAMP WHERE email = ?",
+        (email,),
+    )
+    conn.commit()
+
+
+def get_heartbeat(conn, email: str):
+    cursor = conn.cursor()
+    cursor.execute("SELECT last_heartbeat FROM users WHERE email = ?", (email,))
+    return cursor.fetchone()["last_heartbeat"]
+
+
+def active_since(conn, email: str, seconds: int):
+    heartbeat_timestamp = get_heartbeat(conn, email)
+    heartbeat_datetime = datetime.strptime(
+        heartbeat_timestamp, "%Y-%m-%d %H:%M:%S"
+    ).replace(tzinfo=timezone.utc)
+
+    return datetime.now() - heartbeat_datetime > timedelta(seconds=seconds)
