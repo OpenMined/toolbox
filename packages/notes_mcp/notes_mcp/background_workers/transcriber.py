@@ -6,6 +6,7 @@ import time
 import traceback
 from datetime import datetime
 
+import httpx
 import requests
 from fastsyftbox.simple_client import SimpleRPCClient
 
@@ -61,7 +62,7 @@ def poll_for_new_audio_chunks(stop_event: threading.Event):
                     )
                 else:
                     print(
-                        f"User {user.email} has not been active for {ACTIVITY_THRESHOLD_SECONDS} seconds, skipping"
+                        f"User {user.email} has not been active in the last {ACTIVITY_THRESHOLD_SECONDS} seconds, skipping"
                     )
             if len(users) == 0:
                 print("No users found to transcribe")
@@ -75,7 +76,6 @@ def _poll_for_new_audio_chunks(email: str, access_token: str):
         user_email=email,
         access_token=access_token,
     )
-    print("Polling for new audio chunks")
     try:
         result = client.post("get_latest_file_to_sync/")
         result.raise_for_status()
@@ -89,6 +89,14 @@ def _poll_for_new_audio_chunks(email: str, access_token: str):
         else:
             print("No files to transcribe")
 
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 504:
+            print(
+                f"Could not reach user {client.app_owner} for /get_latest_file_to_sync"
+            )
+            return
+        else:
+            raise e
     except Exception:
         print(
             f"Failed calling {client.app_name} on {client.app_owner}/get_latest_file_to_sync: {traceback.format_exc()}"

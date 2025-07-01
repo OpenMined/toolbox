@@ -5,6 +5,7 @@ import traceback
 
 from fastsyftbox.simple_client import SimpleRPCClient
 
+import httpx
 from notes_mcp import db
 from notes_mcp.remote_fastapi_server import executor
 from notes_mcp.models.audio import AudioChunk, TranscriptionChunksResult
@@ -28,7 +29,7 @@ def poll_for_new_meetings(stop_event: threading.Event):
             users = db.get_users(conn)
             for user in users:
                 if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
-                    print("Polling for new meetings")
+                    print(f"User {user.email} is active, polling for new meetings")
                     future = executor.submit(
                         index_meetings, user.email, user.access_token
                     )
@@ -57,6 +58,14 @@ def extract_and_upload_meetings(client: SimpleRPCClient):
         response = client.post("/query_transcription_chunks")
         response.raise_for_status()
         res = TranscriptionChunksResult.model_validate_json(response.json())
+    except httpx.HTTPStatusError as e:
+        if e.response.status_code == 504:
+            print(
+                f"Could not reach user {client.app_owner} for /query_transcription_chunks"
+            )
+            return
+        else:
+            raise e
     except Exception as e:
         print(
             f"Failed calling syft://{client.app_owner} on {client.app_name}/query_transcription_chunks: {e}"

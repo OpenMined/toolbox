@@ -124,7 +124,7 @@ def get_audio_chunk_by_id(conn, chunk_id: int) -> AudioChunkDB:
 def mark_file_as_synced(conn, audio_chunk: AudioChunkDB):
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO synced_files (file_path, chunk_id) VALUES (?, ?)",
+        "INSERT OR REPLACE INTO synced_files (file_path, chunk_id) VALUES (?, ?)",
         (audio_chunk.file_path, audio_chunk.chunk_id),
     )
     conn.commit()
@@ -306,7 +306,7 @@ def get_all_heartbeat_entries(conn):
     return [HeartbeatEntry.from_sqlite_row(row) for row in cursor.fetchall()]
 
 
-def insert_heartbeat_entry(
+def upsert_heartbeat_entry(
     conn,
     app_name: str,
     email: str,
@@ -315,7 +315,7 @@ def insert_heartbeat_entry(
 ):
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO heartbeat_entries (app_name, email, url, healthy) VALUES (?, ?, ?, ?)",
+        "INSERT OR REPLACE INTO heartbeat_entries (app_name, email, url, healthy) VALUES (?, ?, ?, ?)",
         (app_name, email, url, healthy),
     )
     conn.commit()

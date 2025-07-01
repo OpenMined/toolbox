@@ -4,8 +4,10 @@ import secrets
 import shutil
 import sqlite3
 from pathlib import Path
+import textwrap
 
 from pydantic import BaseModel
+import requests
 from tabulate import tabulate
 
 from toolbox.db import db_get_mcps, db_get_mcps_by_name, db_upsert_mcp
@@ -113,7 +115,7 @@ def install_mcp(
     if not settings.request_syftbox_login:
         email = get_syftbox_email()
         # use a random secret here
-        print("INSERTING SYFTBOX LOGIN")
+        # print("INSERTING SYFTBOX LOGIN")
         syftbox_access_token = secrets.token_hex(8)
         context.context_dict["syftbox_email"] = email
         context.context_dict["syftbox_access_token"] = syftbox_access_token
@@ -139,7 +141,6 @@ def install_mcp(
         context.mcp = mcp
 
         if client == "claude":
-            print("HAS CLIENT JSON", mcp.has_client_json)
             if mcp.has_client_json:
                 add_mcp_to_claude_desktop_config(mcp)
             context.on_install_init_finished()
@@ -178,21 +179,39 @@ Clients:
 def list_apps_in_store():
     store_data = []
     for name, store_json in STORE.items():
+        requirements_str = ", ".join(store_json.get("requirements", []))
+        external_dependencies_str = ", ".join(
+            store_json.get("external_dependencies", [])
+        )
+        url = store_json.get("url", "")
         store_data.append(
-            [name, store_json["default_settings"]["default_deployment_method"]]
+            [
+                name,
+                store_json["default_settings"]["default_deployment_method"],
+                external_dependencies_str,
+                requirements_str,
+                url,
+            ]
         )
 
     print(
         tabulate(
             store_data,
-            headers=["Name", "Description"],
-            maxcolwidths=[30, 50],
-            maxheadercolwidths=[30, 50],
+            headers=[
+                "Name",
+                "Deployment",
+                "External Dependencies",
+                "Requirements",
+                "URL",
+            ],
+            maxcolwidths=[20, 15, 15, 15, 100],
+            maxheadercolwidths=[20, 15, 15, 15, 100],
+            tablefmt="grid",
         )
     )
 
 
-def show_mcp(conn: sqlite3.Connection, name: str):
+def get_mcp_by_fuzzy_name(conn: sqlite3.Connection, name: str):
     mcps = db_get_mcps_by_name(conn, name)
     if len(mcps) == 0:
         mcps = db_get_mcps(conn)
@@ -204,16 +223,20 @@ def show_mcp(conn: sqlite3.Connection, name: str):
             raise ValueError(f"No MCPs found for {name}")
         elif len(matches) == 1:
             mcp = matches[0]
-            mcp.show()
         else:
             print(f"Multiple MCPs found for {name}:")
             raise ValueError(f"Multiple MCPs found for {name}")
 
     elif len(mcps) == 1:
         mcp = mcps[0]
-        mcp.show()
     else:
         raise ValueError(f"Multiple MCPs found for {name}")
+    return mcp
+
+
+def show_mcp(conn: sqlite3.Connection, name: str):
+    mcp = get_mcp_by_fuzzy_name(conn, name)
+    mcp.show()
 
 
 def reset_mcp(conn: sqlite3.Connection):
@@ -226,6 +249,16 @@ def reset_mcp(conn: sqlite3.Connection):
     if toolbox_dir.exists():
         shutil.rmtree(toolbox_dir, ignore_errors=True)
         print(f"Removed toolbox directory: {toolbox_dir}")
+
+
+def log_mcp(conn: sqlite3.Connection, name: str, follow: bool = False):
+    mcp = get_mcp_by_fuzzy_name(conn, name)
+    mcp.log(follow=follow)
+
+
+def call_mcp(conn: sqlite3.Connection, name: str, endpoint: str):
+    res = requests.post(f"http://localhost:8002/{endpoint}")
+    print(res.json())
 
 
 def add_mcp_to_claude_desktop_config(mcp: InstalledMCP):

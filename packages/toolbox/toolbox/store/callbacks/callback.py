@@ -1,22 +1,23 @@
 from __future__ import annotations
 
 import os
-import subprocess
-import sys
+import traceback
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import requests
 from pydantic import BaseModel
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from toolbox.installed_mcp import InstalledMCP
+import time
+from time import sleep
+
 from toolbox.external_dependencies.external_depenencies import (
     screenpipe_installed,
     syftbox_installed,
     syftbox_running,
 )
-from toolbox.settings import settings
 from toolbox.mcp_installer.mcp_installer import (
     check_uv_installed,
     init_venv_uv,
@@ -28,6 +29,7 @@ from toolbox.mcp_installer.mcp_installer import (
     run_python_mcp,
     should_kill_existing_process,
 )
+from toolbox.settings import settings
 
 HOME = Path.home()
 
@@ -165,7 +167,7 @@ syftbox email: """)
             context.context_dict["syftbox_access_token"] = access_token
             context.context_settings["SYFTBOX_ACCESS_TOKEN"] = access_token
         else:
-            print("Reusing syftbox email and access token")
+            print("Found existing syftbox email and access token")
 
         if "syftbox_access_token" not in context.context_dict:
             access_token = input("syftbox access token: ")
@@ -202,26 +204,44 @@ class RegisterNotesMCPCallback(Callback):
 
 class RegisterNotesMCPAppHeartbeatMCPCallback(Callback):
     def on_install_init(self, context: InstallationContext, json_body: dict):
+        # Check if the uvicorn server is already running
+        max_retries = 3
+        retry_delay = 2  # seconds
+        if "SYFTBOX_QUERYENGINE_PORT" not in context.context_settings:
+            raise Exception(
+                "SYFTBOX_QUERYENGINE_PORT not found in context.context_settings"
+            )
+
+        port = context.context_settings["SYFTBOX_QUERYENGINE_PORT"]
+        queryengine_url = f"http://localhost:{port}"
+        notes_mcp_url = context.context_settings["notes_webserver_url"]
+        # first wait until ready
+        for attempt in range(max_retries):
+            try:
+                response = requests.get(f"{queryengine_url}/healthcheck", timeout=5)
+                if response.status_code == 200:
+                    break
+            except requests.exceptions.RequestException:
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay)
+                else:
+                    raise Exception(
+                        f"Server not available after {max_retries} attempts"
+                    )
+
         try:
-            port = context.context_settings["SYFTBOX_QUERYENGINE_PORT"]
-            url = f"http://localhost:{port}"
             response = requests.post(
-                f"{url}/register_app_healthcheck",
+                f"{queryengine_url}/register_app_healthcheck",
                 json={
                     "app_name": "notes_mcp",
                     "email": context.context_dict["syftbox_email"],
-                    "url": url,
+                    "url": notes_mcp_url,
                 },
             )
             response.raise_for_status()
-            print("Succesfully registered app heartbeat for meeting notes MCP ")
-        except KeyError:
-            raise Exception(
-                "Could not find SYFTBOX_QUERYENGINE_PORT in context.context_settings"
-            )
         except Exception as e:
             raise Exception(
-                f"Error registering user for NotesMCP, could not connect to {url}"
+                f"Error registering user for NotesMCP, could not connect to {queryengine_url}/register_app_healthcheck {e} {traceback.format_exc()}"
             ) from e
 
 
@@ -232,31 +252,25 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
         context.context_settings["SYFTBOX_QUERYENGINE_PORT"] = "8002"
 
         print("Install syftbox-queryengine-mcp")
-        print("Check if uv is installed")
         check_uv_installed()
-        print("Make installation directory")
         installation_dir = make_mcp_installation_dir(context.current_app)
-        print("Init venv")
         init_venv_uv(installation_dir)
-        print("Install syftbox-queryengine-mcp from git")
 
         if settings.use_local_packages:
-            print("\n\n\nUsing local packages!!!!\n\n\n")
+            # print("\nUsing local packages!!!!\n")
             # TODO: read from configuration
             install_package_from_local_path(
                 installation_dir,
                 "~/workspace/agentic-syftbox/packages/syftbox_queryengine",
             )
         else:
-            print("\n\n\nUsing remote packages!!!!\n\n\n")
+            # print("\n\n\nUsing remote packages!!!!\n\n\n")
             install_package_from_git(
                 installation_dir,
                 package_url="https://github.com/OpenMined/agentic-syftbox",
                 subdirectory="packages/syftbox_queryengine",
                 branch="main",
             )
-
-        print("Run syftbox_queryengine.app mcp module")
 
         module = mcp.deployment["module"]
         start_process = True

@@ -13,7 +13,7 @@ HOME = Path.home()
 
 def check_uv_installed():
     try:
-        subprocess.run(["uv", "--version"], check=True, capture_output=True)
+        _ = subprocess.run(["uv", "--version"], check=True, capture_output=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("uv is not installed. Please install uv first.")
         sys.exit(1)
@@ -26,15 +26,16 @@ def make_mcp_installation_dir(name: str):
 
 
 def init_venv_uv(installation_dir: Path):
-    subprocess.run(
+    _ = subprocess.run(
         ["uv", "venv", "--python", "3.12"],
         cwd=installation_dir,
         check=True,
+        capture_output=True,
     )
 
 
 def install_package_from_local_path(installation_dir: Path, package_path: Path):
-    print(f"Installing package from local path: {package_path}")
+    # print(f"Installing package from local path: {package_path}")
     try:
         cmd = f"source .venv/bin/activate && uv pip install -q -e {package_path}"
         result = subprocess.run(
@@ -51,7 +52,7 @@ def install_package_from_local_path(installation_dir: Path, package_path: Path):
             f"Failed to install package using running:\n{cmd} in {installation_dir}:\n{e.stderr}\n "
         ) from e
 
-    print(result.stdout, result.stderr)
+    # print(result.stdout, result.stderr)
     if result.returncode != 0:
         print(f"Failed to install package: {result.stderr}")
         raise Exception(f"Failed to install package: {result.stderr}")
@@ -90,6 +91,7 @@ def process_exists(pattern):
                 continue  # Skip if cmdline is None or not a list
             cmdline_str = " ".join(cmdline)
             if regex.search(cmdline_str):
+                print(f"Process {cmdline_str} exists")
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
@@ -126,7 +128,6 @@ def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict = None):
     SHELL = os.environ.get("SHELL", "/bin/sh")
 
     cmd = f'{SHELL} -c "source .venv/bin/activate && uv run python -m {mcp_module} > {DEFAULT_LOG_FILE} 2>&1"'
-    print("cmd", cmd)
     proc = subprocess.Popen(
         cmd,
         shell=True,

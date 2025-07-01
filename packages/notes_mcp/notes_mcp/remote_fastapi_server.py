@@ -2,6 +2,7 @@ import sqlite3
 from concurrent.futures import ThreadPoolExecutor
 import traceback
 
+from notes_mcp.models.heartbeat import HeartbeatRequest
 import uvicorn
 from fastapi import Depends, FastAPI, HTTPException, APIRouter
 from pydantic import BaseModel
@@ -61,9 +62,9 @@ def healthcheck():
 
 
 @main_router.post("/heartbeat")
-def heartbeat(email: str):
+def heartbeat(request: HeartbeatRequest):
     with get_notes_db() as conn:
-        set_heartbeat(conn, email)
+        set_heartbeat(conn, request.email)
     return {"status": "ok"}
 
 

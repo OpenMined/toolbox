@@ -1,15 +1,17 @@
-from toolbox.store.store_json import STORE
 import typer
 
 from toolbox.db import conn
 from toolbox.installer import (
+    call_mcp,
     install_mcp,
-    list_installed,
     list_apps_in_store,
+    list_installed,
+    log_mcp,
     reset_mcp,
     show_mcp,
 )
 from toolbox.settings import settings
+from toolbox.store.store_json import STORE
 
 app = typer.Typer()
 
@@ -29,16 +31,18 @@ def install(
         [], "--client", "-c", help="Client to install for"
     ),
 ):
+    use_local_deployments = True
+    use_local_packages = True
     if use_local_deployments:
         # TOOD: FIX
         settings.use_local_deployments = True
         STORE["meeting-notes-mcp"]["context_settings"]["notes_webserver_url"] = (
             "http://localhost:8000/"
         )
-        print("USING LOCAL DEPLOYMENTS")
+        # print("USING LOCAL DEPLOYMENTS")
     if use_local_packages:
         settings.use_local_packages = True
-        print("USING LOCAL PACKAGES")
+        # print("USING LOCAL PACKAGES")
     if request_syftbox_login:
         settings.request_syftbox_login = True
         print("REQUESTING SYFTBOX LOGIN")
@@ -61,11 +65,22 @@ def reset():
     reset_mcp(conn)
 
 
+def log(name: str, follow: bool = typer.Option(False, "--follow", "-f")):
+    log_mcp(conn, name, follow=follow)
+
+
+def call(app_name: str, endpoint: str):
+    call_mcp(conn, app_name, endpoint)
+
+
+app.command()(list_store)
 app.command()(install)
 app.command()(list)
 app.command()(show)
+app.command()(log)
 app.command()(reset)
-app.command()(list_store)
+app.command()(call)
+
 
 if __name__ == "__main__":
     app()

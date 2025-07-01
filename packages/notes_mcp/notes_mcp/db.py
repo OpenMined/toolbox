@@ -116,4 +116,6 @@ def active_since(conn, email: str, seconds: int):
         heartbeat_timestamp, "%Y-%m-%d %H:%M:%S"
     ).replace(tzinfo=timezone.utc)
 
-    return datetime.now() - heartbeat_datetime > timedelta(seconds=seconds)
+    return datetime.now(tz=timezone.utc) - heartbeat_datetime < timedelta(
+        seconds=seconds
+    )

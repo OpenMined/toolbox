@@ -34,6 +34,7 @@ STORE = {
                 },
             }
         },
+        "url": "https://github.com/github/github-mcp-server",
         "secret_requests": [
             {
                 "request_type": "text_input",
@@ -53,7 +54,9 @@ STORE = {
     },
     "meeting-notes-mcp": {
         "has_client_json": False,
+        "url": "https://github.com/OpenMined/agentic-syftbox/tree/main/packages/notes_mcp",
         "requirements": ["syftbox-queryengine-mcp"],
+        "external_dependencies": ["syftbox", "screenpipe"],
         "context_settings": {
             "notes_webserver_url": "http://20.224.153.50:8000/",
         },
@@ -68,6 +71,7 @@ STORE = {
         },
     },
     "syftbox-queryengine-mcp": {
+        "url": "https://github.com/OpenMined/agentic-syftbox/tree/main/packages/syftbox_queryengine",
         "json_bodies_for_client_for_deployment_method": {
             "all": {
                 "proxy-to-local-http": {

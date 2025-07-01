@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import shutil
 import sqlite3
+import time
 import urllib
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -10,8 +11,11 @@ from typing import TYPE_CHECKING
 from toolbox import db
 from pydantic import BaseModel
 
-from toolbox.mcp_clients.mcp_clients import current_claude_desktop_config, write_claude_desktop_config
-from toolbox.mcp_installer.mcp_installer import process_exists
+from toolbox.mcp_clients.mcp_clients import (
+    current_claude_desktop_config,
+    write_claude_desktop_config,
+)
+from toolbox.mcp_installer.mcp_installer import pkill_f, process_exists
 from toolbox.store.store_code import STORE_ELEMENTS
 from toolbox.store.store_json import STORE, get_default_setting
 from toolbox.utils.healthcheck import HealthStatus, healthcheck
@@ -75,11 +79,10 @@ class InstalledMCP(BaseModel):
     def status_icon(self) -> str:
         if self.managed_by.lower() == "claude":
             return "🟢"
-        
+
         healthy = healthcheck(self)
         return HEALTH_STATUS_ICON[healthy]
-    
-    
+
     @property
     def status_str(self) -> str:
         icon = self.status_icon
@@ -194,13 +197,19 @@ class InstalledMCP(BaseModel):
             settings=context.context_settings,
             has_client_json=has_mcp,
         )
-        
+
     def delete(self, conn: sqlite3.Connection):
         if self.installation_dir.exists():
             shutil.rmtree(self.installation_dir, ignore_errors=True)
         db.db_delete_mcp(conn, self.name)
+        if self.is_running:
+            module_name = self.deployment.get("module", None)
+            if module_name is not None:
+                pkill_f(module_name)
+            else:
+                print(f"No module name found for {self.name}")
         self.remove_from_client_config()
-        
+
     def remove_from_client_config(self) -> str:
         if self.client == "claude":
             client_config = current_claude_desktop_config()
@@ -221,7 +230,7 @@ class InstalledMCP(BaseModel):
         row["deployment"] = json.loads(row["deployment"])
         row["settings"] = json.loads(row["settings"])
         return cls(**row)
-    
+
     def external_dependency_status_checks(self) -> dict:
         status_dict = {}
         for callback in STORE_ELEMENTS[self.name].callbacks:
@@ -229,10 +238,12 @@ class InstalledMCP(BaseModel):
             if res is not None:
                 status_dict.update(res)
         return status_dict
-    
+
     def external_dependency_check_str(self) -> str:
         status_dict = self.external_dependency_status_checks()
-        status_str =  "\n".join([f"{key}: {value}" for key, value in status_dict.items()])
+        status_str = "\n".join(
+            [f"{key}: {value}" for key, value in status_dict.items()]
+        )
         if status_str == "":
             return ""
         else:
@@ -240,7 +251,23 @@ class InstalledMCP(BaseModel):
 EXTERNAL DEPENDENCY STATUS:
 {status_str}
 """
-    
+
+    def log(self, follow: bool = False):
+        if self.log_file.exists():
+            if follow:
+                with open(self.log_file, "r") as f:
+                    while True:
+                        line = f.readline()
+                        if line == "":
+                            time.sleep(0.1)
+                        else:
+                            print(line, end="")
+            else:
+                with open(self.log_file, "r") as f:
+                    print(f.read())
+        else:
+            print(f"No log file found for {self.name}")
+
     def logs_str(self) -> str:
         MAX_LOG_LINES = 5
         if self.log_file.exists():
@@ -266,8 +293,6 @@ LOGS:
 {self.external_dependency_check_str()}
 {self.logs_str()}
 """)
-        
-
 
 
 def create_clickable_file_link(file_path, link_text="LINK"):

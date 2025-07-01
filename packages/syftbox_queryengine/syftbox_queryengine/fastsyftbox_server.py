@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastsyftbox import FastSyftBox
 from fastsyftbox.simple_client import DEV_DEFAULT_OWNER_EMAIL, default_dev_data_dir
+from pydantic import BaseModel
 from syft_core import SyftClientConfig
 
 from syftbox_queryengine import db
@@ -15,14 +16,10 @@ from syftbox_queryengine.auth import authenticate
 from syftbox_queryengine.db import (
     get_query_engine_connection,
     get_screenpipe_connection,
-    insert_heartbeat_entry,
     mark_file_as_synced,
+    upsert_heartbeat_entry,
 )
-from syftbox_queryengine.heartbeat import (
-    send_heartbeat,
-    heartbeat_entries,
-    heartbeat_lock,
-)
+from syftbox_queryengine.heartbeat import send_heartbeat
 from syftbox_queryengine.models import (
     AudioChunkDB,
     FilesToSyncResponse,
@@ -67,20 +64,38 @@ def healthcheck():
     return {"status": "ok"}
 
 
+class RegisterAppHealthcheckRequest(BaseModel):
+    app_name: str
+    email: str
+    url: str
+
+
+class AppHeartbeatRequest(BaseModel):
+    app_name: str
+
+
 @router.post("/register_app_healthcheck")
-def register_app_healthcheck(app_name: str, email: str, url: str):
+def register_app_healthcheck(request: RegisterAppHealthcheckRequest):
     with get_query_engine_connection() as conn:
-        send_heartbeat(app_name, email, url)
-        insert_heartbeat_entry(conn, app_name, email, url, True)
+        send_heartbeat(request.app_name, request.email, request.url)
+        upsert_heartbeat_entry(conn, request.app_name, request.email, request.url, True)
 
 
 @router.post("/app_heartbeat_healthy")
-def app_healthcheck(app_name: str):
+def app_healthcheck(request: AppHeartbeatRequest):
     with get_query_engine_connection() as conn:
-        healthy = db.is_healthy(conn, app_name)
+        healthy = db.is_healthy(conn, request.app_name)
         if healthy is None:
             return HTTPException(status_code=400, detail="App not found")
         return healthy
+
+
+@router.post("/get_transcriptions")
+def get_transcriptions():
+    with get_screenpipe_connection() as conn:
+        transcriptions = db.get_all_meeting_notes(conn)
+        res = [dict(transcription) for transcription in transcriptions]
+        return res
 
 
 @router.post("/get_latest_file_to_sync", tags=["syftbox"])

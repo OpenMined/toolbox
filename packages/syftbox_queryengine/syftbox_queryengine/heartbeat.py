@@ -6,7 +6,7 @@ from httpx import Client
 from syftbox_queryengine.db import (
     get_all_heartbeat_entries,
     get_query_engine_connection,
-    insert_heartbeat_entry,
+    upsert_heartbeat_entry,
 )
 
 stop_event = Event()
@@ -26,7 +26,9 @@ def send_heartbeat(app_name: str, email: str, url: str):
         response = client.heartbeat(email)
         response.raise_for_status()
     except Exception as e:
-        print(f"Error sending heartbeat: {e}")
+        print(
+            f" Queryengine could not reach {app_name} for {email} for heartbeat: on {url}/heartbeat {e}"
+        )
 
 
 def heartbeat_loop():
