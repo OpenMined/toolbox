@@ -31,8 +31,6 @@ def install(
         [], "--client", "-c", help="Client to install for"
     ),
 ):
-    use_local_deployments = True
-    use_local_packages = True
     if use_local_deployments:
         # TOOD: FIX
         settings.use_local_deployments = True

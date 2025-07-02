@@ -22,6 +22,9 @@ tb install <app_name>
 ```
 
 
+# Example
+tb install meeting-notes-mcp
+
 # Store
 
 

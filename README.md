@@ -33,6 +33,9 @@ To get logs for a local app
 tb log <appname>
 ```
 
+# Example
+tb install meeting-notes-mcp
+
 
 # Store
 

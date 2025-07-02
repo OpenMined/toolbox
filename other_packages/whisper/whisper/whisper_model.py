@@ -11,7 +11,11 @@ MODEL_ID = "openai/whisper-large-v3"
 
 
 def get_mp3_bytes(mp4_bytes: bytes):
-    audio = AudioFileClip("test_audio.mp4")
+    mp4_file = f"test_audio-{uuid.uuid4()}.mp4"
+    with open(mp4_file, "wb") as f:
+        f.write(mp4_bytes)
+    audio = AudioFileClip(mp4_file)
+    Path(mp4_file).unlink()
     out_file = f"test_audio-{uuid.uuid4()}.mp3"
     audio.write_audiofile(out_file)
     with open(out_file, "rb") as f:
