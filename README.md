@@ -12,6 +12,10 @@ uv pip install -e .
 ```
 
 # Installing apps
+To shwo apps in store
+```
+tb list-store
+```
 To list installed apps
 ```
 tb list
@@ -19,6 +23,14 @@ tb list
 To install a new app
 ```
 tb install <app_name>
+```
+To show an installed app
+```
+tb show <appname>
+```
+To get logs for a local app
+```
+tb log <appname>
 ```
 
 

@@ -18,6 +18,7 @@ def send_message(receiver_name: str, message: str) -> dict:
     """send a slack message."""
     print("sending message")
     response = client.chat_postMessage(channel="D022YGA1L9Y", text=message)
+    response.validate()
     # response = client.chat_postMessage(
     #     channel="D7GH378QG", text="test message from python slack bot"
     # )

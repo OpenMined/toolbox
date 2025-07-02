@@ -12,7 +12,7 @@ from fastsyftbox.simple_client import SimpleRPCClient
 
 from notes_mcp import db
 from notes_mcp.remote_fastapi_server import executor
-from notes_mcp.models.audio import TranscriptionStoreRequest
+from notes_mcp.models.audio import TranscribeRequest, TranscriptionStoreRequest
 from notes_mcp.models.file import FilesToSyncResponse, FileToSync
 from notes_mcp.settings import settings
 from notes_mcp.syftbox_client import create_authenticated_client
@@ -126,16 +126,18 @@ def transcribe(bytes_data: bytes):
     if settings.use_mock_transcription:
         print("using test transcription")
         return "This is a test transcription"
+    else:
+        token = settings.whisper_secret_key
+        if token is None:
+            raise ValueError("WHISPER_SECRET_KEY is not set")
 
-    response = requests.post(
-        "https://api.deepgram.com/v1/listen",
-        headers={
-            "Authorization": f"Token {settings.deepgram_api_key}",
-            "Content-Type": "audio/wav",
-        },
-        params={"model": "nova-2", "smart_format": "true", "sample_rate": "16000"},
-        data=bytes_data,
-    )
-    res = response.json()
-    transcript = res["results"]["channels"][0]["alternatives"][0]["transcript"]
-    return transcript
+        request = TranscribeRequest.from_bytes(bytes_data, token=token)
+
+        payload = request.model_dump()
+
+        response = requests.post(
+            f"http://{settings.whisper_url}/transcribe",
+            json=payload,
+        )
+        transcription = response.json()["transcription"]
+        return transcription
