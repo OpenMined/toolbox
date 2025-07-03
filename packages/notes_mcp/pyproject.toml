@@ -24,7 +24,7 @@ build-backend = "hatchling.build"
 dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4"]
 
 [tool.uv.sources]
-fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "simple-client" }
+fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "fix-startup" }
 
 
 [dependency-groups]

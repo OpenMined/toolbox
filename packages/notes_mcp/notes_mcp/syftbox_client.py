@@ -18,5 +18,5 @@ def create_authenticated_client(
         return SimpleRPCClient.for_local_transport(app_name=app_name, headers=headers)
     else:
         return SimpleRPCClient.for_syftbox_transport(
-            app_owner="koen@openmined.org", app_name=app_name, headers=headers
+            app_owner=user_email, app_name=app_name, headers=headers
         )
