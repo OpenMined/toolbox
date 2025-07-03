@@ -3,7 +3,6 @@ import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-from notes_mcp.models.audio import AudioChunk
 from notes_mcp.models.user import User
 from notes_mcp.settings import settings
 

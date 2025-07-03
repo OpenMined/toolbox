@@ -7,7 +7,10 @@ if TYPE_CHECKING:
     from toolbox.installed_mcp import InstalledMCP
 from toolbox.store.callbacks.callback import (
     Callback,
+    DeleteNotesMCPCallback,
+    DeleteSyftboxQueryengineMCPCallback,
     InstallSyftboxQueryengineMCPCallback,
+    MeetingNotesMCPDataStatsCallback,
     RegisterNotesMCPCallback,
     RegisterNotesMCPAppHeartbeatMCPCallback,
     ScreenpipeExternalDependencyCallback,
@@ -32,6 +35,8 @@ class NotesMCP(StoreElement):
         RegisterNotesMCPAppHeartbeatMCPCallback(),
         ScreenpipeExternalDependencyCallback(),
         SyftboxExternalDependencyCallback(),
+        DeleteNotesMCPCallback(),
+        MeetingNotesMCPDataStatsCallback(),
     ]
 
     def healthcheck(self, mcp: "InstalledMCP") -> bool:
@@ -49,6 +54,8 @@ class SyftboxQueryengineMCP(StoreElement):
         InstallSyftboxQueryengineMCPCallback(),
         ScreenpipeExternalDependencyCallback(),
         SyftboxExternalDependencyCallback(),
+        DeleteSyftboxQueryengineMCPCallback(),
+        MeetingNotesMCPDataStatsCallback(),
     ]
 
     def healthcheck(self, mcp: "InstalledMCP") -> bool:

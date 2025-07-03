@@ -50,7 +50,7 @@ class FilesToSyncResponse(BaseModel):
 
 class MeetingModel(BaseModel):
     filename: str
-    chunks_ids: list[int]
+    audio_chunk_ids: list[int]
 
 
 class TranscriptionStoreRequest(BaseModel):
@@ -63,16 +63,8 @@ class TranscriptionStoreRequest(BaseModel):
 
 class AudioChunk(BaseModel):
     id: int
-    offset_index: int
+    file_path: str
     timestamp: str
-    transcription: str
-    device: str
-    is_input_device: bool
-    speaker_id: int
-    transcription_engine: str
-    start_time: float
-    end_time: float
-    text_length: int
 
     @property
     def datetime(self):
@@ -82,19 +74,11 @@ class AudioChunk(BaseModel):
     def from_sql_row(cls, row):
         return cls(
             id=row["id"],
-            offset_index=row["offset_index"],
+            file_path=row["file_path"],
             timestamp=row["timestamp"],
-            transcription=row["transcription"],
-            device=row["device"],
-            is_input_device=row["is_input_device"],
-            speaker_id=row["speaker_id"],
-            transcription_engine=row["transcription_engine"],
-            start_time=row["start_time"],
-            end_time=row["end_time"],
-            text_length=row["text_length"],
         )
 
 
-class TranscriptionChunksResult(BaseModel):
-    transcription_chunks: list[AudioChunk]
+class AudioChunksResult(BaseModel):
+    audio_chunks: list[AudioChunk]
     indexed: list[bool]

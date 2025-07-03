@@ -68,9 +68,9 @@ def create_tables_screenpipe(conn):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS meeting_audio_chunks (
             meeting_id INTEGER,
-            chunkid INTEGER,  
+            audio_chunk_id INTEGER,  
             FOREIGN KEY (meeting_id) REFERENCES meeting_meta(meeting_id),
-            PRIMARY KEY (meeting_id, chunkid)
+            PRIMARY KEY (meeting_id, audio_chunk_id)
         );
     """)
     conn.commit()
@@ -144,18 +144,18 @@ def insert_audio_chunk(
     conn.commit()
 
 
-def get_transcription_chunks(conn) -> tuple[list[AudioChunk], list[bool]]:
+def get_audio_chunks(conn) -> tuple[list[AudioChunk], list[bool]]:
     cursor = conn.cursor()
-    cursor.execute("""SELECT audio_transcriptions.*, meeting_audio_chunks.chunkid is NOT NULL as indexed  
-                   FROM audio_transcriptions
-                   LEFT JOIN meeting_audio_chunks on audio_transcriptions.audio_chunk_id = meeting_audio_chunks.chunkid""")
+    cursor.execute("""SELECT audio_chunks.*, meeting_audio_chunks.audio_chunk_id is NOT NULL as indexed  
+                   FROM audio_chunks
+                   LEFT JOIN meeting_audio_chunks on audio_chunks.id = meeting_audio_chunks.audio_chunk_id""")
     rows = cursor.fetchall()
     chunks = [AudioChunk.from_sql_row(row) for row in rows]
     indexed = [row["indexed"] for row in rows]
     return chunks, indexed
 
 
-def insert_meeting(conn, filename: str, chunks_ids: list[int]):
+def insert_meeting(conn, filename: str, audio_chunk_ids: list[int]):
     """
     Insert meeting notes into the database.
     """
@@ -169,13 +169,13 @@ def insert_meeting(conn, filename: str, chunks_ids: list[int]):
     )
     meeting_id = cursor.lastrowid
     conn.commit()
-    for chunk_id in chunks_ids:
+    for audio_chunk_id in audio_chunk_ids:
         cursor.execute(
             """
-            INSERT INTO meeting_audio_chunks (meeting_id, chunkid)
+            INSERT INTO meeting_audio_chunks (meeting_id, audio_chunk_id)
             VALUES (?, ?)
         """,
-            (meeting_id, chunk_id),
+            (meeting_id, audio_chunk_id),
         )
     conn.commit()
 
@@ -198,24 +198,58 @@ def insert_transcription(
     cursor = conn.cursor()
     cursor.execute(
         """
-        INSERT INTO audio_transcriptions (id, audio_chunk_id, offset_index, timestamp, transcription, device, is_input_device, speaker_id, transcription_engine, start_time, end_time, text_length)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        SELECT id FROM audio_transcriptions 
+        WHERE audio_chunk_id = ? AND transcription_engine = ?
     """,
-        (
-            transcription_id,
-            audio_chunk_id,
-            offset_index,
-            timestamp,
-            transcription,
-            device,
-            is_input_device,
-            speaker_id,
-            transcription_engine,
-            start_time,
-            end_time,
-            text_length,
-        ),
+        (audio_chunk_id, transcription_engine),
     )
+    existing = cursor.fetchone()
+
+    if existing:
+        # Update existing entry
+        cursor.execute(
+            """
+            UPDATE audio_transcriptions 
+            SET offset_index = ?, timestamp = ?, transcription = ?, device = ?, 
+                is_input_device = ?, speaker_id = ?, start_time = ?, end_time = ?, text_length = ?
+            WHERE audio_chunk_id = ? AND transcription_engine = ?
+        """,
+            (
+                offset_index,
+                timestamp,
+                transcription,
+                device,
+                is_input_device,
+                speaker_id,
+                start_time,
+                end_time,
+                text_length,
+                audio_chunk_id,
+                transcription_engine,
+            ),
+        )
+    else:
+        # Insert new entry
+        cursor.execute(
+            """
+            INSERT INTO audio_transcriptions (id, audio_chunk_id, offset_index, timestamp, transcription, device, is_input_device, speaker_id, transcription_engine, start_time, end_time, text_length)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """,
+            (
+                transcription_id,
+                audio_chunk_id,
+                offset_index,
+                timestamp,
+                transcription,
+                device,
+                is_input_device,
+                speaker_id,
+                transcription_engine,
+                start_time,
+                end_time,
+                text_length,
+            ),
+        )
     conn.commit()
 
 
@@ -227,12 +261,12 @@ WITH meetings AS (
     mm.filename,
     MIN(at.timestamp) AS datetime
   FROM (
-    SELECT * FROM meeting_audio_chunks ORDER BY chunkid
-  ) mc
-  JOIN meeting_meta mm ON mc.meeting_id = mm.meeting_id
-  JOIN audio_transcriptions at ON mc.chunkid = at.audio_chunk_id
-  GROUP BY mc.meeting_id
-  ORDER BY at.timestamp
+    SELECT * FROM meeting_audio_chunks ORDER BY audio_chunk_id
+  ) mac
+  JOIN meeting_meta mm ON mm.meeting_id = mac.meeting_id
+  JOIN audio_chunks ac ON ac.id = mac.audio_chunk_id
+  GROUP BY mac.meeting_id
+  ORDER BY ac.timestamp
 )
 SELECT *
 FROM meetings;
@@ -252,12 +286,12 @@ WITH meetings AS (
     MAX(at.timestamp) AS end_date,
     GROUP_CONCAT(at.transcription, ' ') AS full_text
   FROM (
-    SELECT * FROM meeting_audio_chunks ORDER BY chunkid
-  ) mc
-  JOIN meeting_meta mm ON mc.meeting_id = mm.meeting_id
-  JOIN audio_transcriptions at ON mc.chunkid = at.audio_chunk_id
+    SELECT * FROM meeting_audio_chunks ORDER BY audio_chunk_id
+  ) mac
+  JOIN meeting_meta mm ON mm.meeting_id = mac.meeting_id
+  JOIN audio_transcriptions at ON at.audio_chunk_id = mac.audio_chunk_id
   WHERE mm.filename = ?
-  GROUP BY mc.meeting_id
+  GROUP BY mm.meeting_id
   ORDER BY at.timestamp
 )
 SELECT *
@@ -272,17 +306,17 @@ def get_all_meeting_notes(conn):
     get_all_meeting_notes_query = """
 WITH meetings AS (
   SELECT
-    mc.meeting_id,
+    mm.meeting_id,
     mm.filename,
     MIN(at.timestamp) AS start_date,
     MAX(at.timestamp) AS end_date,
     GROUP_CONCAT(at.transcription, ' ') AS full_text
   FROM (
-    SELECT * FROM meeting_audio_chunks ORDER BY chunkid
-  ) mc
-  JOIN meeting_meta mm ON mc.meeting_id = mm.meeting_id
-  JOIN audio_transcriptions at ON mc.chunkid = at.audio_chunk_id
-  GROUP BY mc.meeting_id
+    SELECT * FROM meeting_audio_chunks ORDER BY audio_chunk_id
+  ) mac
+  JOIN meeting_meta mm ON mm.meeting_id = mac.meeting_id
+  JOIN audio_transcriptions at ON at.audio_chunk_id = mac.audio_chunk_id
+  GROUP BY mm.meeting_id
   ORDER BY at.timestamp
 )
 SELECT *

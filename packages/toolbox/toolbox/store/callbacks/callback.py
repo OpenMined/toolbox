@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import sqlite3
 import traceback
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -59,9 +60,47 @@ class Callback(BaseModel):
     def on_external_dependency_status_check(self, mcp: "InstalledMCP"):
         pass
 
+    def on_delete(self, mcp: "InstalledMCP"):
+        pass
+
+    def on_data_stats(self, mcp: "InstalledMCP"):
+        pass
+
 
 class RequestedSecret(BaseModel):
     result_name: str
+
+
+class DeleteNotesMCPCallback(Callback):
+    def on_delete(self, mcp: "InstalledMCP"):
+        db_path = HOME / ".meeting-notes-mcp" / "db.sqlite"
+        screenpipe_db_path = HOME / ".screenpipe" / "db.sqlite"
+        if db_path.exists():
+            print(f"Deleting {db_path}")
+            db_path.unlink()
+        if screenpipe_db_path.exists():
+            conn = sqlite3.connect(screenpipe_db_path)
+            cursor = conn.cursor()
+            print("Deleting table meeting_meta from screenpipe")
+            cursor.execute("DELETE FROM meeting_meta")
+            print("Deleting table meeting_audio_chunks from screenpipe")
+            cursor.execute("DELETE FROM meeting_audio_chunks")
+            print(
+                "Deleting audio_transcriptions from screenpipe where transcription_engine='syftbox-whisper-v3-large'"
+            )
+            cursor.execute(
+                "DELETE FROM audio_transcriptions where transcription_engine='syftbox-whisper-v3-large'"
+            )
+            conn.commit()
+            conn.close()
+
+
+class DeleteSyftboxQueryengineMCPCallback(Callback):
+    def on_delete(self, mcp: "InstalledMCP"):
+        db_path = HOME / ".query-engine-mcp" / "data.db"
+        if db_path.exists():
+            print(f"Deleting {db_path}")
+            db_path.unlink()
 
 
 class TextInputEnvRequestedSecretCallback(RequestedSecret, Callback):
@@ -123,6 +162,27 @@ Press Enter to continue."""
             return {
                 "syftbox": "🔴",
             }
+
+
+class MeetingNotesMCPDataStatsCallback(Callback):
+    def on_data_stats(self, mcp: "InstalledMCP") -> dict:
+        try:
+            query_engine_port = mcp.settings.get("SYFTBOX_QUERYENGINE_PORT", None)
+            if query_engine_port is None:
+                query_engine_port = mcp.settings.get("syftbox_queryengine_port", None)
+                if query_engine_port is None:
+                    raise ValueError("SYFTBOX_QUERYENGINE_PORT not found in settings")
+            response = requests.post(
+                f"http://localhost:{query_engine_port}/get_meeting_transcriptions"
+            )
+            response.raise_for_status()
+            transcriptions = response.json()
+            return {
+                "meeting_transcriptions": len(transcriptions),
+                "db_path": str(HOME / ".screenpipe" / "db.sqlite"),
+            }
+        except Exception as e:
+            return {"error": str(e)}
 
 
 class ScreenpipeExternalDependencyCallback(Callback):

@@ -26,15 +26,13 @@ if TYPE_CHECKING:
 
 HOME = Path.home()
 INSTALLED_HEADERS = [
+    "TYPE",
     "NAME",
+    "MANAGED BY",
     "CLIENT",
-    "DEPLOYMENT",
+    "ACCESS",
     "READ ACCESS",
     "WRITE ACCESS",
-    "HOST",
-    "MANAGED BY",
-    "PROXY",
-    "VERIFIED",
     "CLIENT CONFIG",
 ]
 
@@ -60,6 +58,7 @@ class InstalledMCP(BaseModel):
     has_client_json: bool = True
     deployment: dict
     settings: dict
+    app_type: str
 
     @property
     def client_config_file(self) -> str:
@@ -101,15 +100,13 @@ class InstalledMCP(BaseModel):
 
     def format_as_tabulate_row(self) -> list[str]:
         return [
+            self.app_type,
             f"{self.name}",
+            f"{self.managed_by} {self.status_icon}",
             self.client,
             self.deployment_method,
             ",\n".join(self.read_access),
             ",\n".join(self.write_access),
-            self.host,
-            f"{self.managed_by} {self.status_icon}",
-            self.proxy if self.proxy is not None else "",
-            "✓" if self.verified else "",
             self.client_config_file,
         ]
 
@@ -146,6 +143,7 @@ class InstalledMCP(BaseModel):
             proxy = get_default_setting(name, client, "proxy")
 
         verified = get_default_setting(name, client, "verified")
+        app_type = get_default_setting(name, client, "app_type")
 
         if deployment_method is None:
             deployment_method = get_default_setting(name, client, "deployment_method")
@@ -196,9 +194,15 @@ class InstalledMCP(BaseModel):
             deployment=deployment,
             settings=context.context_settings,
             has_client_json=has_mcp,
+            app_type=app_type,
         )
 
     def delete(self, conn: sqlite3.Connection):
+        store_object = STORE_ELEMENTS[self.name]
+        callbacks = store_object.callbacks
+        for callback in callbacks:
+            callback.on_delete(self)
+
         if self.installation_dir.exists():
             shutil.rmtree(self.installation_dir, ignore_errors=True)
         db.db_delete_mcp(conn, self.name)
@@ -229,6 +233,7 @@ class InstalledMCP(BaseModel):
         row["deployment_method"] = row["deployment_method"]
         row["deployment"] = json.loads(row["deployment"])
         row["settings"] = json.loads(row["settings"])
+        row["app_type"] = row["app_type"]
         return cls(**row)
 
     def external_dependency_status_checks(self) -> dict:
@@ -285,12 +290,22 @@ LOGS:
 {logs}
 """
 
+    def data_stats_str(self) -> str:
+        callbacks = STORE_ELEMENTS[self.name].callbacks
+        res = {}
+        for callback in callbacks:
+            callback_res = callback.on_data_stats(self)
+            if callback_res is not None:
+                res.update(callback_res)
+        return "\n".join([f"{key}: {value}" for key, value in res.items()])
+
     def show(self):
         print(f"""
 ========================================
 {self.name} {self.status_str}
 ========================================
 {self.external_dependency_check_str()}
+{self.data_stats_str()}
 {self.logs_str()}
 """)
 

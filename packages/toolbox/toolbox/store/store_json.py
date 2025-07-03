@@ -11,6 +11,7 @@ GLOBAL_MCP_DEFAULTS = {
     "default_host": DEFAULT_LOCAL_MACHINE_NAME,
     "default_verified": True,
     "default_proxy": "mcp-remote",
+    "default_app_type": "mcp",
 }
 
 # you either provide a client and nothing, then it chooses the default deployment of the client, or of all
@@ -62,12 +63,13 @@ STORE = {
         },
         "default_settings": {
             "default_read_access": ["Apple Audio Recordings"],
-            "default_write_access": ["Meeting Notes"],
+            "default_write_access": ["Meetings", "Transcriptions"],
             "default_model": None,
             "default_proxy": "mcp-remote",
             "default_host": "OM enclave",
             "default_managed_by": "OM enclave",
             "default_deployment_method": "proxy-to-om-enclave",
+            "default_app_type": "bg agent",
         },
     },
     "syftbox-queryengine-mcp": {

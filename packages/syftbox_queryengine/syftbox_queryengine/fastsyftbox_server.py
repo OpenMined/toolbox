@@ -26,11 +26,12 @@ from syftbox_queryengine.models import (
     FileToSync,
     MeetingModel,
     SubmitResult,
-    TranscriptionChunksResult,
+    AudioChunksResult,
     TranscriptionStoreRequest,
 )
 from syftbox_queryengine.settings import settings
 from syftbox_queryengine.sync import get_files_to_sync
+from loguru import logger
 
 APP_NAME = "data-syncer"
 
@@ -90,8 +91,8 @@ def app_healthcheck(request: AppHeartbeatRequest):
         return healthy
 
 
-@router.post("/get_transcriptions")
-def get_transcriptions():
+@router.post("/get_meeting_transcriptions")
+def get_meeting_transcriptions():
     with get_screenpipe_connection() as conn:
         transcriptions = db.get_all_meeting_notes(conn)
         res = [dict(transcription) for transcription in transcriptions]
@@ -140,7 +141,7 @@ def submit_transcription(
             device=transcription_req.device,
             is_input_device=True,
             speaker_id=0,
-            transcription_engine="deepgram",
+            transcription_engine="syftbox-whisper-v3-large",
             start_time=0,
             end_time=0,
             text_length=len(transcription_req.transcription),
@@ -159,11 +160,10 @@ def query_transcription_chunks(
     current_user_email: str = Depends(authenticate),
 ):
     with get_screenpipe_connection() as conn:
-        transcription_chunks, indexed = db.get_transcription_chunks(conn)
-    print("transcription_chunks", transcription_chunks[0])
-    response = TranscriptionChunksResult(
-        transcription_chunks=transcription_chunks, indexed=indexed
-    )
+        audio_chunks, indexed = db.get_audio_chunks(conn)
+    if len(audio_chunks) > 0:
+        logger.info(f"transcription_chunks {audio_chunks[0]}")
+    response = AudioChunksResult(audio_chunks=audio_chunks, indexed=indexed)
 
     return response.model_dump_json()
 
@@ -177,7 +177,7 @@ def submit_meetings(
         print("Found", len(meetings), "meetings")
         for meeting in meetings:
             print("Inserting new meeting", meeting.filename)
-            db.insert_meeting(conn, meeting.filename, meeting.chunks_ids)
+            db.insert_meeting(conn, meeting.filename, meeting.audio_chunk_ids)
 
 
 app = FastSyftBox(

@@ -8,7 +8,7 @@ from fastsyftbox.simple_client import SimpleRPCClient
 import httpx
 from notes_mcp import db
 from notes_mcp.remote_fastapi_server import executor
-from notes_mcp.models.audio import AudioChunk, TranscriptionChunksResult
+from notes_mcp.models.audio import AudioChunksResult
 from notes_mcp.models.meeting import Meeting
 from notes_mcp.syftbox_client import create_authenticated_client
 
@@ -57,7 +57,7 @@ def extract_and_upload_meetings(client: SimpleRPCClient):
     try:
         response = client.post("/query_transcription_chunks")
         response.raise_for_status()
-        res = TranscriptionChunksResult.model_validate_json(response.json())
+        res = AudioChunksResult.model_validate_json(response.json())
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 504:
             print(
@@ -72,46 +72,57 @@ def extract_and_upload_meetings(client: SimpleRPCClient):
         )
         return
 
-    transcription_chunks = res.transcription_chunks
+    audio_chunks = res.audio_chunks
     indexed = res.indexed
+    n_not_indexed = sum([not i for i in indexed])
 
     meetings = []
     current_meeting_chunks = []
-    if len(transcription_chunks) > 0:
+    if len(audio_chunks) > 0:
         print(
             "Found",
-            len(transcription_chunks),
+            n_not_indexed,
             "new transcription chunks to index for meetings",
         )
 
-        previous_start_date = transcription_chunks[0].datetime
+        previous_start_date = audio_chunks[0].datetime
 
-        for indexed, chunk in zip(indexed, transcription_chunks):
-            if indexed:
+        for is_indexed, audio_chunk in zip(indexed, audio_chunks):
+            if is_indexed:
                 continue
-            print(chunk.datetime, previous_start_date)
-            time_diff = (chunk.datetime - previous_start_date).total_seconds() / 60
+            print(audio_chunk.datetime, previous_start_date)
+            time_diff = (
+                audio_chunk.datetime - previous_start_date
+            ).total_seconds() / 60
             if time_diff > 30:
                 if current_meeting_chunks:
                     meeting = Meeting(
                         filename=f"meeting_{current_meeting_chunks[0].datetime}.txt",
-                        chunks_ids=[chunk.id for chunk in current_meeting_chunks],
+                        audio_chunk_ids=[chunk.id for chunk in current_meeting_chunks],
                     )
                     meetings.append(meeting)
-                current_meeting_chunks = [chunk]
-                previous_start_date = chunk.datetime
+                current_meeting_chunks = [audio_chunk]
+                previous_start_date = audio_chunk.datetime
             else:
-                current_meeting_chunks.append(chunk)
+                current_meeting_chunks.append(audio_chunk)
 
         if len(current_meeting_chunks) > 0:
             meeting = Meeting(
                 filename=f"meeting-{current_meeting_chunks[0].datetime}.txt",
-                chunks_ids=[chunk.id for chunk in current_meeting_chunks],
+                audio_chunk_ids=[
+                    audio_chunk.id for audio_chunk in current_meeting_chunks
+                ],
             )
             meetings.append(meeting)
     else:
         print("No new transcription chunks found to index for meetings")
 
     if len(meetings) > 0:
+        for meeting in meetings:
+            print(
+                f"found meeting {meeting.filename} with audio chunk ids {meeting.audio_chunk_ids}"
+            )
         payload = [meeting.model_dump() for meeting in meetings]
         client.post("/submit_meetings", json=payload)
+    else:
+        print(f"No new meetings found from {n_not_indexed} new transcription chunks")

@@ -4,7 +4,17 @@
   <br/>
 </p>
 
-<p align="center"><b>A privacy-first tool to install local and remote mcp servers for your personal data</b></p>
+<p align="center"><b>A privacy-first tool to install mcp servers and background agents for your personal data</b></p>
+
+# Toolbox
+Toolbox is a cli tool for installing and managing [MCP](https://github.com/modelcontextprotocol/python-sdk) servers and background agents, made for developers.
+
+- Toolbox aims to support popular developer tools (think github, slack, discord, gmail etc.), and clients (claude desktop, cursor), making it easier to deploy useful MCP servers  
+- **mcp servers** are servers that provide context for LLMs in a standardized way, mostly used for tool calling
+- **background agents** are long running processes that create new data based on your existing data (think [RAG](https://en.wikipedia.org/wiki/Retrieval-augmented_generation), [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition),[speech recognition](https://en.wikipedia.org/wiki/Speech_recognition))
+- we provide the option to run some of these agents/mcp server in the cloud, with the medium term vision of deploying  those components in [trusted execution environments](https://en.wikipedia.org/wiki/Trusted_execution_environment). In the first beta versions this wont be supported, but we wont store any sensitive user data (only meta data).
+
+
 
 # Install
 ```

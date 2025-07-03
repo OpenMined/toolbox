@@ -17,7 +17,7 @@ conn.row_factory = sqlite3.Row
 def create_table(conn: sqlite3.Connection):
     curr = conn.cursor()
     curr.execute("""CREATE TABLE IF NOT EXISTS mcps (name TEXT, client TEXT, read_access TEXT, write_access TEXT, model TEXT, host TEXT,
-                 managed_by TEXT, proxy TEXT, verified TEXT, json_body TEXT, deployment_method TEXT, deployment TEXT, settings TEXT,
+                 managed_by TEXT, proxy TEXT, verified TEXT, json_body TEXT, deployment_method TEXT, deployment TEXT, settings TEXT, app_type TEXT,
                  PRIMARY KEY (name, client))""")
 
 
@@ -25,8 +25,9 @@ def db_upsert_mcp(conn: sqlite3.Connection, mcp: InstalledMCP):
     curr = conn.cursor()
     curr.execute(
         """
-        INSERT INTO mcps (name, client, read_access, write_access, model, host, managed_by, proxy, verified, json_body, deployment_method, deployment, settings)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO mcps (name, client, read_access, write_access, model, host,
+        managed_by, proxy, verified, json_body, deployment_method, deployment, settings, app_type)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ON CONFLICT (name, client) DO UPDATE SET
             read_access = excluded.read_access,
             write_access = excluded.write_access,
@@ -38,7 +39,8 @@ def db_upsert_mcp(conn: sqlite3.Connection, mcp: InstalledMCP):
             json_body = excluded.json_body,
             deployment_method = excluded.deployment_method,
             deployment = excluded.deployment,
-            settings = excluded.settings
+            settings = excluded.settings,
+            app_type = excluded.app_type
     """,
         (
             mcp.name,
@@ -54,6 +56,7 @@ def db_upsert_mcp(conn: sqlite3.Connection, mcp: InstalledMCP):
             mcp.deployment_method,
             json.dumps(mcp.deployment),
             json.dumps(mcp.settings),
+            mcp.app_type,
         ),
     )
     conn.commit()
@@ -75,6 +78,7 @@ def db_get_mcps_by_name(conn: sqlite3.Connection, name: str):
     curr.execute("SELECT * FROM mcps WHERE name = ?", (name,))
     rows = curr.fetchall()
     return [InstalledMCP.from_db_row(row) for row in rows]
+
 
 def db_delete_mcp(conn: sqlite3.Connection, name: str):
     curr = conn.cursor()

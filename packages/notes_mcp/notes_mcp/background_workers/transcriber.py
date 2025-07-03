@@ -81,7 +81,7 @@ def _poll_for_new_audio_chunks(email: str, access_token: str):
         result.raise_for_status()
         file = FilesToSyncResponse.model_validate_json(result.json()).file
         if file is not None:
-            print("Got file to transcribe and upload", file)
+            print("Got file to transcribe and upload", file.filename)
             bts = base64.b64decode(file.encoded_bts)
             transcript = transcribe(bts)
             print("transcription succesful, uploading to data-syncer")
