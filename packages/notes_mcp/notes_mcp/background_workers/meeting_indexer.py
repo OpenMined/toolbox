@@ -30,9 +30,7 @@ def poll_for_new_meetings(stop_event: threading.Event):
             for user in users:
                 if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
                     print(f"User {user.email} is active, polling for new meetings")
-                    future = executor.submit(
-                        index_meetings, user.email, user.access_token
-                    )
+                    future = executor.submit(index_meetings, user.id)
                     future.add_done_callback(log_error)
                 else:
                     print(
@@ -44,13 +42,15 @@ def poll_for_new_meetings(stop_event: threading.Event):
             time.sleep(POLL_INTERVAL)
 
 
-def index_meetings(user_email: str, access_token: str):
-    client = create_authenticated_client(
-        app_name="data-syncer",
-        user_email=user_email,
-        access_token=access_token,
-    )
-    extract_and_upload_meetings(client)
+def index_meetings(user_id: int):
+    with db.get_notes_db() as conn:
+        user = db.get_user_by_id(conn, user_id)
+        client = create_authenticated_client(
+            app_name="data-syncer",
+            user_email=user.email,
+            access_token=user.access_token,
+        )
+        extract_and_upload_meetings(client)
 
 
 def extract_and_upload_meetings(client: SimpleRPCClient):

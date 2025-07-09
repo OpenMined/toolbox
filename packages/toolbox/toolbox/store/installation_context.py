@@ -30,3 +30,7 @@ class InstallationContext(BaseModel):
     def on_install_init_finished(self, *args, **kwargs):
         for callback in self.callbacks:
             callback.on_install_init_finished(self, *args, **kwargs)
+
+    def on_install_start(self, *args, **kwargs):
+        for callback in self.callbacks:
+            callback.on_install_start(self, *args, **kwargs)

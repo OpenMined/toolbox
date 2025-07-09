@@ -57,9 +57,7 @@ def poll_for_new_audio_chunks(stop_event: threading.Event):
             for user in users:
                 if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
                     print("Polling for new audio chunks for user", user.email)
-                    executor.submit(
-                        _poll_for_new_audio_chunks, user.email, user.access_token
-                    )
+                    executor.submit(_poll_for_new_audio_chunks, user.id)
                 else:
                     print(
                         f"User {user.email} has not been active in the last {ACTIVITY_THRESHOLD_SECONDS} seconds, skipping"
@@ -70,39 +68,39 @@ def poll_for_new_audio_chunks(stop_event: threading.Event):
     print("DONE")
 
 
-def _poll_for_new_audio_chunks(email: str, access_token: str):
-    client = create_authenticated_client(
-        app_name="data-syncer",
-        user_email=email,
-        access_token=access_token,
-    )
-    try:
-        result = client.post("get_latest_file_to_sync/")
-        result.raise_for_status()
-        file = FilesToSyncResponse.model_validate_json(result.json()).file
-        if file is not None:
-            print("Got file to transcribe and upload", file.filename)
-            bts = base64.b64decode(file.encoded_bts)
-            transcript = transcribe(bts)
-            print("transcription succesful, uploading to data-syncer")
-            upload_transcription_to_queryengine(client, transcript, file)
-        else:
-            print("No files to transcribe")
-
-    except httpx.HTTPStatusError as e:
-        if e.response.status_code == 504:
-            print(
-                f"Could not reach user {client.app_owner} for /get_latest_file_to_sync"
-            )
-            return
-        else:
-            raise e
-    except Exception:
-        print(
-            f"Failed calling {client.app_name} on {client.app_owner}/get_latest_file_to_sync: {traceback.format_exc()}"
+def _poll_for_new_audio_chunks(user_id: int):
+    with db.get_notes_db() as conn:
+        user = db.get_user_by_id(conn, user_id)
+        client = create_authenticated_client(
+            app_name="data-syncer",
+            user_email=user.email,
+            access_token=user.access_token,
         )
+        try:
+            result = client.post("get_latest_file_to_sync/")
+            result.raise_for_status()
+            file = FilesToSyncResponse.model_validate_json(result.json()).file
+            if file is not None:
+                print("Got file to transcribe and upload", file.filename)
+                bts = base64.b64decode(file.encoded_bts)
+                transcript = transcribe(bts)
+                print("transcription succesful, uploading to data-syncer")
+                upload_transcription_to_queryengine(client, transcript, file)
+            else:
+                print("No files to transcribe")
 
-    time.sleep(10)
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 504:
+                print(
+                    f"Could not reach user {client.app_owner} for /get_latest_file_to_sync"
+                )
+                return
+            else:
+                raise e
+        except Exception:
+            print(
+                f"Failed calling {client.app_name} on {client.app_owner}/get_latest_file_to_sync: {traceback.format_exc()}"
+            )
 
 
 def upload_transcription_to_queryengine(

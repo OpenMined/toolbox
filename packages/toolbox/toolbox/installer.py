@@ -11,7 +11,9 @@ import requests
 from tabulate import tabulate
 
 from toolbox.db import db_get_mcps, db_get_mcps_by_name, db_upsert_mcp
-from toolbox.external_dependencies.external_depenencies import get_syftbox_email
+from toolbox.external_dependencies.external_depenencies import (
+    get_existing_syftbox_email_from_config,
+)
 from toolbox.installed_mcp import (
     HOME,
     INSTALLED_HEADERS,
@@ -58,10 +60,8 @@ def install_requirements(
 
 
 def check_external_dependencies(
-    conn: sqlite3.Connection,
     name: str,
     context: InstallationContext,
-    clients: list[str],
 ):
     store_element = STORE_ELEMENTS[name]
     for callback in store_element.callbacks:
@@ -77,6 +77,18 @@ def check_toolbox_requirements():
         res = input("npx is not installed. Please install npx first. Continue? (y/n)")
         if res != "y":
             exit(1)
+
+
+def add_syftbox_config_to_context(context: InstallationContext):
+    email = get_existing_syftbox_email_from_config()
+    if email is not None:
+        # use a random secret here
+
+        context.context_dict["syftbox_email"] = email
+        context.context_settings["SYFTBOX_EMAIL"] = email
+        syftbox_access_token = secrets.token_hex(8)
+        context.context_dict["syftbox_access_token"] = syftbox_access_token
+        context.context_settings["SYFTBOX_ACCESS_TOKEN"] = syftbox_access_token
 
 
 def install_mcp(
@@ -112,18 +124,14 @@ def install_mcp(
             context_apps=[name],
             context_settings=store_json.get("context_settings", {}),
         )
+
+    context.on_install_start()
+
     if not settings.request_syftbox_login:
-        email = get_syftbox_email()
-        # use a random secret here
-        # print("INSERTING SYFTBOX LOGIN")
-        syftbox_access_token = secrets.token_hex(8)
-        context.context_dict["syftbox_email"] = email
-        context.context_dict["syftbox_access_token"] = syftbox_access_token
-        context.context_settings["SYFTBOX_EMAIL"] = email
-        context.context_settings["SYFTBOX_ACCESS_TOKEN"] = syftbox_access_token
+        add_syftbox_config_to_context(context)
 
     install_requirements(conn, name, context, clients)
-    check_external_dependencies(conn, name, context, clients)
+    check_external_dependencies(name, context)
     context.on_input()
 
     for client in clients:
@@ -234,9 +242,9 @@ def get_mcp_by_fuzzy_name(conn: sqlite3.Connection, name: str):
     return mcp
 
 
-def show_mcp(conn: sqlite3.Connection, name: str):
+def show_mcp(conn: sqlite3.Connection, name: str, settings: bool = False):
     mcp = get_mcp_by_fuzzy_name(conn, name)
-    mcp.show()
+    mcp.show(settings=settings)
 
 
 def reset_mcp(conn: sqlite3.Connection):

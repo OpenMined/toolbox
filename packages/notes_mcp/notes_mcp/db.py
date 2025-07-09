@@ -82,7 +82,7 @@ def get_user_by_id(conn, user_id: int):
     """Get user by ID."""
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users WHERE id = ?", (user_id,))
-    return cursor.fetchone()
+    return User(**dict(cursor.fetchone()))
 
 
 def get_users(conn) -> list[User]:

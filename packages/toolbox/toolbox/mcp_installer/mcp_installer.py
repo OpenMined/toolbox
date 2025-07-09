@@ -6,32 +6,16 @@ from pathlib import Path
 import psutil
 import os
 
+from toolbox.mcp_installer.uv_utils import set_uv_path_in_env
 from toolbox.utils.utils import DEFAULT_LOG_FILE, installation_dir_from_name
 
 HOME = Path.home()
-
-
-def check_uv_installed():
-    try:
-        _ = subprocess.run(["uv", "--version"], check=True, capture_output=True)
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        print("uv is not installed. Please install uv first.")
-        sys.exit(1)
 
 
 def make_mcp_installation_dir(name: str):
     installation_dir = installation_dir_from_name(name)
     installation_dir.mkdir(parents=True, exist_ok=True)
     return installation_dir
-
-
-def init_venv_uv(installation_dir: Path):
-    _ = subprocess.run(
-        ["uv", "venv", "--python", "3.12"],
-        cwd=installation_dir,
-        check=True,
-        capture_output=True,
-    )
 
 
 def install_package_from_local_path(installation_dir: Path, package_path: Path):
@@ -124,25 +108,33 @@ def should_kill_existing_process(module: str):
         return should_kill_existing_process(module)
 
 
-def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict = None):
-    SHELL = os.environ.get("SHELL", "/bin/sh")
+def prepare_env_with_uv(passed_env: dict | None = None):
+    inherited_env = os.environ.copy()
+    inherited_env = set_uv_path_in_env(inherited_env)
+    if passed_env is None:
+        passed_env = {}
+    final_env = {**inherited_env, **passed_env}
+    return final_env
 
-    cmd = f'{SHELL} -c "source .venv/bin/activate && uv run python -m {mcp_module} > {DEFAULT_LOG_FILE} 2>&1"'
+
+def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict | None = None):
+    SHELL = os.environ.get("SHELL", "/bin/sh")
+    final_env = prepare_env_with_uv(env)
+
+    cmd = f'{SHELL} -c "which uv && source .venv/bin/activate && nohup uv run python -m {mcp_module} > {DEFAULT_LOG_FILE} 2>&1 &"'
     proc = subprocess.Popen(
         cmd,
         shell=True,
         cwd=installation_dir,
         text=True,
         executable=SHELL,
-        env=env,
+        env=final_env,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
     )
-
-    # try:
-    #     stdout, stderr = proc.communicate(timeout=5)
-    #     if proc.returncode != 0:
-    #         print(f"Process finished with error within 5 seconds (code {proc.returncode}):")
-    #         raise Exception(stderr.decode())
-    # except subprocess.TimeoutExpired:
-    #     return
-
-    # return stdout.decode()
+    status_code = proc.wait(timeout=15)
+    if status_code != 0:
+        stdout, stderr = proc.communicate(timeout=5)
+        raise Exception(
+            f"Could not start MCP process from {installation_dir} (code {status_code}): {stderr.decode()}\n{stdout.decode()}"
+        )

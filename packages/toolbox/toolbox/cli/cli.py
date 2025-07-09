@@ -51,8 +51,8 @@ def list():
     list_installed(conn)
 
 
-def show(name: str):
-    show_mcp(conn, name)
+def show(name: str, settings: bool = typer.Option(False, "--settings", "-s")):
+    show_mcp(conn, name, settings=settings)
 
 
 def list_store():

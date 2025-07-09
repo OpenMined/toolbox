@@ -26,7 +26,12 @@ def syftbox_running(syftbox_port: int = 7938):
     return response.status_code == 200
 
 
-def get_syftbox_email(syftbox_config_path: Path | str = DEFAULT_SYFTBOX_CONFIG_PATH):
-    with open(syftbox_config_path, "r") as f:
-        config = json.load(f)
-    return config["email"]
+def get_existing_syftbox_email_from_config(
+    syftbox_config_path: Path | str = DEFAULT_SYFTBOX_CONFIG_PATH,
+):
+    if syftbox_config_path.exists():
+        with open(syftbox_config_path, "r") as f:
+            config = json.load(f)
+        return config["email"]
+    else:
+        return None

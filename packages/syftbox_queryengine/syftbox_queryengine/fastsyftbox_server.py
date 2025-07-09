@@ -99,6 +99,22 @@ def get_meeting_transcriptions():
         return res
 
 
+@router.post("/get_transcription_chunks")
+def get_transcription_chunks():
+    with get_screenpipe_connection() as conn:
+        transcriptions = db.get_all_transcription_chunks(conn)
+        res = [dict(transcription) for transcription in transcriptions]
+        return res
+
+
+@router.post("/get_audio_chunks")
+def get_audio_chunks():
+    with get_screenpipe_connection() as conn:
+        audio_chunks = db.get_all_audio_chunks(conn)
+        res = [audio_chunk.model_dump_json() for audio_chunk in audio_chunks]
+        return res
+
+
 @router.post("/get_latest_file_to_sync", tags=["syftbox"])
 def get_latest_file_to_sync(current_user_email: str = Depends(authenticate)):
     with get_query_engine_connection() as conn:

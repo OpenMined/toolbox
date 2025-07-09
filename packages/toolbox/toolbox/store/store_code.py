@@ -10,6 +10,7 @@ from toolbox.store.callbacks.callback import (
     DeleteNotesMCPCallback,
     DeleteSyftboxQueryengineMCPCallback,
     InstallSyftboxQueryengineMCPCallback,
+    NotesMCPInstallationSummaryCallback,
     MeetingNotesMCPDataStatsCallback,
     RegisterNotesMCPCallback,
     RegisterNotesMCPAppHeartbeatMCPCallback,
@@ -30,6 +31,7 @@ class StoreElement(BaseModel):
 class NotesMCP(StoreElement):
     name: str = "meeting-notes-mcp"
     callbacks: list[Callback] = [
+        NotesMCPInstallationSummaryCallback(),
         SyftboxAuthCallback(),
         RegisterNotesMCPCallback(),
         RegisterNotesMCPAppHeartbeatMCPCallback(),

@@ -259,7 +259,7 @@ def get_meeting_meta(conn) -> list[dict[str, str]]:
 WITH meetings AS (
   SELECT
     mm.filename,
-    MIN(at.timestamp) AS datetime
+    MIN(ac.timestamp) AS datetime
   FROM (
     SELECT * FROM meeting_audio_chunks ORDER BY audio_chunk_id
   ) mac
@@ -319,11 +319,17 @@ WITH meetings AS (
   GROUP BY mm.meeting_id
   ORDER BY at.timestamp
 )
-SELECT *
+SELECT *    
 FROM meetings;
 """
     cursor.execute(get_all_meeting_notes_query)
     return cursor.fetchall()
+
+
+def get_all_transcription_chunks(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM audio_transcriptions")
+    return [dict(row) for row in cursor.fetchall()]
 
 
 def is_healthy(conn, app_name: str):

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import secrets
 import sqlite3
 import traceback
 from pathlib import Path
@@ -8,6 +9,8 @@ from typing import TYPE_CHECKING
 
 import requests
 from pydantic import BaseModel
+
+from toolbox.mcp_installer.uv_utils import check_uv_installed, init_venv_uv
 
 if TYPE_CHECKING:
     from toolbox.installed_mcp import InstalledMCP
@@ -20,8 +23,6 @@ from toolbox.external_dependencies.external_depenencies import (
     syftbox_running,
 )
 from toolbox.mcp_installer.mcp_installer import (
-    check_uv_installed,
-    init_venv_uv,
     install_package_from_git,
     install_package_from_local_path,
     make_mcp_installation_dir,
@@ -35,8 +36,6 @@ from toolbox.settings import settings
 HOME = Path.home()
 
 INHERIT_SECRET_FROM_ENV = True
-REQUEST_REUSE = False
-AUTOMATIC_REUSE = True
 
 from typing import TYPE_CHECKING  # noqa: E402
 
@@ -45,6 +44,9 @@ if TYPE_CHECKING:
 
 
 class Callback(BaseModel):
+    def on_install_start(self, context: InstallationContext):
+        pass
+
     def on_input(self, context: InstallationContext):
         pass
 
@@ -164,6 +166,30 @@ Press Enter to continue."""
             }
 
 
+class NotesMCPInstallationSummaryCallback(Callback):
+    def on_install_start(self, context: InstallationContext):
+        orange = "\033[33m"
+        end = "\033[0m"
+        end_bold = "\033[21m"
+        bold = "\033[1m"
+        print(f"""
+{orange}{bold}Installation summary:{end_bold}
+This app is a background agent running on an Openmined server that transcribes audio recordings
+from your laptop. This background agent does not store any recordings or transcriptions.
+
+This app will install the following dependencies:
+1. Screenpipe to make audio recordings (stored in ~/.screenpipe/db.sqlite)
+2. Syftbox to receive http requests locally without opening your firewall
+3. Queryengine to make screenpipe data available to the remote background agent
+
+screenpipe: https://github.com/mediar-ai/screenpipe
+syftbox: https://github.com/OpenMined/syftbox
+queryengine: https://github.com/OpenMined/agentic-syftbox/tree/main/packages/syftbox_queryengine
+
+use `toolbox list`, `toolbox show <app_name>` or `toolbox log <app_name>` to see the status of the installation.
+{end}""")
+
+
 class MeetingNotesMCPDataStatsCallback(Callback):
     def on_data_stats(self, mcp: "InstalledMCP") -> dict:
         try:
@@ -177,9 +203,23 @@ class MeetingNotesMCPDataStatsCallback(Callback):
             )
             response.raise_for_status()
             transcriptions = response.json()
+
+            response = requests.post(
+                f"http://localhost:{query_engine_port}/get_transcription_chunks"
+            )
+            response.raise_for_status()
+            transcription_chunks = response.json()
+
+            audio_chunks = requests.post(
+                f"http://localhost:{query_engine_port}/get_audio_chunks"
+            )
+            audio_chunks.raise_for_status()
+            audio_chunks = audio_chunks.json()
+
             return {
-                "meeting_transcriptions": len(transcriptions),
-                "db_path": str(HOME / ".screenpipe" / "db.sqlite"),
+                "# meetings": len(transcriptions),
+                "# transcribed chunks": len(transcription_chunks),
+                "# audio chunks": len(audio_chunks),
             }
         except Exception as e:
             return {"error": str(e)}
@@ -206,31 +246,18 @@ class SyftboxAuthCallback(Callback):
     keys: list[str] = ["syftbox_email", "syftbox_access_token"]
 
     def on_input(self, context: InstallationContext):
-        request_email = True
-        if "syftbox_email" in context.context_dict:
-            if AUTOMATIC_REUSE:
-                request_email = False
-            if REQUEST_REUSE:
-                reuse = request_reuse("syftbox email and access token")
-                if reuse:
-                    request_email = False
-
-        if request_email:
+        if "syftbox_email" not in context.context_dict:
             email = input("""\nFill in your syftbox email, if you already have one, enter it, if not you can regsiter by
 going to http://172.172.234.167:7000/syftbox/login and get your access token (store it).
 syftbox email: """)
             # TODO: maybe only have one
             context.context_dict["syftbox_email"] = email
             context.context_settings["SYFTBOX_EMAIL"] = email
-
-            access_token = input("syftbox access token: ")
-            context.context_dict["syftbox_access_token"] = access_token
-            context.context_settings["SYFTBOX_ACCESS_TOKEN"] = access_token
         else:
             print("Found existing syftbox email and access token")
 
         if "syftbox_access_token" not in context.context_dict:
-            access_token = input("syftbox access token: ")
+            access_token = secrets.token_hex(8)
             context.context_dict["syftbox_access_token"] = access_token
             context.context_settings["SYFTBOX_ACCESS_TOKEN"] = access_token
 
@@ -243,12 +270,17 @@ syftbox email: """)
 
 class RegisterNotesMCPCallback(Callback):
     def on_install_init(self, context: InstallationContext, json_body: dict):
+        access_token = context.context_dict["syftbox_access_token"]
+        email = context.context_dict["syftbox_email"]
         payload = {
-            "email": context.context_dict["syftbox_email"],
-            "access_token": context.context_dict["syftbox_access_token"],
+            "email": email,
+            "access_token": access_token,
         }
         try:
             url = context.context_settings["notes_webserver_url"]
+            print(
+                f"Registering user for NotesMCP {url} with access token {access_token[:5]}..."
+            )
             response = requests.post(f"{url}/register_user", json=payload)
             response.raise_for_status()
             print(
@@ -265,7 +297,7 @@ class RegisterNotesMCPCallback(Callback):
 class RegisterNotesMCPAppHeartbeatMCPCallback(Callback):
     def on_install_init(self, context: InstallationContext, json_body: dict):
         # Check if the uvicorn server is already running
-        max_retries = 3
+        max_retries = 5
         retry_delay = 2  # seconds
         if "SYFTBOX_QUERYENGINE_PORT" not in context.context_settings:
             raise Exception(

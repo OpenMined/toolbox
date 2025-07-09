@@ -42,6 +42,12 @@ HEALTH_STATUS_ICON = {
     HealthStatus.UNKNOWN: "🟠",
 }
 
+ANSI_BOLD = "\x1b[1m"
+ANSI_GREEN = "\x1b[32m"
+ANSI_RED = "\x1b[31m"
+ANSI_YELLOW = "\x1b[33m"
+ANSI_RESET = "\x1b[0m"
+
 
 class InstalledMCP(BaseModel):
     name: str
@@ -253,7 +259,7 @@ class InstalledMCP(BaseModel):
             return ""
         else:
             return f"""
-EXTERNAL DEPENDENCY STATUS:
+{ANSI_BOLD}external dependency status:{ANSI_RESET}
 {status_str}
 """
 
@@ -285,8 +291,8 @@ EXTERNAL DEPENDENCY STATUS:
         else:
             logs = "No logs available"
         return f"""        
-LOG FILE: {self.log_file}
-LOGS:
+{ANSI_BOLD}Logs:{ANSI_RESET} ({self.log_file})
+
 {logs}
 """
 
@@ -299,13 +305,24 @@ LOGS:
                 res.update(callback_res)
         return "\n".join([f"{key}: {value}" for key, value in res.items()])
 
-    def show(self):
+    def settings_str(self) -> str:
+        setting_values_str = "\n".join(
+            [f"{key}: {value}" for key, value in self.settings.items()]
+        )
+        return f"""
+{ANSI_BOLD}Settings:{ANSI_RESET}
+{setting_values_str}
+"""
+
+    def show(self, settings: bool = False):
+        settings_str = ""
+        if settings:
+            settings_str = self.settings_str()
         print(f"""
-========================================
-{self.name} {self.status_str}
-========================================
+{ANSI_GREEN}{self.name}{ANSI_RESET} {self.status_str}
 {self.external_dependency_check_str()}
 {self.data_stats_str()}
+{settings_str}
 {self.logs_str()}
 """)
 

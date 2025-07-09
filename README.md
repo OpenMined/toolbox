@@ -10,10 +10,10 @@
 Toolbox is a cli tool for installing and managing [MCP](https://github.com/modelcontextprotocol/python-sdk) servers and background agents, made for developers.
 
 - Toolbox aims to support popular developer tools (think github, slack, discord, gmail etc.), and clients (claude desktop, cursor), making it easier to deploy useful MCP servers  
-- With toolbox you can install **mcp servers** and **background agents** usiong the `toolbox install <appname>` command
+- With toolbox you can install **mcp servers**, **background agents** and their dependencies using the `toolbox install <appname>` command
 - **mcp servers** are servers that provide context for LLMs in a standardized way, mostly used for tool calling
 - **background agents** are long running processes that create new data based on your existing data (think [RAG](https://en.wikipedia.org/wiki/Retrieval-augmented_generation), [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition),[speech recognition](https://en.wikipedia.org/wiki/Speech_recognition))
-- we provide the option to run some of these agents/mcp server in the cloud, with the medium term vision of deploying  those components in [trusted execution environments](https://en.wikipedia.org/wiki/Trusted_execution_environment). In the first beta versions this wont be supported, but we wont store any sensitive user data (only meta data).
+- we provide the option to run some of these agents/mcp server in the cloud for free, with the medium term vision of deploying  those components in [trusted execution environments](https://en.wikipedia.org/wiki/Trusted_execution_environment). The first beta versions wont have trusted execution environments, but we wont store any sensitive user data (only meta data). In the long term we plan to make these available at break-even cost (OpenMined is non-profit so we wont make money)
 
 
 
@@ -22,8 +22,27 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 uv pip install -e .
 ```
 
+# Alpha example
+This is a alpha version, currently the only functioning app is the meeting-notes-mcp, with the slack-mcp coming soon. The only supported client is Claude Desktop, which is also the default client. Install this app and its dependencies using:
+```
+tb install meeting-notes-mcp
+```
+After making some recording using screenpipe you should be able to see your data using
+```
+tb show meeting-notes-mcp
+```
+Which you can then query with Claude desktop by asking something like
+
+**"Get me the meeting notes from my latest meeting"**
+
+## Bonus
+If you also install the github mcp server you could also ask
+
+**"Now make tickets for the todo's of that meeting"**
+
+
 # Installing apps
-To shwo apps in store
+To show apps in store
 ```
 tb list-store
 ```
@@ -43,10 +62,6 @@ To get logs for a local app
 ```
 tb log <appname>
 ```
-
-# Example
-tb install meeting-notes-mcp
-
 
 # Store
 
