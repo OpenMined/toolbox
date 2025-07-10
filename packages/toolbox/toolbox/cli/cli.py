@@ -9,6 +9,8 @@ from toolbox.installer import (
     log_mcp,
     reset_mcp,
     show_mcp,
+    start_mcp,
+    stop_mcp,
 )
 from toolbox.settings import settings
 from toolbox.store.store_json import STORE
@@ -55,6 +57,14 @@ def show(name: str, settings: bool = typer.Option(False, "--settings", "-s")):
     show_mcp(conn, name, settings=settings)
 
 
+def start(name: str):
+    start_mcp(name, conn)
+
+
+def stop(name: str):
+    stop_mcp(name, conn)
+
+
 def list_store():
     list_apps_in_store()
 
@@ -78,6 +88,8 @@ app.command()(show)
 app.command()(log)
 app.command()(reset)
 app.command()(call)
+app.command()(start)
+app.command()(stop)
 
 
 if __name__ == "__main__":

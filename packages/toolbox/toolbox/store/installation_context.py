@@ -27,9 +27,9 @@ class InstallationContext(BaseModel):
         for callback in self.callbacks:
             callback.on_install_init(self, json_body)
 
-    def on_install_init_finished(self, *args, **kwargs):
+    def on_run_mcp(self, *args, **kwargs):
         for callback in self.callbacks:
-            callback.on_install_init_finished(self, *args, **kwargs)
+            callback.on_run_mcp(self, *args, **kwargs)
 
     def on_install_start(self, *args, **kwargs):
         for callback in self.callbacks:

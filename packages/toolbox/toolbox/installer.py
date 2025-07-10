@@ -151,7 +151,7 @@ def install_mcp(
         if client == "claude":
             if mcp.has_client_json:
                 add_mcp_to_claude_desktop_config(mcp)
-            context.on_install_init_finished()
+            context.on_run_mcp()
             db_upsert_mcp(conn, mcp)
         else:
             print(f"skipping mcp for {client}, not supported yet")
@@ -163,6 +163,23 @@ def install_mcp(
     # 1. local mcp server over stdio
     # 2. local mcp server over http (not for now?) -> requires daemon
     # 3. remote openmined mcp server over http
+
+
+def stop_mcp(name: str, conn: sqlite3.Connection):
+    mcp = get_mcp_by_fuzzy_name(conn, name)
+    mcp.stop()
+
+
+def start_mcp(name: str, conn: sqlite3.Connection):
+    mcp = get_mcp_by_fuzzy_name(conn, name)
+    context = InstallationContext(
+        callbacks=mcp.callbacks,
+        context_dict=mcp.context_dict,
+        current_app=mcp.name,
+        context_apps=[mcp.name],
+        context_settings=mcp.context_settings,
+    )
+    context.on_run_mcp()
 
 
 def list_installed(conn: sqlite3.Connection):

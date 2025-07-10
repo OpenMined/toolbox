@@ -56,7 +56,7 @@ class Callback(BaseModel):
     def on_install_init(self, context: InstallationContext, json_body: dict):
         pass
 
-    def on_install_init_finished(self, context: InstallationContext):
+    def on_run_mcp(self, context: InstallationContext):
         pass
 
     def on_external_dependency_status_check(self, mcp: "InstalledMCP"):
@@ -338,7 +338,7 @@ class RegisterNotesMCPAppHeartbeatMCPCallback(Callback):
 
 
 class InstallSyftboxQueryengineMCPCallback(Callback):
-    def on_install_init_finished(self, context: InstallationContext):
+    def on_run_mcp(self, context: InstallationContext):
         mcp = context.mcp
         mcp.settings["syftbox_queryengine_port"] = "8002"
         context.context_settings["SYFTBOX_QUERYENGINE_PORT"] = "8002"

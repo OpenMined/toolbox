@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sqlite3
 import time
@@ -183,6 +184,9 @@ class InstalledMCP(BaseModel):
 
             json_body = jsons_bodies_for_deployment_methods[deployment_method]
 
+        if proxy == "mcp-remote":
+            add_npx_node_to_path(json_body)
+
         context.on_install_init(json_body)
 
         return cls(
@@ -212,13 +216,16 @@ class InstalledMCP(BaseModel):
         if self.installation_dir.exists():
             shutil.rmtree(self.installation_dir, ignore_errors=True)
         db.db_delete_mcp(conn, self.name)
+        self.stop()
+        self.remove_from_client_config()
+
+    def stop(self):
         if self.is_running:
             module_name = self.deployment.get("module", None)
             if module_name is not None:
                 pkill_f(module_name)
             else:
                 print(f"No module name found for {self.name}")
-        self.remove_from_client_config()
 
     def remove_from_client_config(self) -> str:
         if self.client == "claude":
@@ -331,3 +338,16 @@ def create_clickable_file_link(file_path, link_text="LINK"):
     abs_path = urllib.parse.quote(file_path)
     file_url = f"file://{abs_path}"
     return file_url
+
+
+def add_npx_node_to_path(json_body: dict):
+    if "env" not in json_body:
+        json_body["env"] = {}
+    # this makes sure that the mcp server can find the npx and node binaries
+    toolbox_path = os.environ.get("PATH", "")
+    if "PATH" not in json_body["env"]:
+        json_body["env"]["PATH"] = toolbox_path
+    else:
+        current_path = json_body["env"]["PATH"]
+        merged_paths = f"{toolbox_path}:{current_path}"
+        json_body["env"]["PATH"] = merged_paths
