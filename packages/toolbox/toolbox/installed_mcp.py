@@ -239,7 +239,7 @@ class InstalledMCP(BaseModel):
         row["deployment_method"] = row["deployment_method"]
         row["deployment"] = json.loads(row["deployment"])
         row["settings"] = json.loads(row["settings"])
-        row["app_type"] = row["app_type"]
+        row["app_type"] = row.get("app_type", "")
         return cls(**row)
 
     def external_dependency_status_checks(self) -> dict:
