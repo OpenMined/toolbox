@@ -280,7 +280,7 @@ def get_meeting_notes_by_filename(conn, filename: str):
     get_meeting_notes_by_filename_query = """
 WITH meetings AS (
   SELECT
-    mc.meeting_id,
+    mm.meeting_id,
     mm.filename,
     MIN(at.timestamp) AS start_date,
     MAX(at.timestamp) AS end_date,

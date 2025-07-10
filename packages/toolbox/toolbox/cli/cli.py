@@ -1,3 +1,6 @@
+import os
+from pathlib import Path
+
 import typer
 
 from toolbox.db import conn
@@ -40,6 +43,7 @@ def install(
         # print("USING LOCAL DEPLOYMENTS")
     if use_local_packages:
         settings.use_local_packages = True
+        settings.working_directory = Path(os.getcwd())
         # print("USING LOCAL PACKAGES")
     if request_syftbox_login:
         settings.request_syftbox_login = True

@@ -8,9 +8,9 @@ import urllib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from toolbox import db
 from pydantic import BaseModel
 
+from toolbox import db
 from toolbox.mcp_clients.mcp_clients import (
     current_claude_desktop_config,
     write_claude_desktop_config,
@@ -239,7 +239,7 @@ class InstalledMCP(BaseModel):
         row["deployment_method"] = row["deployment_method"]
         row["deployment"] = json.loads(row["deployment"])
         row["settings"] = json.loads(row["settings"])
-        row["app_type"] = row["app_type"]
+        row["app_type"] = row.get("app_type", "")
         return cls(**row)
 
     def external_dependency_status_checks(self) -> dict:

@@ -350,10 +350,10 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
 
         if settings.use_local_packages:
             # print("\nUsing local packages!!!!\n")
-            # TODO: read from configuration
+            local_path = settings.working_directory / "packages" / "syftbox_queryengine"
             install_package_from_local_path(
                 installation_dir,
-                "~/workspace/agentic-syftbox/packages/syftbox_queryengine",
+                str(local_path),
             )
         else:
             # print("\n\n\nUsing remote packages!!!!\n\n\n")
