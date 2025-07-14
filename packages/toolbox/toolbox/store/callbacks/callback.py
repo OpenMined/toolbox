@@ -139,13 +139,13 @@ class SyftboxExternalDependencyCallback(Callback):
         if not syftbox_installed():
             input(
                 """
-Syftbox is not installed. Please install it from https://github.com/OpenMined/syftbox and run it.
+Syftbox is not installed. Please install it from https://www.syftbox.net/ and run it.
 Press Enter to continue."""
             )
         elif not syftbox_running():
             input(
                 """
-Syftbox is not running. Please install it from https://github.com/OpenMined/syftbox and run it.
+Syftbox is not running. Please install it from https://www.syftbox.net/ and run it.
 Press Enter to continue."""
             )
 
@@ -230,7 +230,9 @@ class ScreenpipeExternalDependencyCallback(Callback):
         if not screenpipe_installed():
             input(
                 """
-Screenpipe is not installed. Please run it using `curl -fsSL get.screenpi.pe/cli | sh`. or by using `screenpipe` if already installed
+Screenpipe is not installed. You can install it in 2 ways: 
+1. By installing the screenpipe desktop app from https://web.crabnebula.cloud/mediar/screenpipe/releases
+2. Run it using `curl -fsSL get.screenpi.pe/cli | sh`. or by using `screenpipe` if already installed
 Press Enter to continue."""
             )
 

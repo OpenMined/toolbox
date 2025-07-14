@@ -75,7 +75,6 @@ def process_exists(pattern):
                 continue  # Skip if cmdline is None or not a list
             cmdline_str = " ".join(cmdline)
             if regex.search(cmdline_str):
-                print(f"Process {cmdline_str} exists")
                 return True
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass

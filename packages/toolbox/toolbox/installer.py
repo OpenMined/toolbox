@@ -32,6 +32,14 @@ from toolbox.settings import settings
 from toolbox.toolbox_requirements import has_npx, has_uv
 
 
+def get_requirements(name: str):
+    store_json = STORE[name]
+    if "requirements" in store_json:
+        return store_json["requirements"]
+    else:
+        return []
+
+
 def install_requirements(
     conn: sqlite3.Connection,
     name: str,
@@ -39,24 +47,23 @@ def install_requirements(
     clients: list[str],
 ):
     store_json = STORE[name]
-    if "requirements" in store_json:
-        for requirement in store_json["requirements"]:
-            print(f"{name} requires {requirement}, installing...")
+    for requirement in get_requirements(name):
+        print(f"{name} requires {requirement}, installing...")
 
-            store_element = STORE_ELEMENTS[requirement]
+        store_element = STORE_ELEMENTS[requirement]
 
-            callbacks = store_element.callbacks
-            requirement_context = InstallationContext(
-                callbacks=callbacks,
-                context_dict=context.context_dict,
-                current_app=requirement,
-                context_apps=context.context_apps + [requirement],
-                context_settings=store_json.get("context_settings", {}),
-            )
-            install_mcp(conn, requirement, clients=clients, context=requirement_context)
-            context.context_dict.update(requirement_context.context_dict)
-            context.context_settings.update(requirement_context.context_settings)
-            context.context_apps.append(requirement)
+        callbacks = store_element.callbacks
+        requirement_context = InstallationContext(
+            callbacks=callbacks,
+            context_dict=context.context_dict,
+            current_app=requirement,
+            context_apps=context.context_apps + [requirement],
+            context_settings=store_json.get("context_settings", {}),
+        )
+        install_mcp(conn, requirement, clients=clients, context=requirement_context)
+        context.context_dict.update(requirement_context.context_dict)
+        context.context_settings.update(requirement_context.context_settings)
+        context.context_apps.append(requirement)
 
 
 def check_external_dependencies(
@@ -168,18 +175,38 @@ def install_mcp(
 def stop_mcp(name: str, conn: sqlite3.Connection):
     mcp = get_mcp_by_fuzzy_name(conn, name)
     mcp.stop()
+    print(f"Stopped MCP: {mcp.name}")
 
 
 def start_mcp(name: str, conn: sqlite3.Connection):
     mcp = get_mcp_by_fuzzy_name(conn, name)
+    store_element = STORE_ELEMENTS[mcp.name]
+    callbacks = store_element.callbacks
     context = InstallationContext(
-        callbacks=mcp.callbacks,
-        context_dict=mcp.context_dict,
+        callbacks=callbacks,
+        context_dict={},
         current_app=mcp.name,
         context_apps=[mcp.name],
-        context_settings=mcp.context_settings,
+        context_settings=mcp.settings,
     )
+
     context.on_run_mcp()
+
+
+def start_mcp_and_requirements(name: str, conn: sqlite3.Connection):
+    mcp = get_mcp_by_fuzzy_name(conn, name)
+
+    for requirement in get_requirements(mcp.name):
+        req_mcp = get_mcp_by_fuzzy_name(conn, requirement)
+        if not req_mcp.is_running:
+            print(f"Starting requirement: {req_mcp.name}")
+            start_mcp(requirement, conn)
+
+    if not mcp.is_running:
+        print(f"Starting MCP: {mcp.name}")
+        start_mcp(mcp.name, conn)
+    else:
+        print(f"MCP {mcp.name} is already running")
 
 
 def list_installed(conn: sqlite3.Connection):

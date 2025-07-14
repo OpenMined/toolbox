@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import threading
 from contextlib import asynccontextmanager
 
@@ -6,7 +7,7 @@ from fastapi import FastAPI
 
 from notes_mcp.background_workers.meeting_indexer import poll_for_new_meetings
 from notes_mcp.background_workers.transcriber import poll_for_new_audio_chunks
-from notes_mcp.remote_fastapi_server import executor, main_router
+from notes_mcp.remote_fastapi_server import main_router
 
 meeting_indexer_stop_event = threading.Event()
 transcriber_stop_event = threading.Event()
@@ -15,27 +16,42 @@ transcriber_stop_event = threading.Event()
 def start_background_workers():
     """Start background workers with optional user authentication."""
     print("Starting meeting indexer")
+    meeting_indexer_executor = ThreadPoolExecutor(max_workers=1)
     poll_meetings_producer = threading.Thread(
-        target=poll_for_new_meetings, args=(meeting_indexer_stop_event,)
+        target=poll_for_new_meetings,
+        args=(meeting_indexer_stop_event, meeting_indexer_executor),
     )
     poll_meetings_producer.start()
 
     print("Starting transcriber")
+    transcriber_executor = ThreadPoolExecutor(max_workers=1)
     poll_transcriber_producer = threading.Thread(
-        target=poll_for_new_audio_chunks, args=(transcriber_stop_event,)
+        target=poll_for_new_audio_chunks,
+        args=(transcriber_stop_event, transcriber_executor),
     )
     poll_transcriber_producer.start()
 
-    return poll_meetings_producer, poll_transcriber_producer
+    return (
+        poll_meetings_producer,
+        poll_transcriber_producer,
+        meeting_indexer_executor,
+        transcriber_executor,
+    )
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    poll_meetings_producer, poll_transcriber_producer = start_background_workers()
+    (
+        poll_meetings_producer,
+        poll_transcriber_producer,
+        meeting_indexer_executor,
+        transcriber_executor,
+    ) = start_background_workers()
 
     yield
     print("Cleaning up executor")
-    executor.shutdown(wait=False)
+    meeting_indexer_executor.shutdown(wait=False)
+    transcriber_executor.shutdown(wait=False)
 
     meeting_indexer_stop_event.set()
     transcriber_stop_event.set()

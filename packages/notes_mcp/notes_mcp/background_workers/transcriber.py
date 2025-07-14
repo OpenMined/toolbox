@@ -4,6 +4,7 @@ import random
 import threading
 import time
 import traceback
+from concurrent.futures import Future, ThreadPoolExecutor
 from datetime import datetime
 
 import httpx
@@ -11,7 +12,7 @@ import requests
 from fastsyftbox.simple_client import SimpleRPCClient
 
 from notes_mcp import db
-from notes_mcp.remote_fastapi_server import executor
+from notes_mcp.background_workers.user_polling_manager import UserPollingManager
 from notes_mcp.models.audio import TranscribeRequest, TranscriptionStoreRequest
 from notes_mcp.models.file import FilesToSyncResponse, FileToSync
 from notes_mcp.settings import settings
@@ -50,14 +51,24 @@ def add_transcription_to_db(
     )
 
 
-def poll_for_new_audio_chunks(stop_event: threading.Event):
+def poll_for_new_audio_chunks(
+    stop_event: threading.Event, executor: ThreadPoolExecutor
+):
+    polling_manager = UserPollingManager(executor)
     while not stop_event.is_set():
         with db.get_notes_db() as conn:
             users = db.get_users(conn)
             for user in users:
                 if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
-                    print("Polling for new audio chunks for user", user.email)
-                    executor.submit(_poll_for_new_audio_chunks, user.id)
+                    future = polling_manager.submit_job(
+                        user.id, _poll_for_new_audio_chunks, (user.id,)
+                    )
+                    if future is not None:
+                        print(f"Polling for new audio chunks for user {user.email}")
+                    else:
+                        print(
+                            f"User {user.email} is already being polled for new audio chunks"
+                        )
                 else:
                     print(
                         f"User {user.email} has not been active in the last {ACTIVITY_THRESHOLD_SECONDS} seconds, skipping"
@@ -65,6 +76,9 @@ def poll_for_new_audio_chunks(stop_event: threading.Event):
             if len(users) == 0:
                 print("No users found to transcribe")
             time.sleep(10)
+
+    # Shutdown the polling manager when the main polling loop stops
+    polling_manager.shutdown()
     print("DONE")
 
 

@@ -43,7 +43,6 @@ class NotesMCP(StoreElement):
 
     def healthcheck(self, mcp: "InstalledMCP") -> bool:
         url = mcp.settings["notes_webserver_url"]
-        print(url)
         res = requests.post(f"{url}/healthcheck")
         # print(res.content)
         return res.json()["status"] == "ok"

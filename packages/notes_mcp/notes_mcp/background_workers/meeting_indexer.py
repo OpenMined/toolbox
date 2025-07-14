@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 import sqlite3
 import threading
 import time
@@ -7,7 +8,7 @@ from fastsyftbox.simple_client import SimpleRPCClient
 
 import httpx
 from notes_mcp import db
-from notes_mcp.remote_fastapi_server import executor
+from notes_mcp.background_workers.user_polling_manager import UserPollingManager
 from notes_mcp.models.audio import AudioChunksResult
 from notes_mcp.models.meeting import Meeting
 from notes_mcp.syftbox_client import create_authenticated_client
@@ -23,15 +24,23 @@ def log_error(future):
         print(f"Background task failed:\n{exception}\n{traceback.format_exc()}")
 
 
-def poll_for_new_meetings(stop_event: threading.Event):
+def poll_for_new_meetings(stop_event: threading.Event, executor: ThreadPoolExecutor):
+    polling_manager = UserPollingManager(executor)
     while not stop_event.is_set():
         with db.get_notes_db() as conn:
             users = db.get_users(conn)
             for user in users:
                 if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
-                    print(f"User {user.email} is active, polling for new meetings")
-                    future = executor.submit(index_meetings, user.id)
-                    future.add_done_callback(log_error)
+                    future = polling_manager.submit_job(
+                        user.id, callback=index_meetings, args=(user.id,)
+                    )
+                    if future is not None:
+                        print(f"User {user.email} is active, polling for new meetings")
+                        future.add_done_callback(log_error)
+                    else:
+                        print(
+                            f"User {user.email} is already being polled for new meetings"
+                        )
                 else:
                     print(
                         f"User {user.email} has not been active for {ACTIVITY_THRESHOLD_SECONDS} seconds, skipping"

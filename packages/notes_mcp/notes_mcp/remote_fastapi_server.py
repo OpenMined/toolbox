@@ -22,9 +22,6 @@ N_WORKERS = 2
 main_router = APIRouter()
 
 
-executor = ThreadPoolExecutor(max_workers=N_WORKERS)
-
-
 class AudioRequest(BaseModel):
     encoded_bts: str
     audio_chunk_id: int

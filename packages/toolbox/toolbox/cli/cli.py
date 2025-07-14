@@ -9,7 +9,7 @@ from toolbox.installer import (
     log_mcp,
     reset_mcp,
     show_mcp,
-    start_mcp,
+    start_mcp_and_requirements,
     stop_mcp,
 )
 from toolbox.settings import settings
@@ -58,7 +58,7 @@ def show(name: str, settings: bool = typer.Option(False, "--settings", "-s")):
 
 
 def start(name: str):
-    start_mcp(name, conn)
+    start_mcp_and_requirements(name, conn)
 
 
 def stop(name: str):
