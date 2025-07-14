@@ -23,7 +23,7 @@ uv pip install -e .
 ```
 
 # Alpha example
-This is a alpha version, currently the only functioning app is the meeting-notes-mcp, with the slack-mcp coming soon. The only supported client is Claude Desktop, which is also the default client. Install this app and its dependencies using:
+This is an alpha version, currently the only functioning app is the meeting-notes-mcp, with the slack-mcp coming soon. The only supported client is Claude Desktop, which is also the default client. Install this app and its dependencies using:
 ```
 tb install meeting-notes-mcp
 ```
