@@ -21,6 +21,7 @@ from notes_mcp.syftbox_client import create_authenticated_client
 # file_path = HOME / ".screenpipe" / "data" / "MacBook Pro Microphone (input)_2025-06-03_14-30-45.mp4"
 # FILE_PATH = 'path/to/your/audio.wav'  # Local WAV file (16kHz sample rate)
 ACTIVITY_THRESHOLD_SECONDS = 10
+AUDIO_CHUNK_POLL_INTERVAL = 1
 
 
 def add_transcription_to_db(
@@ -58,6 +59,8 @@ def poll_for_new_audio_chunks(
     while not stop_event.is_set():
         with db.get_notes_db() as conn:
             users = db.get_users(conn)
+            users_already_processed = set()
+            users_inactive = set()
             for user in users:
                 if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
                     future = polling_manager.submit_job(
@@ -66,16 +69,12 @@ def poll_for_new_audio_chunks(
                     if future is not None:
                         print(f"Polling for new audio chunks for user {user.email}")
                     else:
-                        print(
-                            f"User {user.email} is already being polled for new audio chunks"
-                        )
+                        users_already_processed.add(user.email)
                 else:
-                    print(
-                        f"User {user.email} has not been active in the last {ACTIVITY_THRESHOLD_SECONDS} seconds, skipping"
-                    )
+                    users_inactive.add(user.email)
             if len(users) == 0:
                 print("No users found to transcribe")
-            time.sleep(10)
+            time.sleep(AUDIO_CHUNK_POLL_INTERVAL)
 
     # Shutdown the polling manager when the main polling loop stops
     polling_manager.shutdown()
@@ -98,7 +97,9 @@ def _poll_for_new_audio_chunks(user_id: int):
                 print("Got file to transcribe and upload", file.filename)
                 bts = base64.b64decode(file.encoded_bts)
                 transcript = transcribe(bts)
-                print("transcription succesful, uploading to data-syncer")
+                print(
+                    f"transcription {file.filename} succesful for {user.email}, uploading to data-syncer"
+                )
                 upload_transcription_to_queryengine(client, transcript, file)
             else:
                 print("No files to transcribe")

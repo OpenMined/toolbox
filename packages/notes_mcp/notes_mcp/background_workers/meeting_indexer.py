@@ -13,7 +13,7 @@ from notes_mcp.models.audio import AudioChunksResult
 from notes_mcp.models.meeting import Meeting
 from notes_mcp.syftbox_client import create_authenticated_client
 
-POLL_INTERVAL = 10
+MEETING_POLL_INTERVAL = 1
 
 ACTIVITY_THRESHOLD_SECONDS = 10
 
@@ -29,6 +29,9 @@ def poll_for_new_meetings(stop_event: threading.Event, executor: ThreadPoolExecu
     while not stop_event.is_set():
         with db.get_notes_db() as conn:
             users = db.get_users(conn)
+            users_already_processed = set()
+            users_inactive = set()
+
             for user in users:
                 if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
                     future = polling_manager.submit_job(
@@ -38,17 +41,14 @@ def poll_for_new_meetings(stop_event: threading.Event, executor: ThreadPoolExecu
                         print(f"User {user.email} is active, polling for new meetings")
                         future.add_done_callback(log_error)
                     else:
-                        print(
-                            f"User {user.email} is already being polled for new meetings"
-                        )
+                        users_already_processed.add(user.email)
                 else:
-                    print(
-                        f"User {user.email} has not been active for {ACTIVITY_THRESHOLD_SECONDS} seconds, skipping"
-                    )
+                    users_inactive.add(user.email)
+
             if len(users) == 0:
                 print("No users found to index meetings")
 
-            time.sleep(POLL_INTERVAL)
+            time.sleep(MEETING_POLL_INTERVAL)
 
 
 def index_meetings(user_id: int):

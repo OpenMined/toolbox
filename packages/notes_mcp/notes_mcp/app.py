@@ -16,7 +16,7 @@ transcriber_stop_event = threading.Event()
 def start_background_workers():
     """Start background workers with optional user authentication."""
     print("Starting meeting indexer")
-    meeting_indexer_executor = ThreadPoolExecutor(max_workers=1)
+    meeting_indexer_executor = ThreadPoolExecutor(max_workers=3)
     poll_meetings_producer = threading.Thread(
         target=poll_for_new_meetings,
         args=(meeting_indexer_stop_event, meeting_indexer_executor),
@@ -24,7 +24,7 @@ def start_background_workers():
     poll_meetings_producer.start()
 
     print("Starting transcriber")
-    transcriber_executor = ThreadPoolExecutor(max_workers=1)
+    transcriber_executor = ThreadPoolExecutor(max_workers=3)
     poll_transcriber_producer = threading.Thread(
         target=poll_for_new_audio_chunks,
         args=(transcriber_stop_event, transcriber_executor),
