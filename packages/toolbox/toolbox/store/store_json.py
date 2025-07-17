@@ -97,6 +97,56 @@ STORE = {
             "default_deployment_method": "proxy-to-local-http",
         },
     },
+    "slack-mcp": {
+        "url": "https://github.com/OpenMined/agentic-syftbox/tree/main/packages/slack_mcp",
+        "json_bodies_for_client_for_deployment_method": {
+            "all": {
+                "proxy-to-local-http": {
+                    "args": ["mcp-remote", "http://127.0.0.1:8003/mcp/mcp"],
+                    "command": "npx",
+                }
+            }
+        },
+        "mcp_deployment_methods": {"all": "infered"},
+        "deployment": {
+            "type": "python",
+            "module": "slack_mcp.app",
+        },
+        "default_settings": {
+            "default_read_access": ["Slack Messages, Channels, Users"],
+            "default_write_access": ["Slack Messages, Channels, Users"],
+            "default_model": None,
+            "default_proxy": "mcp-remote",
+            "default_host": "local",
+            "default_managed_by": "toolbox (local)",
+            "default_deployment_method": "proxy-to-local-http",
+        },
+    },
+    "whatsapp-desktop-mcp": {
+        "url": "https://github.com/OpenMined/agentic-syftbox/tree/main/packages/whatsapp_desktop_mcp",
+        "json_bodies_for_client_for_deployment_method": {
+            "all": {
+                "proxy-to-local-http": {
+                    "args": ["mcp-remote", "http://127.0.0.1:8004/mcp/mcp"],
+                    "command": "npx",
+                }
+            }
+        },
+        "mcp_deployment_methods": {"all": "infered"},
+        "deployment": {
+            "type": "python",
+            "module": "whatsapp_desktop_mcp.app",
+        },
+        "default_settings": {
+            "default_read_access": ["Whatsapp Messages, Channels, Users"],
+            "default_write_access": ["Whatsapp Messages, Channels, Users"],
+            "default_model": None,
+            "default_proxy": "mcp-remote",
+            "default_host": "local",
+            "default_managed_by": "toolbox (local)",
+            "default_deployment_method": "proxy-to-local-http",
+        },
+    },
 }
 
 

@@ -14,6 +14,7 @@ from syft_core import SyftClientConfig
 from syftbox_queryengine import db
 from syftbox_queryengine.auth import authenticate
 from syftbox_queryengine.db import (
+    DEFAULT_TRANSCRIPTION_ENGINE,
     get_query_engine_connection,
     get_screenpipe_connection,
     mark_file_as_synced,
@@ -157,7 +158,7 @@ def submit_transcription(
             device=transcription_req.device,
             is_input_device=True,
             speaker_id=0,
-            transcription_engine="syftbox-whisper-v3-large",
+            transcription_engine=DEFAULT_TRANSCRIPTION_ENGINE,
             start_time=0,
             end_time=0,
             text_length=len(transcription_req.transcription),

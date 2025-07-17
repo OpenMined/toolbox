@@ -1,3 +1,4 @@
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -30,6 +31,15 @@ def set_uv_path_in_env(env: dict):
         if str(uv_path) not in current_PATH:
             env["PATH"] = f"{uv_path}:{current_PATH}"
     return env
+
+
+def prepare_env_with_uv(passed_env: dict | None = None):
+    inherited_env = os.environ.copy()
+    inherited_env = set_uv_path_in_env(inherited_env)
+    if passed_env is None:
+        passed_env = {}
+    final_env = {**inherited_env, **passed_env}
+    return final_env
 
 
 def check_uv_installed():

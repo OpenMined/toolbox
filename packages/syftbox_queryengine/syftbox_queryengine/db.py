@@ -13,6 +13,8 @@ QUERY_ENGINE_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 SCREENPIPE_DB_DIR = HOME / ".screenpipe"
 SCREENPIPE_DB_PATH = SCREENPIPE_DB_DIR / "db.sqlite"
 
+DEFAULT_TRANSCRIPTION_ENGINE = "syftbox-whisper-v3-large"
+
 
 @contextmanager
 def get_screenpipe_connection():
@@ -328,7 +330,10 @@ FROM meetings;
 
 def get_all_transcription_chunks(conn):
     cursor = conn.cursor()
-    cursor.execute("SELECT * FROM audio_transcriptions")
+    cursor.execute(
+        "SELECT * FROM audio_transcriptions where transcription_engine = ?",
+        (DEFAULT_TRANSCRIPTION_ENGINE,),
+    )
     return [dict(row) for row in cursor.fetchall()]
 
 

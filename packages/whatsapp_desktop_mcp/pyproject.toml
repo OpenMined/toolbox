@@ -7,11 +7,10 @@ dependencies = [
     "uvicorn>=0.34.3",
     "fastapi>=0.115.13",
     "pydantic-settings>=2.10.0",
-    "mcp==1.10.0",
-    "slack_sdk==3.35.0"
+    "mcp==1.10.0"
 ]
 
-name = "slack_mcp"
+name = "whatsapp_desktop_mcp"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"

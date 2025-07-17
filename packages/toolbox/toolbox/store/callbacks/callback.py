@@ -10,28 +10,17 @@ from typing import TYPE_CHECKING
 import requests
 from pydantic import BaseModel
 
-from toolbox.mcp_installer.uv_utils import check_uv_installed, init_venv_uv
-
 if TYPE_CHECKING:
     from toolbox.installed_mcp import InstalledMCP
 import time
-from time import sleep
+
 
 from toolbox.external_dependencies.external_depenencies import (
     screenpipe_installed,
     syftbox_installed,
     syftbox_running,
 )
-from toolbox.mcp_installer.mcp_installer import (
-    install_package_from_git,
-    install_package_from_local_path,
-    make_mcp_installation_dir,
-    pkill_f,
-    process_exists,
-    run_python_mcp,
-    should_kill_existing_process,
-)
-from toolbox.settings import settings
+from toolbox.mcp_installer.python_package_installer import install_python_mcp
 
 HOME = Path.home()
 
@@ -299,7 +288,7 @@ class RegisterNotesMCPCallback(Callback):
 class RegisterNotesMCPAppHeartbeatMCPCallback(Callback):
     def on_install_init(self, context: InstallationContext, json_body: dict):
         # Check if the uvicorn server is already running
-        max_retries = 5
+        max_retries = 10
         retry_delay = 2  # seconds
         if "SYFTBOX_QUERYENGINE_PORT" not in context.context_settings:
             raise Exception(
@@ -346,34 +335,7 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
         context.context_settings["SYFTBOX_QUERYENGINE_PORT"] = "8002"
 
         print("Install syftbox-queryengine-mcp")
-        check_uv_installed()
-        installation_dir = make_mcp_installation_dir(context.current_app)
-        init_venv_uv(installation_dir)
+        from toolbox.store.store_code import STORE_ELEMENTS
 
-        if settings.use_local_packages:
-            # print("\nUsing local packages!!!!\n")
-            # TODO: read from configuration
-            install_package_from_local_path(
-                installation_dir,
-                "~/workspace/agentic-syftbox/packages/syftbox_queryengine",
-            )
-        else:
-            # print("\n\n\nUsing remote packages!!!!\n\n\n")
-            install_package_from_git(
-                installation_dir,
-                package_url="https://github.com/OpenMined/agentic-syftbox",
-                subdirectory="packages/syftbox_queryengine",
-                branch="main",
-            )
-
-        module = mcp.deployment["module"]
-        start_process = True
-        if process_exists(module):
-            kill_process = should_kill_existing_process(module)
-            if kill_process:
-                pkill_f(module)
-            else:
-                start_process = False
-
-        if start_process:
-            run_python_mcp(installation_dir, module, env=context.context_settings)
+        store_element = STORE_ELEMENTS["syftbox-queryengine-mcp"]
+        install_python_mcp(store_element, context)
