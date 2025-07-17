@@ -47,9 +47,6 @@ def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict | None = N
 
 def install_python_package_from_local_path(installation_dir: Path, package_path: Path):
     # print(f"Installing package from local path: {package_path}")
-    import pdb
-
-    pdb.set_trace()
     try:
         cmd = f"source .venv/bin/activate && uv pip install -q -e {package_path}"
         result = subprocess.run(
@@ -82,8 +79,9 @@ def install_python_package_from_git(
     if subdirectory:
         subdir_postfix = f"#subdirectory={subdirectory}"
     url = f"git+{package_url}.git@{branch}{subdir_postfix}"
+    cmd = f"source .venv/bin/activate && uv pip install -U {url}"
     result = subprocess.run(
-        f"source .venv/bin/activate && uv pip install -U {url}",
+        cmd,
         shell=True,
         cwd=installation_dir,
         executable="/bin/bash",  # This is critical
@@ -92,8 +90,9 @@ def install_python_package_from_git(
     )
 
     if result.returncode != 0:
-        print(f"Failed to install package: {result.stderr}")
-        raise Exception(f"Failed to install package: {result.stderr}")
+        raise Exception(
+            f"Failed to install package with cmd: {cmd} in {installation_dir}:\n{result.stderr}"
+        )
 
 
 def install_python_mcp(store_element: "StoreElement", context: "InstallationContext"):

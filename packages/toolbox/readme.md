@@ -23,15 +23,17 @@ tb install <app_name>
 
 
 # Example
+```
 tb install meeting-notes-mcp
+```
 
 # Store
 
 
 | Name | Clients | Default Deployment | Read Access | Write Access | Install |
-|------|--------|------------|-------------|--------------|-------|
+|------|--------|--------------------|-------------|--------------|---------|
 | github-mcp | claude | stdio | Issues, PRs, Settings | Issues, PRs, Settings | `tb install github-mcp` |
 | meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
-| screen-recording-syncer | claude | proxy-to-local | Apple Audio Recordings | Apple Audio Recordings over syftbox | `tb install screen-recording-syncer` |
-| screen-recording-mcp | claude | app | Apple-mic-input, Apple-video-input | Apple Audio Recordings, Apple Video Recordings | `tb install screen-recording-mcp`|
+| whatsapp-desktop-mcp | claude | proxy-to-om-enclave | WhatsApp Messages | WhatsApp Messages | `tb install whatsapp-desktop-mcp` |
+| slack-mcp | claude | proxy-to-om-enclave | Slack Messages | Slack Messages | `tb install slack-mcp` |
 

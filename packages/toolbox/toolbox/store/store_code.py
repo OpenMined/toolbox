@@ -73,6 +73,9 @@ class SyftboxQueryengineMCP(StoreElement):
     local_package_path: Path = Path(
         TOOLBOX_WORKSPACE_DIR / "packages/syftbox_queryengine"
     ).expanduser()
+    package_url: str = "https://github.com/OpenMined/agentic-syftbox"
+    subdirectory: str = "packages/syftbox_queryengine"
+    branch: str = "main"
     callbacks: list[Callback] = [
         SyftboxAuthCallback(),
         InstallSyftboxQueryengineMCPCallback(),
