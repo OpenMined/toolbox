@@ -18,7 +18,7 @@ tb list
 ``` 
 To install a new app
 ```
-tb install <app_name>
+tb install <app_name> --client="claude"
 ```
 
 
