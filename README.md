@@ -25,7 +25,7 @@ uv pip install -e .
 # Alpha example
 This is an alpha version, currently the only functioning app is the meeting-notes-mcp, with the slack-mcp coming soon. The only supported client is Claude Desktop, which is also the default client. Install this app and its dependencies using:
 ```
-tb install meeting-notes-mcp
+tb install meeting-notes-mcp --client=claude
 ```
 After making some recording using screenpipe you should be able to see your data using
 ```
@@ -66,10 +66,13 @@ tb log <appname>
 # Store
 
 
+# Store
+
+
 | Name | Clients | Default Deployment | Read Access | Write Access | Install |
-|------|--------|------------|-------------|--------------|-------|
+|------|--------|--------------------|-------------|--------------|---------|
 | github-mcp | claude | stdio | Issues, PRs, Settings | Issues, PRs, Settings | `tb install github-mcp` |
 | meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
-| screen-recording-syncer | claude | proxy-to-local | Apple Audio Recordings | Apple Audio Recordings over syftbox | `tb install screen-recording-syncer` |
-| screen-recording-mcp | claude | app | Apple-mic-input, Apple-video-input | Apple Audio Recordings, Apple Video Recordings | `tb install screen-recording-mcp`|
+| whatsapp-desktop-mcp | claude | proxy-to-om-enclave | WhatsApp Messages | WhatsApp Messages | `tb install whatsapp-desktop-mcp` |
+| slack-mcp | claude | proxy-to-om-enclave | Slack Messages | Slack Messages | `tb install slack-mcp` |
 
