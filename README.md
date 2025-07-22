@@ -31,12 +31,21 @@ After making some recording using screenpipe you should be able to see your data
 ```
 tb show meeting-notes-mcp
 ```
-Which you can then query with Claude desktop by asking something like
+This should now show you the nr of audio chunks screenpipe recorded and how many are transcribed. When you start talking they should start appearting within 30 seconds. If not, check [troubleshooting screenpipe](#troubleshooting-screenpipe)
+
+Once you have recordings, you can then query them with Claude desktop by asking something like
 
 **"Get me the meeting notes from my latest meeting"**
 
 ## Bonus
 If you also install the github mcp server you could also ask
+
+## Troubleshooting screenpipe
+If you dont seen audio recordings under `tb show meeting-notes-mcp`. The following things may help
+
+- make sure you gave screenpipe the right permissions for recording video and audio in under Privacy and security (screenpipe should automatically request this). 
+- Also make sure you select the right audio device by clicking -> person icon in the right top -> settings -> recording -> audio devices -> and then select the right one. 
+- By default screenpipe uses local trancription, which we are not using because it might be heavy on your laptop. However, screenpipe will still try to download the model, which may block transcription. To prevent this, choose a small model like `whisper-tiny-quantized` under -> person icon in the right top -> settings -> recording -> audio-transcription-model
 
 **"Now make tickets for the todo's of that meeting"**
 
