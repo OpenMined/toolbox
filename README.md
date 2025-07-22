@@ -40,13 +40,6 @@ Once you have recordings, you can then query them with Claude desktop by asking 
 ## Bonus
 If you also install the github mcp server you could also ask
 
-## Troubleshooting screenpipe
-If you dont seen audio recordings under `tb show meeting-notes-mcp`. The following things may help
-
-- make sure you gave screenpipe the right permissions for recording video and audio in under Privacy and security (screenpipe should automatically request this). 
-- Also make sure you select the right audio device by clicking -> person icon in the right top -> settings -> recording -> audio devices -> and then select the right one. 
-- By default screenpipe uses local trancription, which we are not using because it might be heavy on your laptop. However, screenpipe will still try to download the model, which may block transcription. To prevent this, choose a small model like `whisper-tiny-quantized` under -> person icon in the right top -> settings -> recording -> audio-transcription-model
-
 **"Now make tickets for the todo's of that meeting"**
 
 
@@ -84,4 +77,13 @@ tb log <appname>
 | meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
 | whatsapp-desktop-mcp | claude | proxy-to-om-enclave | WhatsApp Messages | WhatsApp Messages | `tb install whatsapp-desktop-mcp` |
 | slack-mcp | claude | proxy-to-om-enclave | Slack Messages | Slack Messages | `tb install slack-mcp` |
+
+
+# Troubleshooting screenpipe
+If you dont seen audio recordings under `tb show meeting-notes-mcp`. The following things may help
+
+- make sure you gave screenpipe the right permissions for recording video and audio in under Privacy and security (screenpipe should automatically request this). 
+- Also make sure you select the right audio device by clicking -> person icon in the right top -> settings -> recording -> audio devices -> and then select the right one. 
+- By default screenpipe uses local trancription, which we are not using because it might be heavy on your laptop. However, screenpipe will still try to download the model, which may block transcription. To prevent this, choose a small model like `whisper-tiny-quantized` under -> person icon in the right top -> settings -> recording -> audio-transcription-model
+
 
