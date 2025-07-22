@@ -1,5 +1,5 @@
 <p align="center">
-<img alt="Hugging Face Transformers Library" src="https://raw.githubusercontent.com/OpenMined/agentic-syftbox/refs/heads/main/packages/toolbox/assets/ToolBox.svg" width="352" height="59" style="max-width: 100%;">
+<img alt="Hugging Face Transformers Library" src="https://raw.githubusercontent.com/OpenMined/toolbox/refs/heads/main/packages/toolbox/assets/ToolBox.svg" width="352" height="59" style="max-width: 100%;">
   <br/>
   <br/>
 </p>

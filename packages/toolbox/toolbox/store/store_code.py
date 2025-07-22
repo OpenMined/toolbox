@@ -47,7 +47,7 @@ class StoreElement(BaseModel):
 class NotesMCP(StoreElement):
     name: str = "meeting-notes-mcp"
     local_package_path: Path | None = None
-    package_url: str = "https://github.com/OpenMined/agentic-syftbox"
+    package_url: str = "https://github.com/OpenMined/toolbox"
     subdirectory: str = "packages/syftbox_queryengine"
     branch: str = "main"
     callbacks: list[Callback] = [
@@ -73,7 +73,7 @@ class SyftboxQueryengineMCP(StoreElement):
     local_package_path: Path = Path(
         TOOLBOX_WORKSPACE_DIR / "packages/syftbox_queryengine"
     ).expanduser()
-    package_url: str = "https://github.com/OpenMined/agentic-syftbox"
+    package_url: str = "https://github.com/OpenMined/toolbox"
     subdirectory: str = "packages/syftbox_queryengine"
     branch: str = "main"
     callbacks: list[Callback] = [
@@ -96,7 +96,7 @@ class SlackMCP(StoreElement):
     local_package_path: Path = Path(
         TOOLBOX_WORKSPACE_DIR / "packages/slack_mcp"
     ).expanduser()
-    package_url: str = "https://github.com/OpenMined/agentic-syftbox"
+    package_url: str = "https://github.com/OpenMined/toolbox"
     subdirectory: str = "packages/slack_mcp"
     branch: str = "main"
     callbacks: list[Callback] = [
@@ -112,7 +112,7 @@ class WhatsappDesktopMCP(StoreElement):
     local_package_path: Path = Path(
         TOOLBOX_WORKSPACE_DIR / "packages/whatsapp_desktop_mcp"
     ).expanduser()
-    package_url: str = "https://github.com/OpenMined/agentic-syftbox"
+    package_url: str = "https://github.com/OpenMined/toolbox"
     subdirectory: str = "packages/whatsapp_desktop_mcp"
     branch: str = "main"
     callbacks: list[Callback] = [

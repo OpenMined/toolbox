@@ -388,7 +388,7 @@ class SlackAuth:
 app = typer.Typer(help="Slack Authentication using Playwright")
 
 
-def do_auth(workspace: str, browser: str):  # Validate browser choice
+def do_browser_auth(workspace: str, browser: str):  # Validate browser choice
     if browser not in ["firefox", "chromium", "webkit"]:
         typer.echo(f"Error: Unsupported browser type: {browser}")
         typer.echo("Supported browsers: firefox, chromium, webkit")
@@ -445,7 +445,7 @@ def authenticate(
     browser: str = typer.Option("firefox", "--browser", help="Browser type to use"),
 ):
     """Authenticate with Slack and extract client token."""
-    do_auth(workspace, browser)
+    do_browser_auth(workspace, browser)
 
 
 if __name__ == "__main__":

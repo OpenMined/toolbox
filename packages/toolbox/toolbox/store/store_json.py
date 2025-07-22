@@ -55,7 +55,7 @@ STORE = {
     },
     "meeting-notes-mcp": {
         "has_client_json": False,
-        "url": "https://github.com/OpenMined/agentic-syftbox/tree/main/packages/notes_mcp",
+        "url": "https://github.com/OpenMined/toolbox/tree/main/packages/notes_mcp",
         "requirements": ["syftbox-queryengine-mcp"],
         "external_dependencies": ["syftbox", "screenpipe"],
         "context_settings": {
@@ -73,7 +73,7 @@ STORE = {
         },
     },
     "syftbox-queryengine-mcp": {
-        "url": "https://github.com/OpenMined/agentic-syftbox/tree/main/packages/syftbox_queryengine",
+        "url": "https://github.com/OpenMined/toolbox/tree/main/packages/syftbox_queryengine",
         "json_bodies_for_client_for_deployment_method": {
             "all": {
                 "proxy-to-local-http": {
@@ -98,7 +98,7 @@ STORE = {
         },
     },
     "slack-mcp": {
-        "url": "https://github.com/OpenMined/agentic-syftbox/tree/main/packages/slack_mcp",
+        "url": "https://github.com/OpenMined/toolbox/tree/main/packages/slack_mcp",
         "json_bodies_for_client_for_deployment_method": {
             "all": {
                 "proxy-to-local-http": {
@@ -123,7 +123,7 @@ STORE = {
         },
     },
     "whatsapp-desktop-mcp": {
-        "url": "https://github.com/OpenMined/agentic-syftbox/tree/main/packages/whatsapp_desktop_mcp",
+        "url": "https://github.com/OpenMined/toolbox/tree/main/packages/whatsapp_desktop_mcp",
         "json_bodies_for_client_for_deployment_method": {
             "all": {
                 "proxy-to-local-http": {

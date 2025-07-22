@@ -173,7 +173,7 @@ This app will install the following dependencies:
 
 screenpipe: https://github.com/mediar-ai/screenpipe
 syftbox: https://github.com/OpenMined/syftbox
-queryengine: https://github.com/OpenMined/agentic-syftbox/tree/main/packages/syftbox_queryengine
+queryengine: https://github.com/OpenMined/toolbox/tree/main/packages/syftbox_queryengine
 
 use `toolbox list`, `toolbox show <app_name>` or `toolbox log <app_name>` to see the status of the installation.
 {end}""")

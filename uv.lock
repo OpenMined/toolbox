@@ -4,7 +4,7 @@ requires-python = ">=3.12"
 
 [manifest]
 members = [
-    "agentic-syftbox",
+    "toolbox",
     "notes-mcp",
     "slack-mcp",
     "syftbox-queryengine",
@@ -12,7 +12,7 @@ members = [
 ]
 
 [[package]]
-name = "agentic-syftbox"
+name = "toolbox"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

@@ -6,7 +6,7 @@ from pathlib import Path
 
 
 # ANTHROPIC_KEY = os.environ["ANTHROPIC_API_KEY"]
-REPO_PATH = Path(os.environ.get("REPO_PATH", "/Users/koen/workspace/agentic-syftbox"))
+REPO_PATH = Path(os.environ.get("REPO_PATH", "/Users/koen/workspace/toolbox"))
 # SCREENPIPE_PATH = REPO_PATH / "data" / "screenpipe" / "db.sqlite"
 # print(f"screenpipe path: {SCREENPIPE_PATH}")
 # assert ANTHROPIC_KEY is not None and ANTHROPIC_KEY != ""
@@ -26,11 +26,12 @@ def get_meeting_notes_metadata() -> list[dict[str, str]]:
     {"filename": "filenname2", "datetime": "datetime2"}, ...].
     When returning meeting note metadata, as a client always make sure to show the metadata to the user so they can see what is going on."""
     # all_meeting_notes: list[str] = get_all_meeting_notes(conn)
-    try:    
+    try:
         with db.get_screenpipe_connection() as conn:
             return db.get_meeting_meta(conn)
     except Exception as e:
         import traceback
+
         print(traceback.format_exc())
         return []
 
@@ -44,6 +45,7 @@ def get_meeting_content_from_filename(filename: str) -> str:
             return meeting_notes
     except Exception as e:
         import traceback
+
         print(traceback.format_exc())
         return ""
 
