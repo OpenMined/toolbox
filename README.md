@@ -65,8 +65,6 @@ To get logs for a local app
 tb log <appname>
 ```
 
-# Store
-
 
 # Store
 
