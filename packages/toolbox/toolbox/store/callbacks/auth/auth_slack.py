@@ -432,8 +432,7 @@ def do_browser_auth(workspace: str, browser: str):  # Validate browser choice
     }
     client = WebClient(token=token, headers=headers)
 
-    response = client.conversations_history(channel="D01LM1NMJ0J", limit=3)
-    pprint(response["messages"])
+    response = client.auth_test()
     return token, d_cookie
 
 

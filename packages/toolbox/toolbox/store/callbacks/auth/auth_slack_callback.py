@@ -45,16 +45,16 @@ class SlackAuthCallback(Callback):
     def on_install_init(self, context: "InstallationContext", json_body: dict):
         try:
             slack_token, slack_d_cookie = gather_tokens_and_cookie(context)
-            context.context_settings["slack_token"] = slack_token
-            context.context_settings["slack_d_cookie"] = slack_d_cookie
+            context.context_settings["SLACK_TOKEN"] = slack_token
+            context.context_settings["SLACK_D_COOKIE"] = slack_d_cookie
             return
         except Exception as e:
             print(f"Error getting tokens and cookie: {e}")
 
             workspace = input("Enter Slack workspace name: ")
             token, d_cookie = do_browser_auth(workspace, "chromium")
-            context.context_settings["slack_token"] = token
-            context.context_settings["slack_d_cookie"] = d_cookie
+            context.context_settings["SLACK_TOKEN"] = token
+            context.context_settings["SLACK_D_COOKIE"] = d_cookie
 
     def on_run_mcp(self, context: "InstallationContext"):
         from toolbox.store.store_code import STORE_ELEMENTS
