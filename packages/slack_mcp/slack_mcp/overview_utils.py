@@ -94,13 +94,13 @@ def get_conversations_replies(client, channel_id, ts, limit=1000, max_pages=50):
     rate_limit_retries = 0
     while current_page <= max_pages:
         try:
-            replies = client.conversations_replies(
+            replies_result = client.conversations_replies(
                 channel=channel_id, ts=ts, limit=limit
             )
             # Skip the first message (it's the same as the parent)
-            replies.extend(replies["messages"][1:])
+            replies.extend(replies_result["messages"][1:])
             current_page += 1
-            cursor = replies.get("response_metadata", {}).get("next_cursor")
+            cursor = replies_result.get("response_metadata", {}).get("next_cursor")
             if not cursor:
                 break
         except SlackApiError as e:
