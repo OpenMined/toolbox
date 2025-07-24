@@ -71,7 +71,12 @@ def get_config(db):
 
         decoded_cfg = cfg[1:].decode("utf-8")
         cleaned_cfg = remove_control_chars(decoded_cfg)
-        return json.loads(cleaned_cfg)
+        try:
+            return json.loads(cleaned_cfg)
+        except Exception:
+            # attempt to fix the json, no idea why this is sometimes missing
+            cleaned_cfg = cleaned_cfg + "}"
+            return json.loads(cleaned_cfg)
     except Exception as e:
         raise RuntimeError(
             "Slack's Local Storage not recognised: localConfig not in expected format. Aborting."
@@ -82,24 +87,27 @@ def get_tokens():
     db = None
     try:
         db = leveldb.LevelDB(str(SLACK_LEVELDB_PATH))
+        config = get_config(db)
+
     except Exception as e:
         try:
             db = try_to_copy_and_read_leveldb(SLACK_LEVELDB_PATH)
+            config = get_config(db)
         except Exception:
             if db:
                 del db
             raise RuntimeError(
                 "Could not read Slack's Local Storage database. Have you quit Slack?"
             ) from e
-
-        config = get_config(db)
-        tokens = {}
-        for v in config["teams"].values():
-            tokens[v["url"]] = {"token": v["token"], "name": v["name"]}
-
     finally:
         if db:
             del db
+
+    tokens = {}
+    for v in config["teams"].values():
+        if not isinstance(v, dict) or "name" not in v or "token" not in v:
+            continue
+        tokens[v["url"]] = {"token": v["token"], "name": v["name"]}
 
     return tokens
 
