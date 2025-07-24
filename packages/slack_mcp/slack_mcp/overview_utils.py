@@ -9,7 +9,8 @@ def get_my_active_channels_from_search(client, last_n_days=7, max_pages=50):
     current_page = 1
     after_date = (datetime.now() - timedelta(days=last_n_days)).strftime("%Y-%m-%d")
     query = f"after:{after_date}"  # filter messages after this date
-
+    MAX_RATE_LIMIT_RETRIES = 20
+    rate_limit_retries = 0
     while current_page <= max_pages:
         try:
             response = client.search_messages(
@@ -34,40 +35,99 @@ def get_my_active_channels_from_search(client, last_n_days=7, max_pages=50):
             current_page += 1
 
         except SlackApiError as e:
-            print(f"Slack API Error: {e.response['error']}")
-            break
+            if (
+                e.response["error"] == "ratelimited"
+                and rate_limit_retries < MAX_RATE_LIMIT_RETRIES
+            ):
+                rate_limit_retries += 1
+                print(
+                    "Got rate limited by slack, sleeping for 60 seconds and continuing"
+                )
+                time.sleep(60)
+            else:
+                print(f"Slack API Error: {e.response}")
+                break
 
     return list(active_channel_ids)
 
 
-def get_channel_messages(client, channel_id, oldest=None, latest=None):
-    try:
-        messages = []
-        cursor = None
-        while True:
+def get_channel_messages(client, channel_id, oldest=None, latest=None, max_pages=50):
+    messages = []
+    cursor = None
+    current_page = 1
+    MAX_RATE_LIMIT_RETRIES = 20
+    rate_limit_retries = 0
+    while current_page <= max_pages:
+        try:
             history = client.conversations_history(
                 channel=channel_id,
                 oldest=oldest,
                 latest=latest,
                 limit=1000,
                 cursor=cursor,
+                page=current_page,
             )
             messages.extend(history["messages"])
+            current_page += 1
             cursor = history.get("response_metadata", {}).get("next_cursor")
             if not cursor:
                 break
-        return messages
+        except SlackApiError as e:
+            if (
+                e.response["error"] == "ratelimited"
+                and rate_limit_retries < MAX_RATE_LIMIT_RETRIES
+            ):
+                rate_limit_retries += 1
+                print(
+                    "Got rate limited by slack, sleeping for 60 seconds and continuing"
+                )
+                time.sleep(60)
+            else:
+                raise e
+    return messages
 
-    except SlackApiError as e:
-        print(f"Error fetching messages: {e.response['error']}")
+
+def get_conversations_replies(client, channel_id, ts, limit=1000, max_pages=50):
+    current_page = 1
+    replies = []
+    MAX_RATE_LIMIT_RETRIES = 20
+    rate_limit_retries = 0
+    while current_page <= max_pages:
+        try:
+            replies = client.conversations_replies(
+                channel=channel_id, ts=ts, limit=limit
+            )
+            # Skip the first message (it's the same as the parent)
+            replies.extend(replies["messages"][1:])
+            current_page += 1
+            cursor = replies.get("response_metadata", {}).get("next_cursor")
+            if not cursor:
+                break
+        except SlackApiError as e:
+            if (
+                e.response["error"] == "ratelimited"
+                and rate_limit_retries < MAX_RATE_LIMIT_RETRIES
+            ):
+                rate_limit_retries += 1
+                print(
+                    "Got rate limited by slack, sleeping for 60 seconds and continuing"
+                )
+                time.sleep(60)
+            else:
+                raise e
+    return replies
 
 
-def get_channel_messages_with_thread_tree(client, channel_id, oldest=None, latest=None):
-    try:
-        messages = []
-        cursor = None
-
-        while True:
+def get_channel_messages_with_thread_tree(
+    client, channel_id, oldest=None, latest=None, max_pages=50
+):
+    messages = []
+    cursor = None
+    current_page = 1
+    MAX_RATE_LIMIT_RETRIES = 20
+    rate_limit_retries = 0
+    while current_page <= max_pages:
+        try:
             history = client.conversations_history(
                 channel=channel_id,
                 oldest=oldest,
@@ -82,23 +142,34 @@ def get_channel_messages_with_thread_tree(client, channel_id, oldest=None, lates
 
                 # Check if the message starts a thread
                 if "thread_ts" in message and message.get("reply_count", 0) > 0:
-                    replies = client.conversations_replies(
-                        channel=channel_id, ts=message["thread_ts"]
+                    replies = get_conversations_replies(
+                        client,
+                        channel_id,
+                        message["thread_ts"],
+                        limit=100,
+                        max_pages=20,
                     )
-                    # Skip the first message (it's the same as the parent)
-                    thread_replies = replies["messages"][1:]
-                    message["replies"].extend(thread_replies)
+                    message["replies"].extend(replies)
 
                 messages.append(message)
 
             cursor = history.get("response_metadata", {}).get("next_cursor")
             if not cursor:
                 break
+        except SlackApiError as e:
+            if (
+                e.response["error"] == "ratelimited"
+                and rate_limit_retries < MAX_RATE_LIMIT_RETRIES
+            ):
+                rate_limit_retries += 1
+                print(
+                    "Got rate limited by slack, sleeping for 60 seconds and continuing"
+                )
+                time.sleep(60)
+            else:
+                raise e
 
-        return messages
-
-    except SlackApiError as e:
-        print(f"Error fetching messages: {e.response['error']}")
+    return messages
 
 
 def get_last_week_messages(client, channel_ids):
