@@ -26,6 +26,13 @@ def get_favourite_channel_ids(client: WebClient):
     return favourite_channel_ids
 
 
+def get_single_message(client: WebClient, channel_id: str, ts: str):
+    res = client.conversations_history(
+        channel=channel_id, oldest=ts, newest=ts, inclusive=True, limit=1
+    )
+    return res["messages"][0]
+
+
 _channelid_to_name_cache = TTLCache(maxsize=8, ttl=300)
 
 
