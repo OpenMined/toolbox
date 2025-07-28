@@ -5,7 +5,7 @@ import shutil
 import sys
 import tempfile
 
-import leveldb
+# import leveldb
 import pycookiecheat
 from pathlib import Path
 
@@ -49,9 +49,9 @@ def try_to_copy_and_read_leveldb(leveldb_path):
     lock_file = tmp_leveldb_path / "LOCK"
     if lock_file.exists():
         lock_file.unlink()
-
-    db = leveldb.LevelDB(str(tmp_leveldb_path))
-    return db
+    return None
+    # db = leveldb.LevelDB(str(tmp_leveldb_path))
+    # return db
 
 
 def get_config(db):
