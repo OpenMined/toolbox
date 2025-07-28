@@ -8,7 +8,8 @@ dependencies = [
     "fastapi>=0.115.13",
     "pydantic-settings>=2.10.0",
     "mcp==1.10.0",
-    "slack_sdk==3.35.0"
+    "slack_sdk==3.35.0",
+    "sqlite-vec==0.1.7a2"
 ]
 
 name = "slack_mcp"

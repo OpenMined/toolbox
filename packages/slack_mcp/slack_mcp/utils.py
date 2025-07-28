@@ -19,6 +19,13 @@ def get_all_channels(client: WebClient):
     return channels
 
 
+def get_single_message(client: WebClient, channel_id: str, ts: str):
+    res = client.conversations_history(
+        channel=channel_id, oldest=ts, newest=ts, inclusive=True, limit=1
+    )
+    return res["messages"][0]
+
+
 def get_favourite_channel_ids(client: WebClient):
     favourites_response = client.stars_list()
     favourites = favourites_response.get("items", [])
