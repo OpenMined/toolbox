@@ -3,21 +3,26 @@ import os
 import traceback
 
 from mcp.server.fastmcp import FastMCP
+from slack_sdk import WebClient
+
+from slack_mcp import db
+from slack_mcp.embeddings import get_embedding, ollama_available
+from slack_mcp.models import ChunkWithMessages, NamesMatchResponse
 from slack_mcp.overview_utils import (
-    get_last_week_messages_with_names,
     get_last_week_messages_with_threads_with_names,
     get_my_active_channels_from_search,
 )
-from slack_sdk import WebClient
-
-from slack_mcp.models import NamesMatchResponse
 from slack_mcp.utils import (
     compute_channelid_to_name_cached,
     get_favourite_channel_ids,
     get_matches_for_name,
 )
 
-mcp = FastMCP("Slack MCP service", stateless_http=True)
+SLACK_MCP_PORT = os.getenv("SLACK_MCP_PORT", 8003)
+mcp = FastMCP("Slack MCP service", stateless_http=True, port=SLACK_MCP_PORT)
+
+OLLAMA_PORT = os.getenv("OLLAMA_PORT", 11434)
+OLLAMA_URL = f"http://localhost:{OLLAMA_PORT}"
 
 
 token = os.getenv("SLACK_TOKEN")
@@ -114,6 +119,29 @@ def get_history(
         res.append(message)
 
     return res
+
+
+@mcp.tool()
+def rag(query: str) -> dict:
+    """Use this tool to search slack for messages that are relevant to the query.
+    It returns the best matching chunks (combination of messages) and the messages in the chunks."""
+    limit = 10
+    try:
+        if not ollama_available():
+            print("Ollama is not available")
+            raise ValueError("Ollama is not available")
+        with db.get_slack_connection() as conn:
+            query_embedding = get_embedding(query)
+            chunks = db.get_matching_chunks(
+                conn, query_embedding=query_embedding, limit=limit
+            )
+            # we return ChunkWithMessages so it contains both the full text and
+            # the messages in the chunks for the LLM to use
+            result: list[ChunkWithMessages] = db.get_chunk_messages(conn, chunks)
+            return [result.model_dump(mode="json") for result in result]
+    except Exception:
+        print(traceback.format_exc())
+        raise ValueError(traceback.format_exc())
 
 
 if __name__ == "__main__":
