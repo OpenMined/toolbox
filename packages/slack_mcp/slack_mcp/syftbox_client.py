@@ -3,8 +3,7 @@ from typing import Dict, Optional
 
 from fastsyftbox.simple_client import SimpleRPCClient
 
-from notes_mcp import db
-from notes_mcp.settings import settings
+from slack_mcp.remote_server.server_settings import settings
 
 
 def create_authenticated_client(

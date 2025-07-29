@@ -1,13 +1,12 @@
 import threading
 import time
 import traceback
-from sqlite3 import Connection
 
 import httpx
 import requests
 from fastsyftbox.simple_client import SimpleRPCClient
 from slack_mcp.models import Chunk
-from slack_mcp.remote_server.db import db
+from slack_mcp.remote_server import server_db as db
 from slack_mcp.remote_server.server_settings import settings
 from slack_mcp.remote_server.user_polling_manager import UserPollingManager
 from slack_mcp.syftbox_client import create_authenticated_client
@@ -16,30 +15,34 @@ ACTIVITY_THRESHOLD_SECONDS = 10
 EMBEDDING_POLL_INTERVAL = 1
 
 
-def poll_for_chunks_to_index(conn: Connection, stop_event: threading.Event):
-    polling_manager = UserPollingManager(conn)
-    while not stop_event.is_set():
-        users = db.get_users(conn)
-        users_already_processed = set()
-        users_inactive = set()
-        for user in users:
-            if db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS):
-                future = polling_manager.submit_job(
-                    user.id, _poll_for_new_chunks, (user.id,)
-                )
-                if future is not None:
-                    print(f"Polling for new audio chunks for user {user.email}")
+def poll_for_chunks_to_index(stop_event: threading.Event):
+    with db.get_indexer_db() as conn:
+        polling_manager = UserPollingManager(conn)
+        while not stop_event.is_set():
+            users = db.get_users(conn)
+            users_already_processed = set()
+            users_inactive = set()
+            for user in users:
+                if (
+                    db.active_since(conn, user.email, ACTIVITY_THRESHOLD_SECONDS)
+                    or True
+                ):
+                    future = polling_manager.submit_job(
+                        user.id, _poll_for_new_chunks, (user.id,)
+                    )
+                    if future is not None:
+                        print(f"Polling for new audio chunks for user {user.email}")
+                    else:
+                        users_already_processed.add(user.email)
                 else:
-                    users_already_processed.add(user.email)
-            else:
-                users_inactive.add(user.email)
-        if len(users) == 0:
-            print("No users found to transcribe")
-        time.sleep(EMBEDDING_POLL_INTERVAL)
+                    users_inactive.add(user.email)
+            if len(users) == 0:
+                print("No users found to emebed")
+            time.sleep(EMBEDDING_POLL_INTERVAL)
 
-    # Shutdown the polling manager when the main polling loop stops
-    polling_manager.shutdown()
-    print("DONE")
+        # Shutdown the polling manager when the main polling loop stops
+        polling_manager.shutdown()
+        print("DONE")
 
 
 def embed(chunks: list[Chunk]) -> list[float]:

@@ -285,6 +285,32 @@ class RegisterNotesMCPCallback(Callback):
             ) from e
 
 
+class RegisterSlackMCPCallback(Callback):
+    def on_install_init(self, context: InstallationContext, json_body: dict):
+        access_token = context.context_dict["syftbox_access_token"]
+        email = context.context_dict["syftbox_email"]
+        payload = {
+            "email": email,
+            "access_token": access_token,
+        }
+        try:
+            url = context.context_settings["slack_webserver_url"]
+            print(
+                f"Registering user for SlackMCP {url} with access token {access_token[:5]}..."
+            )
+            response = requests.post(f"{url}/register_user", json=payload)
+            response.raise_for_status()
+            print(
+                f"Succesfully registered account for meeting notes MCP {context.context_dict['syftbox_access_token']}"
+            )
+
+        except Exception as e:
+            # print(e)
+            raise Exception(
+                f"Error registering user for NotesMCP, could not connect to {url}"
+            ) from e
+
+
 class RegisterNotesMCPAppHeartbeatMCPCallback(Callback):
     def on_install_init(self, context: InstallationContext, json_body: dict):
         # Check if the uvicorn server is already running

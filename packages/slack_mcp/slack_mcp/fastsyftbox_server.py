@@ -101,4 +101,4 @@ if __name__ == "__main__":
     with get_slack_connection() as conn:
         db.create_tables(conn)
     print(settings)
-    uvicorn.run(app, host="0.0.0.0", port=8015)
+    uvicorn.run(app, host="0.0.0.0", port=8004)
