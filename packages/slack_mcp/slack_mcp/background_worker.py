@@ -119,7 +119,7 @@ def run_slack_mesage_dump_background_worker_single(
             upsert_message(conn, msg)
 
 
-def run_slack_mesage_dump_background_worke_loop():
+def run_slack_mesage_dump_background_worker_loop():
     # check what the last timestamp is locally
     with get_slack_connection() as conn:
         client = get_webclient()

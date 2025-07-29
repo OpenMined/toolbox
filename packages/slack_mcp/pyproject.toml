@@ -7,9 +7,14 @@ dependencies = [
     "uvicorn>=0.34.3",
     "fastapi>=0.115.13",
     "pydantic-settings>=2.10.0",
-    "mcp==1.10.0",
     "slack_sdk==3.35.0",
-    "sqlite-vec==0.1.7a2"
+    "sqlite-vec==0.1.7a2",
+    "numpy==2.3.2",
+    "tqdm==4.67.1",
+    "loguru==0.7.3",
+    "fastmcp==2.9.2",
+    "fastsyftbox==0.1.17",
+    "syft_core==0.2.5"
 ]
 
 name = "slack_mcp"
@@ -24,10 +29,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv]
-dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4"]
+dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4", "typer==0.16.0"]
 
 [dependency-groups]
 dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]
+embeddings = [
+    "torch==2.2.2",
+    "transformers==4.54.0",
+    "einops==0.8.1"
+]
 
 [tool.mypy]
 python_version = "3.12"

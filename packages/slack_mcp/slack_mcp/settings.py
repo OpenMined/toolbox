@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     skip_auth: bool = False
     syftbox_email: str = ""
     syftbox_access_token: str = ""
-    syftbox_queryengine_port: int = 8002
+    slack_mcp_port: int = 8003
     dev_email: str = "dev@openmined.org"
     dev_access_token: str = "dev_mode"
 
