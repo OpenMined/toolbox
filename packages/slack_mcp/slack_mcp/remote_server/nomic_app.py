@@ -34,12 +34,14 @@ class EmbeddingRequest(BaseModel):
 
 
 @router.post("/embeddings")
-async def embeddings(request: EmbeddingRequest):
+async def embeddings(request: list[EmbeddingRequest]):
     if USE_MOCK_EMBEDDINGS:
-        return {"chunk_id": str(request.chunk_id), "embedding": [0.0] * 768}
+        return [
+            {"chunk_id": str(x.chunk_id), "embedding": [0.0] * 768} for x in request
+        ]
 
     inputs = tokenizer(
-        request.prompt,
+        [x.prompt for x in request],
         return_tensors="pt",
         padding=True,
         truncation=True,
@@ -55,9 +57,12 @@ async def embeddings(request: EmbeddingRequest):
         mask_expanded = attention_mask.unsqueeze(-1).expand(last_hidden.size()).float()
         sum_embeddings = torch.sum(last_hidden * mask_expanded, 1)
         sum_mask = torch.clamp(mask_expanded.sum(1), min=1e-9)
-        embedding = (sum_embeddings / sum_mask).squeeze().tolist()
+        embeddings = (sum_embeddings / sum_mask).squeeze().tolist()
 
-    return {"chunk_id": str(request.chunk_id), "embedding": embedding}
+    return [
+        {"chunk_id": str(x.chunk_id), "embedding": embedding}
+        for x, embedding in zip(request, embeddings)
+    ]
 
 
 @asynccontextmanager

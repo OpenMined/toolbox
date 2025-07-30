@@ -7,7 +7,9 @@ import traceback
 from pathlib import Path
 from typing import TYPE_CHECKING
 
+import numpy as np
 import requests
+import sqlite_vec
 from pydantic import BaseModel
 
 if TYPE_CHECKING:
@@ -214,6 +216,32 @@ class MeetingNotesMCPDataStatsCallback(Callback):
             return {"error": str(e)}
 
 
+def _get_slack_connection():
+    slack_mcp_db_path = HOME / ".slack_mcp" / "db.sqlite"
+    conn = sqlite3.connect(slack_mcp_db_path)
+    conn.row_factory = sqlite3.Row
+
+    conn.enable_load_extension(True)
+    sqlite_vec.load(conn)
+    conn.enable_load_extension(False)
+    return conn
+
+
+def get_n_embeddings(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM message_embeddings_vec")
+    return cursor.fetchone()[0]
+
+
+class SlackMCPDataStatsCallback(Callback):
+    def on_data_stats(self, mcp: "InstalledMCP") -> dict:
+        try:
+            conn = _get_slack_connection()
+            return {"# embeddings": get_n_embeddings(conn)}
+        except Exception as e:
+            return {"error": str(e)}
+
+
 class ScreenpipeExternalDependencyCallback(Callback):
     def on_external_dependency_check(self, context: InstallationContext):
         if not screenpipe_installed():
@@ -307,7 +335,7 @@ class RegisterSlackMCPCallback(Callback):
         except Exception as e:
             # print(e)
             raise Exception(
-                f"Error registering user for NotesMCP, could not connect to {url}"
+                f"Error registering user for SlackMCP, could not connect to {url}"
             ) from e
 
 

@@ -12,9 +12,9 @@ dependencies = [
     "numpy==2.3.2",
     "tqdm==4.67.1",
     "loguru==0.7.3",
-    "fastmcp==2.9.2",
-    "fastsyftbox==0.1.17",
-    "syft_core==0.2.5"
+    "mcp>=1.9.2",
+    "fastsyftbox",
+    "syft_core==0.2.8"
 ]
 
 name = "slack_mcp"
@@ -27,6 +27,9 @@ requires-python = ">=3.12"
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.uv.sources]
+fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "fix-startup" }
 
 [tool.uv]
 dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4", "typer==0.16.0"]

@@ -206,7 +206,7 @@ def upsert_chunks(conn, chunks: list[Chunk]):
     VALUES (?, ?, ?)
     """,
         [
-            (chunk.chunk_id, channel_id, ts)
+            (str(chunk.chunk_id), channel_id, ts)
             for chunk in chunks
             for channel_id, ts in zip(chunk.channel_ids, chunk.tss)
         ],
@@ -271,4 +271,10 @@ def get_earliest_timestamp_from_db(conn):
 def get_latest_timestamp_from_db(conn):
     cursor = conn.cursor()
     cursor.execute("SELECT MAX(CAST(ts AS REAL)) AS max_ts FROM messages;")
+    return cursor.fetchone()[0]
+
+
+def get_n_embeddings(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM message_embeddings_vec")
     return cursor.fetchone()[0]

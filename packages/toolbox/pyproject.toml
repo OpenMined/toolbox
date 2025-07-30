@@ -9,7 +9,8 @@ dependencies = [
     "typer>=0.16.0",
     "uvicorn>=0.34.3",
     "leveldb-312==1.0.0",
-    "pycookiecheat==0.8.0"
+    "pycookiecheat==0.8.0",
+    "sqlite-vec==0.1.7a2"
 ]
 
 name = "toolbox"

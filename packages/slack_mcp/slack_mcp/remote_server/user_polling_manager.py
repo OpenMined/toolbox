@@ -1,11 +1,11 @@
 import threading
 import traceback
-from concurrent.futures import Future
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Callable, Set
 
 
 class UserPollingManager:
-    def __init__(self, thread_pool_executor):
+    def __init__(self, thread_pool_executor: ThreadPoolExecutor):
         self.executor = thread_pool_executor
         self.active_users: Set[int] = set()
         self.user_futures: dict[int, Future] = {}

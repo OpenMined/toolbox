@@ -1,4 +1,5 @@
 import sqlite3
+from uuid import UUID
 
 from pydantic import BaseModel, EmailStr
 
@@ -26,3 +27,8 @@ class UserResponse(BaseModel):
     id: int
     email: EmailStr
     message: str
+
+
+class EmbeddingRequest(BaseModel):
+    chunk_id: UUID
+    prompt: str

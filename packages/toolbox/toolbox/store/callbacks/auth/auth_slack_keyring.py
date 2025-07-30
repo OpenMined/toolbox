@@ -89,15 +89,13 @@ def get_tokens():
         db = leveldb.LevelDB(str(SLACK_LEVELDB_PATH))
         config = get_config(db)
 
-    except Exception as e:
+    except Exception:
         try:
             db = try_to_copy_and_read_leveldb(SLACK_LEVELDB_PATH)
             config = get_config(db)
-        except Exception:
-            if db:
-                del db
+        except Exception as e:
             raise RuntimeError(
-                "Could not read Slack's Local Storage database. Have you quit Slack?"
+                f"Could not read Slack's Local Storage database {SLACK_LEVELDB_PATH}. Did you quit Slack?"
             ) from e
     finally:
         if db:

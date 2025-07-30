@@ -3,8 +3,7 @@ import threading
 import traceback
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, Depends, FastAPI
-from httpx import HTTPException
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from slack_mcp.remote_server.background_worker import poll_for_chunks_to_index
 from slack_mcp.remote_server.server_db import get_indexer_db, insert_user
 from slack_mcp.remote_server.server_models import UserRegistration, UserResponse

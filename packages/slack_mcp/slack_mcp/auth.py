@@ -2,8 +2,7 @@ import os
 from typing import Optional
 
 from fastapi import Header
-
-from syftbox_queryengine.settings import settings
+from slack_mcp.settings import settings
 
 
 def get_syftbox_credentials():

@@ -35,7 +35,7 @@ set -eo pipefail
 export NOMIC_URL=http://4.151.234.109
 export NOMIC_PORT=8020
 export NOMIC_SECRET_KEY=$NOMIC_SECRET_KEY
-export USE_MOCK_EMBEDDINGS=True
+export USE_MOCK_EMBEDDINGS=False
 export SERVER_PORT=8005
 
 cd /home/azureuser/slack_mcp

@@ -45,20 +45,25 @@ def healthcheck():
     return {"status": "ok"}
 
 
+class GetNewChunksResponse(BaseModel):
+    chunks: list[Chunk]
+
+
 @router.post("/get_new_chunks", tags=["syftbox"])
 def get_new_chunks(
     limit: int = 10,
     current_user_email: str = Depends(authenticate),
-):
+) -> GetNewChunksResponse:
     try:
         with get_slack_connection() as conn:
             chunks = db.gather_chunks_without_embeddings(conn, limit=limit)
-        print("Returning chunks", chunks)
+        print(f"returning {len(chunks)} chunks")
         if len(chunks) > 0:
-            logger.info(f"chunks {chunks[0]}")
-            return [chunk.model_dump(mode="json") for chunk in chunks]
+            res = GetNewChunksResponse(chunks=chunks)
+            return res.model_dump(mode="json")
         else:
-            return []
+            print("returning empty chunks")
+            return GetNewChunksResponse(chunks=[]).model_dump(mode="json")
     except Exception as e:
         import traceback
 
@@ -66,8 +71,8 @@ def get_new_chunks(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/submit_chunks", tags=["syftbox"])
-def submit_chunks(
+@router.post("/upload_embeddings", tags=["syftbox"])
+def upload_embeddings(
     chunks: list[Chunk],
     current_user_email: str = Depends(authenticate),
 ):

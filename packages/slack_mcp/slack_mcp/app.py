@@ -15,8 +15,9 @@ from slack_mcp.settings import settings
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     async with contextlib.AsyncExitStack() as stack:
-        thread = Thread(target=run_slack_mesage_dump_background_worker_loop)
-        thread.start()
+        if settings.start_polling_thread:
+            thread = Thread(target=run_slack_mesage_dump_background_worker_loop)
+            thread.start()
         await stack.enter_async_context(mcp.session_manager.run())
         yield
 

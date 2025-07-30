@@ -20,6 +20,7 @@ from toolbox.store.callbacks.callback import (
     RegisterNotesMCPAppHeartbeatMCPCallback,
     RegisterSlackMCPCallback,
     ScreenpipeExternalDependencyCallback,
+    SlackMCPDataStatsCallback,
     SyftboxAuthCallback,
     SyftboxExternalDependencyCallback,
     TextInputEnvRequestedSecretCallback,
@@ -103,6 +104,7 @@ class SlackMCP(StoreElement):
     callbacks: list[Callback] = [
         SlackAuthCallback(),
         RegisterSlackMCPCallback(),
+        SlackMCPDataStatsCallback(),
     ]
 
     def healthcheck(self, mcp: "InstalledMCP") -> bool:

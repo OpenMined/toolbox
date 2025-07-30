@@ -49,7 +49,10 @@ class SlackAuthCallback(Callback):
             context.context_settings["SLACK_D_COOKIE"] = slack_d_cookie
             return
         except Exception as e:
+            import traceback
+
             print(f"Error getting tokens and cookie: {e}")
+            print(traceback.format_exc())
 
             workspace = input("Enter Slack workspace name: ")
             token, d_cookie = do_browser_auth(workspace, "chromium")
