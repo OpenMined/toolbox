@@ -2,7 +2,11 @@ from typing import TYPE_CHECKING
 
 from toolbox.mcp_installer.python_package_installer import install_python_mcp
 from toolbox.store.callbacks.auth.auth_slack import do_browser_auth
-from toolbox.store.callbacks.auth.auth_slack_keyring import get_tokens_and_cookie
+from toolbox.store.callbacks.auth.auth_slack_keyring import (
+    get_slack_d_cookie_and_test_with_token,
+    get_tokens,
+    get_tokens_and_cookie,
+)
 from toolbox.store.callbacks.callback import Callback
 
 if TYPE_CHECKING:
@@ -27,17 +31,17 @@ def get_workspace(workspaces: list[str]) -> str:
 
 
 def gather_tokens_and_cookie(context: "InstallationContext"):
-    tokens_and_cookie = get_tokens_and_cookie()
-    workspaces = [x["name"].lower() for x in tokens_and_cookie["tokens"].values()]
+    tokens = get_tokens()
+    workspaces = [x["name"].lower() for x in tokens.values()]
     if len(workspaces) == 0:
         raise ValueError("No Slack workspaces found")
     workspace = get_workspace(workspaces)
     slack_token = [
-        x["token"]
-        for x in tokens_and_cookie["tokens"].values()
-        if x["name"].lower() == workspace
+        x["token"] for x in tokens.values() if x["name"].lower() == workspace
     ][0]
-    slack_d_cookie = tokens_and_cookie["cookie"]
+
+    slack_d_cookie = get_slack_d_cookie_and_test_with_token(slack_token)
+
     return slack_token, slack_d_cookie
 
 

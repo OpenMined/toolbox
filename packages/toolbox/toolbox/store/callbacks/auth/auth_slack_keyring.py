@@ -4,10 +4,14 @@ import pathlib
 import shutil
 import sys
 import tempfile
+from pathlib import Path
 
 import leveldb
 import pycookiecheat
-from pathlib import Path
+import requests
+from toolbox.store.callbacks.auth.auth_slack_browser_cookie_files import (
+    get_slack_xoxd_cookie_from_browser_cookie_files,
+)
 
 
 def get_slack_leveldb_path():
@@ -35,7 +39,51 @@ SLACK_LEVELDB_PATH = get_slack_leveldb_path()
 
 def get_cookie():
     cookies = pycookiecheat.chrome_cookies("http://slack.com", browser="Slack")
+    print(cookies)
     return cookies["d"]
+
+
+def test_connection_for_cookie_and_token(d_cookie, slack_token):
+    cookies = {"d": d_cookie}
+    headers = {"User-Agent": "Mozilla/5.0"}
+
+    response = requests.post(
+        "https://slack.com/api/auth.test",
+        headers=headers,
+        cookies=cookies,
+        data={"token": slack_token},
+    )
+    return response.json()["ok"]
+
+
+def get_slack_d_cookie_and_test_with_token(slack_token):
+    try:
+        cookies = pycookiecheat.chrome_cookies("http://slack.com", browser="Slack")
+        d_cookie = cookies["d"]
+
+        if test_connection_for_cookie_and_token(d_cookie, slack_token):
+            return d_cookie
+        else:
+            print(
+                "Got slack cookie from keychain, but failed to authenticate, trying browser cookie"
+            )
+    except Exception as e:
+        import traceback
+
+        print(
+            f"Failed to read slack cookie from keychain, trying browser cookie {traceback.format_exc()}"
+        )
+        pass
+    try:
+        xoxd_cookie = get_slack_xoxd_cookie_from_browser_cookie_files()
+        if test_connection_for_cookie_and_token(xoxd_cookie, slack_token):
+            return xoxd_cookie
+        else:
+            print("Got slack cookie from browser, but failed to authenticate")
+    except Exception as e:
+        print("Failed to read slack cookie from browser")
+
+    raise ValueError("Failed to read slack cookie from keychain or browser")
 
 
 def get_tokens_and_cookie():
