@@ -102,10 +102,14 @@ STORE = {
         "json_bodies_for_client_for_deployment_method": {
             "all": {
                 "proxy-to-local-http": {
-                    "args": ["mcp-remote", "http://127.0.0.1:8003/mcp/mcp"],
+                    "args": ["mcp-remote", "http://127.0.0.1:8004/mcp/mcp"],
                     "command": "npx",
                 }
             }
+        },
+        "external_dependencies": ["syftbox"],
+        "context_settings": {
+            "slack_webserver_url": "http://20.224.153.50:8005/",
         },
         "mcp_deployment_methods": {"all": "infered"},
         "deployment": {
