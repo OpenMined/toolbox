@@ -77,7 +77,6 @@ class SlackAuthCallback(Callback):
             slack_token, slack_d_cookie = gather_tokens_and_cookie(context)
             context.context_settings["SLACK_TOKEN"] = slack_token
             context.context_settings["SLACK_D_COOKIE"] = slack_d_cookie
-            raise Exception("Authentication successful")
         except Exception as e:
             print(
                 "Failed to read slack cookie from keychain, trying other auth methods"
