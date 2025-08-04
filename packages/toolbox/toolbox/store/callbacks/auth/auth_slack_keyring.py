@@ -1,6 +1,7 @@
 import json
 import os
 import pathlib
+import re
 import shutil
 import sys
 import tempfile
@@ -39,7 +40,6 @@ SLACK_LEVELDB_PATH = get_slack_leveldb_path()
 
 def get_cookie():
     cookies = pycookiecheat.chrome_cookies("http://slack.com", browser="Slack")
-    print(cookies)
     return cookies["d"]
 
 
@@ -67,13 +67,8 @@ def get_slack_d_cookie_and_test_with_token(slack_token):
             print(
                 "Got slack cookie from keychain, but failed to authenticate, trying browser cookie"
             )
-    except Exception as e:
-        import traceback
-
-        print(
-            f"Failed to read slack cookie from keychain, trying browser cookie {traceback.format_exc()}"
-        )
-        pass
+    except Exception:
+        print("No slack encryption key found in keychain, trying browser cookie.")
     try:
         xoxd_cookie = get_slack_xoxd_cookie_from_browser_cookie_files()
         if test_connection_for_cookie_and_token(xoxd_cookie, slack_token):
@@ -81,7 +76,7 @@ def get_slack_d_cookie_and_test_with_token(slack_token):
         else:
             print("Got slack cookie from browser, but failed to authenticate")
     except Exception as e:
-        print("Failed to read slack cookie from browser")
+        print("Could not read slack cookie from browser")
 
     raise ValueError("Failed to read slack cookie from keychain or browser")
 
@@ -102,6 +97,11 @@ def try_to_copy_and_read_leveldb(leveldb_path):
     return db
 
 
+def remove_control_chars(s):
+    # Remove all non-printable control characters (ASCII 0–31), except \n, \r, \t
+    return re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F]", "", s)
+
+
 def get_config(db):
     try:
         cfg = next(v for k, v in db.RangeIter() if bytearray(b"localConfig_v2") in k)
@@ -111,16 +111,11 @@ def get_config(db):
         ) from e
 
     try:
-        import re
-
-        def remove_control_chars(s):
-            # Remove all non-printable control characters (ASCII 0–31), except \n, \r, \t
-            return re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F]", "", s)
-
         decoded_cfg = cfg[1:].decode("utf-8")
         cleaned_cfg = remove_control_chars(decoded_cfg)
         try:
-            return json.loads(cleaned_cfg)
+            cfg = json.loads(cleaned_cfg)
+            return cfg
         except Exception:
             # attempt to fix the json, no idea why this is sometimes missing
             cleaned_cfg = cleaned_cfg + "}"
@@ -132,6 +127,7 @@ def get_config(db):
 
 
 def get_tokens():
+    # trigger_level_db_team_populated()
     db = None
     try:
         db = leveldb.LevelDB(str(SLACK_LEVELDB_PATH))
@@ -154,7 +150,6 @@ def get_tokens():
         if not isinstance(v, dict) or "name" not in v or "token" not in v:
             continue
         tokens[v["url"]] = {"token": v["token"], "name": v["name"]}
-
     return tokens
 
 
