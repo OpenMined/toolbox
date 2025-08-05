@@ -22,6 +22,13 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 uv pip install -e .
 ```
 
+## Installation troubleshooting
+For CLang issues during installation please run
+```
+uv python install --reinstall
+```
+to [fix python in uv](https://github.com/astral-sh/python-build-standalone/pull/414)
+
 # Alpha example
 This is an alpha version, currently the only functioning app is the meeting-notes-mcp, with the slack-mcp coming soon. The only supported client is Claude Desktop, which is also the default client. Install this app and its dependencies using:
 ```

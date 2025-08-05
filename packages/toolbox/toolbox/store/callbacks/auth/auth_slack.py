@@ -425,14 +425,6 @@ def do_browser_auth(workspace: str, browser: str):  # Validate browser choice
         return token, d_cookie
 
     token, d_cookie = asyncio.run(run_auth())
-    print("")
-    headers = {
-        "Cookie": f"d={d_cookie}",
-        "User-Agent": "Mozilla/5.0 (compatible; Python)",
-    }
-    client = WebClient(token=token, headers=headers)
-
-    response = client.auth_test()
     return token, d_cookie
 
 

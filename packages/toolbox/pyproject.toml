@@ -9,10 +9,10 @@ dependencies = [
     "typer>=0.16.0",
     "uvicorn>=0.34.3",
     "leveldb-312==1.0.0",
-    "pycookiecheat==0.8.0",
     "sqlalchemy>=2.0.42",
-    "python-crontab>=3.3.0",
     "croniter>=6.0.0",
+    "sqlite-vec==0.1.7a2",
+    "pycookiecheat",
 ]
 
 name = "toolbox"
@@ -21,13 +21,15 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.uv]
 dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4"]
+
+[tool.uv.sources]
+pycookiecheat = { git = "https://github.com/koenvanderveen/pycookiecheat", branch = "master" }
 
 [dependency-groups]
 dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]
