@@ -1,5 +1,6 @@
 import typer
 
+from toolbox.cli import daemon_cli, trigger_cli
 from toolbox.db import conn
 from toolbox.installer import (
     call_mcp,
@@ -15,7 +16,7 @@ from toolbox.installer import (
 from toolbox.settings import settings
 from toolbox.store.store_json import STORE
 
-app = typer.Typer()
+app = typer.Typer(no_args_is_help=True)
 
 
 def install(
@@ -90,6 +91,10 @@ app.command()(reset)
 app.command()(call)
 app.command()(start)
 app.command()(stop)
+
+# Add subgroups
+app.add_typer(daemon_cli.app, name="daemon", help="Daemon management commands")
+app.add_typer(trigger_cli.app, name="trigger", help="Trigger management commands")
 
 
 if __name__ == "__main__":

@@ -9,7 +9,10 @@ dependencies = [
     "typer>=0.16.0",
     "uvicorn>=0.34.3",
     "leveldb-312==1.0.0",
-    "pycookiecheat==0.8.0"
+    "pycookiecheat==0.8.0",
+    "sqlalchemy>=2.0.42",
+    "python-crontab>=3.3.0",
+    "croniter>=6.0.0",
 ]
 
 name = "toolbox"
