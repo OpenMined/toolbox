@@ -10,6 +10,7 @@ from typing import Literal
 
 from mcp.server.fastmcp import Context, FastMCP, Image
 from mcp.server.stdio import stdio_server
+from mcp.types import ToolAnnotations
 from pydantic import BaseModel, Field
 
 OBSIDIAN_SETTINGS_FOLDER = ".obsidian"
@@ -55,7 +56,10 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
     yield AppContext(vault_path=vault_path)
 
 
-mcp = FastMCP("obsidian-mcp", lifespan=app_lifespan)
+mcp = FastMCP(
+    "obsidian-mcp",
+    lifespan=app_lifespan,
+)
 
 
 def is_safe_path(path: Path, vault_path: Path) -> bool:
@@ -82,7 +86,13 @@ def get_file_info(file_path: Path, vault_path: Path) -> FileInfo:
     )
 
 
-@mcp.tool(description="Read a markdown file from the Obsidian vault with metadata")
+@mcp.tool(
+    description=(
+        "Read a markdown file from the Obsidian vault with metadata. "
+        "Simple filesystem-based operation that returns document content and file info."
+    ),
+    annotations=ToolAnnotations(readOnly=True),
+)
 def read_document(path: str, ctx: Context) -> Document:
     """Read a markdown file from the vault with metadata"""
     vault_path = ctx.request_context.lifespan_context.vault_path
@@ -97,7 +107,12 @@ def read_document(path: str, ctx: Context) -> Document:
     return Document(content=content, **info.model_dump())
 
 
-@mcp.tool(description="Read an image from the Obsidian vault")
+@mcp.tool(
+    description=(
+        "Read an image from the Obsidian vault. "
+        "Simple filesystem-based operation that returns image data."
+    )
+)
 def read_image(path: str, ctx: Context) -> Image:
     """Read an image from the vault"""
     vault_path = ctx.request_context.lifespan_context.vault_path
@@ -115,7 +130,12 @@ class DailyNotesSettings(BaseModel):
     format: str = Field(description="Format of the daily notes files")
 
 
-@mcp.tool(description="Get the location and file format of the daily notes")
+@mcp.tool(
+    description=(
+        "Get the location and file format of the daily notes. "
+        "Returns None if no daily notes settings are found."
+    )
+)
 def daily_notes_settings(ctx: Context) -> DailyNotesSettings | None:
     """Get the location and file format of the daily notes. Returns None if no daily notes settings are found."""
     vault_path = ctx.request_context.lifespan_context.vault_path
@@ -132,7 +152,221 @@ def daily_notes_settings(ctx: Context) -> DailyNotesSettings | None:
     )
 
 
-@mcp.tool(description="List markdown files in the Obsidian vault with metadata")
+@mcp.tool(
+    description=(
+        "Replace entire file content in the Obsidian vault. "
+        "CAUTION: This is a destructive operation - use only when explicitly requested. "
+        "Prefer insert_lines/remove_lines instead. "
+        "Uses atomic write with temporary file and backup for safety."
+    ),
+    annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True),
+)
+def replace_entire_file(path: str, new_content: str, ctx: Context) -> None:
+    """Update a markdown file in the vault"""
+    vault_path = ctx.request_context.lifespan_context.vault_path
+    file_path = (vault_path / path).resolve()
+    if not is_safe_path(file_path, vault_path) or not file_path.exists():
+        raise ValueError("File not found or not accessible")
+
+    # Create backup and use atomic write
+    backup_path = file_path.with_suffix(file_path.suffix + ".bak")
+    temp_path = file_path.with_suffix(file_path.suffix + ".tmp")
+
+    try:
+        # Create backup
+        backup_path.write_text(file_path.read_text(encoding="utf-8"), encoding="utf-8")
+
+        # Write to temp file first
+        temp_path.write_text(new_content, encoding="utf-8")
+
+        # Atomic move
+        temp_path.replace(file_path)
+
+        # Clean up backup after successful write
+        backup_path.unlink()
+
+    except Exception as e:
+        # Clean up temp file if it exists
+        if temp_path.exists():
+            temp_path.unlink()
+        # Restore from backup if needed
+        if backup_path.exists() and not file_path.exists():
+            backup_path.replace(file_path)
+        elif backup_path.exists():
+            backup_path.unlink()
+        raise e
+
+
+@mcp.tool(
+    description=(
+        "Insert lines at a specific position in a markdown file (1-based line numbering). "
+        "CAUTION: File modification tool - use only when user explicitly requests it. "
+        "Uses atomic write with temporary file and backup for safety."
+    ),
+    annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=False),
+)
+def insert_lines(path: str, line_number: int, lines: list[str], ctx: Context) -> None:
+    """Insert lines at a specific position (1-based line numbering)"""
+    vault_path = ctx.request_context.lifespan_context.vault_path
+    file_path = (vault_path / path).resolve()
+    if not is_safe_path(file_path, vault_path) or not file_path.exists():
+        raise ValueError("File not found or not accessible")
+
+    current_content = file_path.read_text(encoding="utf-8")
+    current_lines = current_content.splitlines(keepends=True)
+
+    # Convert to 0-based indexing, clamp to valid range
+    insert_pos = max(0, min(line_number - 1, len(current_lines)))
+
+    # Insert new lines
+    new_lines = (
+        current_lines[:insert_pos]
+        + [line + "\n" for line in lines]
+        + current_lines[insert_pos:]
+    )
+    new_content = "".join(new_lines)
+
+    # Use the safe update_file function
+    replace_entire_file(path, new_content, ctx)
+
+
+@mcp.tool(
+    description=(
+        "Remove lines from a markdown file by line range (inclusive, 1-based numbering). "
+        "CAUTION: This is a destructive operation - use only when user explicitly requests it. "
+        "Uses atomic write with temporary file and backup for safety."
+    ),
+    annotations=ToolAnnotations(readOnlyHint=False, destructive=True),
+)
+def remove_lines(path: str, start_line: int, end_line: int, ctx: Context) -> None:
+    """Remove lines from start_line to end_line (inclusive, 1-based line numbering)"""
+    vault_path = ctx.request_context.lifespan_context.vault_path
+    file_path = (vault_path / path).resolve()
+    if not is_safe_path(file_path, vault_path) or not file_path.exists():
+        raise ValueError("File not found or not accessible")
+
+    current_content = file_path.read_text(encoding="utf-8")
+    current_lines = current_content.splitlines(keepends=True)
+
+    # Convert to 0-based indexing, validate range
+    start_idx = max(0, start_line - 1)
+    end_idx = min(len(current_lines), end_line)
+
+    if start_idx >= end_idx:
+        raise ValueError("Invalid line range")
+
+    # Remove lines
+    new_lines = current_lines[:start_idx] + current_lines[end_idx:]
+    new_content = "".join(new_lines)
+
+    # Use the safe update_file function
+    replace_entire_file(path, new_content, ctx)
+
+
+@mcp.tool(
+    description=(
+        "Append lines to the end of a markdown file. "
+        "CAUTION: File modification tool - use only when user explicitly requests it. "
+        "Uses atomic write with temporary file and backup for safety."
+    )
+)
+def append_lines(path: str, lines: list[str], ctx: Context) -> None:
+    """Append lines to the end of a markdown file"""
+    vault_path = ctx.request_context.lifespan_context.vault_path
+    file_path = (vault_path / path).resolve()
+    if not is_safe_path(file_path, vault_path) or not file_path.exists():
+        raise ValueError("File not found or not accessible")
+
+    current_content = file_path.read_text(encoding="utf-8")
+
+    # Ensure file ends with newline before appending
+    if current_content and not current_content.endswith("\n"):
+        current_content += "\n"
+
+    # Append new lines
+    new_content = current_content + "\n".join(lines) + "\n"
+
+    # Use the safe update_file function
+    replace_entire_file(path, new_content, ctx)
+
+
+@mcp.tool(
+    description=(
+        "Replace lines in a markdown file by line range (inclusive, 1-based numbering). "
+        "CAUTION: File modification tool - use only when user explicitly requests it. "
+        "Uses atomic write with temporary file and backup for safety."
+    ),
+    annotations=ToolAnnotations(readOnlyHint=False, destructiveHint=True),
+)
+def replace_lines(
+    path: str, start_line: int, end_line: int, lines: list[str], ctx: Context
+) -> None:
+    """Replace lines in a markdown file by line range (inclusive, 1-based numbering)."""
+    vault_path = ctx.request_context.lifespan_context.vault_path
+    file_path = (vault_path / path).resolve()
+    if not is_safe_path(file_path, vault_path) or not file_path.exists():
+        raise ValueError("File not found or not accessible")
+
+    current_content = file_path.read_text(encoding="utf-8")
+    current_lines = current_content.splitlines(keepends=True)
+
+    # Convert to 0-based indexing, validate range
+    start_idx = max(0, start_line - 1)
+    end_idx = min(len(current_lines), end_line)
+
+    if start_idx >= end_idx:
+        raise ValueError("Invalid line range")
+
+    # Replace lines
+    new_lines = (
+        current_lines[:start_idx]
+        + [line + "\n" for line in lines]
+        + current_lines[end_idx:]
+    )
+    new_content = "".join(new_lines)
+
+    # Use the safe update_file function
+    replace_entire_file(path, new_content, ctx)
+
+
+@mcp.tool(
+    description=(
+        "Create a new markdown file in the Obsidian vault. "
+        "CAUTION: File creation tool - use only when user explicitly requests it. "
+        "Uses atomic write with temporary file for safety."
+    )
+)
+def create_file(path: str, ctx: Context, content: str = "") -> None:
+    """Create a new markdown file in the vault"""
+    vault_path = ctx.request_context.lifespan_context.vault_path
+    file_path = (vault_path / path).resolve()
+
+    if not is_safe_path(file_path, vault_path):
+        raise ValueError("File path not accessible")
+
+    if file_path.exists():
+        raise ValueError(f"File already exists: {path}")
+
+    # Ensure parent directory exists
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Write content atomically
+    temp_path = file_path.with_suffix(file_path.suffix + ".tmp")
+    try:
+        temp_path.write_text(content, encoding="utf-8")
+        temp_path.replace(file_path)
+    except Exception as e:
+        if temp_path.exists():
+            temp_path.unlink()
+        raise e
+
+
+@mcp.tool(
+    description=(
+        "List markdown files in the Obsidian vault with metadata. "
+        "Simple filesystem-based operation with optional filtering and sorting."
+    )
+)
 def list_files(
     ctx: Context,
     subfolder: str = "",
