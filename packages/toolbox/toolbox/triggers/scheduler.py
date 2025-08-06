@@ -2,43 +2,20 @@ import os
 import signal
 import subprocess
 import sys
-from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
 from croniter import croniter
+from loguru import logger
 
 from toolbox.triggers.trigger_store import Trigger, TriggerDB
 
 
-@contextmanager
-def redirect_to_log(log_file: Path):
-    """Context manager to redirect stdout and stderr to a log file"""
-    if log_file is None:
-        yield
-        return
-
-    # Open log file
-    log_fd = os.open(log_file, os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o644)
-
-    # Save original stdout/stderr
-    original_stdout = os.dup(sys.stdout.fileno())
-    original_stderr = os.dup(sys.stderr.fileno())
-
-    try:
-        # Redirect stdout and stderr to log file
-        os.dup2(log_fd, sys.stdout.fileno())
-        os.dup2(log_fd, sys.stderr.fileno())
-        yield
-    finally:
-        # Restore original stdout/stderr
-        os.dup2(original_stdout, sys.stdout.fileno())
-        os.dup2(original_stderr, sys.stderr.fileno())
-
-        # Close file descriptors
-        os.close(log_fd)
-        os.close(original_stdout)
-        os.close(original_stderr)
+def setup_logger(log_file: Path | None = None):
+    """Setup loguru logger with optional file output"""
+    if log_file:
+        logger.remove()
+        logger.add(log_file, rotation="10 MB")
 
 
 class Scheduler:
@@ -52,7 +29,7 @@ class Scheduler:
 
     def _signal_handler(self, signum, frame):
         """Handle shutdown signals gracefully"""
-        print(f"Received signal {signum}")
+        logger.info(f"Received signal {signum}")
         self.running = False
 
     def _setup_signal_handlers(self):
@@ -89,7 +66,7 @@ class Scheduler:
         iter = croniter(trigger.cron_schedule, last_run)
         next_due = iter.get_next(datetime)
 
-        print(f"Next due: {next_due}, now: {now}")
+        logger.debug(f"Next due: {next_due}, now: {now}")
 
         return next_due <= now
 
@@ -105,7 +82,7 @@ class Scheduler:
 
         try:
             # Run the script with uv
-            print(
+            logger.info(
                 f"Executing trigger {trigger.name} with uv run python {trigger.script_path}"
             )
             result = subprocess.run(
@@ -131,33 +108,40 @@ class Scheduler:
         import time
         from concurrent.futures import ThreadPoolExecutor
 
-        with redirect_to_log(log_file):
-            # Setup signal handlers and PID file
-            self._setup_signal_handlers()
-            self._write_pid_file()
+        # Setup logging
+        setup_logger(log_file)
 
-            print(f"Scheduler started with PID {os.getpid()}")
+        # Check if already running BEFORE writing our PID
+        if self.is_running():
+            logger.error(f"Scheduler already running (PID file: {self.pid_file})")
+            sys.exit(78)  # EX_CONFIG - configuration error
 
-            try:
-                with ThreadPoolExecutor(max_workers=4) as executor:
-                    while self.running:
-                        try:
-                            now = datetime.now(timezone.utc)
-                            triggers_to_run = self.get_triggers_to_run(now)
+        # Setup signal handlers and PID file
+        self._setup_signal_handlers()
+        self._write_pid_file()
 
-                            # Submit each trigger to the thread pool
-                            for trigger in triggers_to_run:
-                                executor.submit(self.execute_trigger, trigger)
+        logger.info(f"Scheduler started with PID {os.getpid()}")
 
-                            time.sleep(1)
+        try:
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                while self.running:
+                    try:
+                        now = datetime.now(timezone.utc)
+                        triggers_to_run = self.get_triggers_to_run(now)
 
-                        except Exception as e:
-                            print(f"Scheduler error: {e}")
-                            time.sleep(1)
+                        # Submit each trigger to the thread pool
+                        for trigger in triggers_to_run:
+                            executor.submit(self.execute_trigger, trigger)
 
-            finally:
-                print("Scheduler shutting down...")
-                self._remove_pid_file()
+                        time.sleep(1)
+
+                    except Exception as e:
+                        logger.error(f"Scheduler error: {e}")
+                        time.sleep(1)
+
+        finally:
+            logger.info("Scheduler shutting down...")
+            self._remove_pid_file()
 
     def is_running(self) -> bool:
         """Check if scheduler is currently running by checking PID file"""

@@ -32,9 +32,6 @@ def add(
         raise typer.Exit(1)
 
     try:
-        # Validate cron schedule
-        db.triggers.validate_cron_schedule(cron_schedule)
-
         # Create trigger
         trigger = db.triggers.create(name, cron_schedule, path.absolute())
         typer.echo(f"✓ Added trigger '{trigger.name}'")

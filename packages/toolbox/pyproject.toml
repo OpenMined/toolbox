@@ -13,6 +13,9 @@ dependencies = [
     "croniter>=6.0.0",
     "sqlite-vec==0.1.7a2",
     "pycookiecheat",
+    "loguru>=0.7.3",
+    "requests>=2.32.4",
+    "numpy>=2.3.2",
 ]
 
 name = "toolbox"

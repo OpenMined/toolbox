@@ -14,6 +14,8 @@ def run_foreground(log_file: Path = typer.Option(None, "--log-file")):
     """Run the trigger daemon in foreground"""
     trigger_db = get_db()
     scheduler = Scheduler(trigger_db)
+    if log_file is None:
+        log_file = scheduler.pid_file.parent / "scheduler.log"
     scheduler.run(log_file=log_file)
 
 

@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Self
 
-import crontab
+from croniter import croniter
 from sqlalchemy import DateTime, Integer, String, create_engine
 from sqlalchemy.engine import Dialect, Engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
@@ -102,10 +102,6 @@ class TriggerStore:
         session_factory = sessionmaker(bind=engine)
         return cls(engine, session_factory)
 
-    def validate_cron_schedule(self, cron_schedule: str) -> bool:
-        if not crontab.CronSlices.is_valid(cron_schedule):
-            raise ValueError(f"Invalid cron schedule: {cron_schedule}")
-
     def create(
         self,
         name: str,
@@ -113,6 +109,8 @@ class TriggerStore:
         script_path: str | Path,
         enabled: bool = True,
     ) -> Trigger:
+        if not croniter.is_valid(cron_schedule):
+            raise ValueError(f"Invalid cron schedule: {cron_schedule}")
         trigger = Trigger(
             name=name,
             cron_schedule=cron_schedule,
