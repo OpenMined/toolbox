@@ -1,16 +1,15 @@
 """Discord API client with rate limiting and retry logic."""
 
-import asyncio
 import json
 import logging
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, AsyncGenerator
+from typing import Any, Dict, List, Optional, Generator
 from urllib.parse import quote, urlencode
 
-import aiohttp
-from aiohttp import ClientResponseError
+import requests
+from requests import HTTPError
 
 from discord_downloader.exceptions import (
     AuthenticationException,
@@ -61,17 +60,17 @@ class DiscordClient:
         self.token = token
         self.rate_limit_preference = rate_limit_preference
         self._resolved_token_kind: Optional[TokenKind] = None
-        self._session: Optional[aiohttp.ClientSession] = None
+        self._session: Optional[requests.Session] = None
 
-    async def __aenter__(self):
-        """Async context manager entry."""
-        self._session = aiohttp.ClientSession()
+    def __enter__(self):
+        """Context manager entry."""
+        self._session = requests.Session()
         return self
 
-    async def __aexit__(self, exc_type, exc_val, exc_tb):
-        """Async context manager exit."""
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """Context manager exit."""
         if self._session:
-            await self._session.close()
+            self._session.close()
 
     def _should_respect_rate_limits(self, token_kind: TokenKind) -> bool:
         """Check if rate limits should be respected for the given token kind."""
@@ -91,14 +90,14 @@ class DiscordClient:
         else:
             return self.token
 
-    async def _resolve_token_kind(self) -> TokenKind:
+    def _resolve_token_kind(self) -> TokenKind:
         """Resolve the token kind by attempting authentication."""
         if self._resolved_token_kind is not None:
             return self._resolved_token_kind
 
         # Try user token first
         try:
-            await self._make_request("GET", "users/@me", token_kind=TokenKind.USER)
+            self._make_request("GET", "users/@me", token_kind=TokenKind.USER)
             self._resolved_token_kind = TokenKind.USER
             return TokenKind.USER
         except AuthenticationException:
@@ -106,7 +105,7 @@ class DiscordClient:
 
         # Try bot token
         try:
-            await self._make_request("GET", "users/@me", token_kind=TokenKind.BOT)
+            self._make_request("GET", "users/@me", token_kind=TokenKind.BOT)
             self._resolved_token_kind = TokenKind.BOT
             return TokenKind.BOT
         except AuthenticationException:
@@ -114,7 +113,7 @@ class DiscordClient:
 
         raise AuthenticationException("Authentication token is invalid")
 
-    async def _make_request(
+    def _make_request(
         self,
         method: str,
         endpoint: str,
@@ -123,10 +122,10 @@ class DiscordClient:
     ) -> Dict[str, Any]:
         """Make a request to the Discord API with retry logic and rate limiting."""
         if not self._session:
-            raise RuntimeError("Client not initialized. Use 'async with' syntax.")
+            raise RuntimeError("Client not initialized. Use 'with' syntax.")
 
         if token_kind is None:
-            token_kind = await self._resolve_token_kind()
+            token_kind = self._resolve_token_kind()
 
         url = f"{self.BASE_URL}/{endpoint.lstrip('/')}"
         headers = {
@@ -136,49 +135,48 @@ class DiscordClient:
 
         for attempt in range(self.MAX_RETRIES + 1):
             try:
-                async with self._session.request(
-                    method, url, headers=headers, **kwargs
-                ) as response:
-                    # Handle rate limiting before checking response status
-                    if self._should_respect_rate_limits(token_kind):
-                        await self._handle_rate_limiting(response)
+                response = self._session.request(method, url, headers=headers, **kwargs)
+                
+                # Handle rate limiting before checking response status
+                if self._should_respect_rate_limits(token_kind):
+                    self._handle_rate_limiting(response)
 
-                    # Check for HTTP errors
-                    if response.status == 401:
-                        raise AuthenticationException("Authentication token is invalid")
-                    elif response.status == 403:
-                        raise ForbiddenException(
-                            f"Request to '{endpoint}' failed: forbidden"
+                # Check for HTTP errors
+                if response.status_code == 401:
+                    raise AuthenticationException("Authentication token is invalid")
+                elif response.status_code == 403:
+                    raise ForbiddenException(
+                        f"Request to '{endpoint}' failed: forbidden"
+                    )
+                elif response.status_code == 404:
+                    raise NotFoundException(
+                        f"Request to '{endpoint}' failed: not found"
+                    )
+                elif response.status_code == 429:
+                    # Handle rate limiting
+                    retry_after = response.headers.get("Retry-After")
+                    if retry_after:
+                        delay = float(retry_after) + 1.0  # Add 1 second buffer
+                        logger.warning(f"Rate limited. Waiting {delay} seconds...")
+                        time.sleep(delay)
+                        continue
+                    else:
+                        # Fallback to exponential backoff
+                        delay = min(
+                            self.INITIAL_DELAY * (2**attempt) + 1, self.MAX_DELAY
                         )
-                    elif response.status == 404:
-                        raise NotFoundException(
-                            f"Request to '{endpoint}' failed: not found"
-                        )
-                    elif response.status == 429:
-                        # Handle rate limiting
-                        retry_after = response.headers.get("Retry-After")
-                        if retry_after:
-                            delay = float(retry_after) + 1.0  # Add 1 second buffer
-                            logger.warning(f"Rate limited. Waiting {delay} seconds...")
-                            await asyncio.sleep(delay)
-                            continue
-                        else:
-                            # Fallback to exponential backoff
-                            delay = min(
-                                self.INITIAL_DELAY * (2**attempt) + 1, self.MAX_DELAY
-                            )
-                            await asyncio.sleep(delay)
-                            continue
-                    elif not response.ok:
-                        error_text = await response.text()
-                        raise DiscordException(
-                            f"Request to '{endpoint}' failed with status {response.status}: {error_text}"
-                        )
+                        time.sleep(delay)
+                        continue
+                elif not response.ok:
+                    error_text = response.text
+                    raise DiscordException(
+                        f"Request to '{endpoint}' failed with status {response.status_code}: {error_text}"
+                    )
 
-                    # Parse JSON response
-                    return await response.json()
+                # Parse JSON response
+                return response.json()
 
-            except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            except (requests.RequestException, requests.Timeout) as e:
                 if attempt == self.MAX_RETRIES:
                     raise DiscordException(
                         f"Request failed after {self.MAX_RETRIES} retries: {e}"
@@ -189,11 +187,11 @@ class DiscordClient:
                 logger.warning(
                     f"Request failed (attempt {attempt + 1}), retrying in {delay} seconds..."
                 )
-                await asyncio.sleep(delay)
+                time.sleep(delay)
 
         raise DiscordException("Maximum retries exceeded")
 
-    async def _handle_rate_limiting(self, response: aiohttp.ClientResponse) -> None:
+    def _handle_rate_limiting(self, response: requests.Response) -> None:
         """Handle Discord's advisory rate limiting."""
         remaining = response.headers.get("X-RateLimit-Remaining")
         reset_after = response.headers.get("X-RateLimit-Reset-After")
@@ -208,20 +206,20 @@ class DiscordClient:
                 logger.info(
                     f"Proactive rate limit handling. Waiting {delay} seconds..."
                 )
-                await asyncio.sleep(delay)
+                time.sleep(delay)
 
-    async def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
+    def get_user(self, user_id: str) -> Optional[Dict[str, Any]]:
         """Get a user by ID."""
         try:
-            return await self._make_request("GET", f"users/{user_id}")
+            return self._make_request("GET", f"users/{user_id}")
         except NotFoundException:
             return None
 
-    async def get_current_user(self) -> Dict[str, Any]:
+    def get_current_user(self) -> Dict[str, Any]:
         """Get the current authenticated user."""
-        return await self._make_request("GET", "users/@me")
+        return self._make_request("GET", "users/@me")
 
-    async def get_user_guilds(self) -> AsyncGenerator[Dict[str, Any], None]:
+    def get_user_guilds(self) -> Generator[Dict[str, Any], None, None]:
         """Get all guilds for the authenticated user."""
         # Add Direct Messages as a special "guild"
         yield {
@@ -233,7 +231,7 @@ class DiscordClient:
         after = "0"
         while True:
             params = {"limit": "100", "after": after}
-            response = await self._make_request(
+            response = self._make_request(
                 "GET", f"users/@me/guilds?{urlencode(params)}"
             )
 
@@ -247,7 +245,7 @@ class DiscordClient:
             if len(response) < 100:
                 break
 
-    async def get_guild(self, guild_id: str) -> Dict[str, Any]:
+    def get_guild(self, guild_id: str) -> Dict[str, Any]:
         """Get guild information."""
         if guild_id == "@me":
             return {
@@ -255,19 +253,19 @@ class DiscordClient:
                 "name": "Direct Messages",
                 "icon": None,
             }
-        return await self._make_request("GET", f"guilds/{guild_id}")
+        return self._make_request("GET", f"guilds/{guild_id}")
 
-    async def get_guild_channels(
+    def get_guild_channels(
         self, guild_id: str
-    ) -> AsyncGenerator[Dict[str, Any], None]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """Get all channels in a guild."""
         if guild_id == "@me":
             # Get DM channels
-            response = await self._make_request("GET", "users/@me/channels")
+            response = self._make_request("GET", "users/@me/channels")
             for channel in response:
                 yield channel
         else:
-            response = await self._make_request("GET", f"guilds/{guild_id}/channels")
+            response = self._make_request("GET", f"guilds/{guild_id}/channels")
             # Sort channels by position, then by ID
             channels = sorted(
                 response, key=lambda c: (c.get("position", 0), int(c["id"]))
@@ -275,17 +273,17 @@ class DiscordClient:
             for channel in channels:
                 yield channel
 
-    async def get_channel(self, channel_id: str) -> Dict[str, Any]:
+    def get_channel(self, channel_id: str) -> Dict[str, Any]:
         """Get channel information."""
-        return await self._make_request("GET", f"channels/{channel_id}")
+        return self._make_request("GET", f"channels/{channel_id}")
 
-    async def get_messages(
+    def get_messages(
         self,
         channel_id: str,
         after: Optional[str] = None,
         before: Optional[str] = None,
         limit: int = 100,
-    ) -> AsyncGenerator[Dict[str, Any], None]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """Get messages from a channel."""
         current_after = after or "0"
 
@@ -296,7 +294,7 @@ class DiscordClient:
             if before:
                 params["before"] = before
 
-            response = await self._make_request(
+            response = self._make_request(
                 "GET", f"channels/{channel_id}/messages?{urlencode(params)}"
             )
 
@@ -313,19 +311,19 @@ class DiscordClient:
             if len(response) < min(limit, 100):
                 break
 
-    async def get_messages_since(
+    def get_messages_since(
         self,
         channel_id: str,
         since: datetime,
         before: Optional[str] = None,
-    ) -> AsyncGenerator[Dict[str, Any], None]:
+    ) -> Generator[Dict[str, Any], None, None]:
         """Get messages from a channel since a specific datetime."""
         # Convert datetime to Discord snowflake (approximate)
         timestamp_ms = int(since.timestamp() * 1000)
         discord_epoch = 1420070400000  # Discord epoch: January 1, 2015
         snowflake = str((timestamp_ms - discord_epoch) << 22)
 
-        async for message in self.get_messages(
+        for message in self.get_messages(
             channel_id, after=snowflake, before=before
         ):
             # Parse message timestamp

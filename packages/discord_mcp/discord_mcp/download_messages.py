@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Script to download Discord messages to JSON file."""
 
-import asyncio
 import os
 import sys
 from typing import Optional
@@ -17,7 +16,7 @@ def get_env_var(name: str, default: Optional[str] = None) -> str:
     return value
 
 
-async def main():
+def main():
     """Main function to download messages."""
     try:
         # Get configuration from environment variables
@@ -32,7 +31,7 @@ async def main():
         print(f"Output directory: {output_dir}")
         
         # Download messages
-        output_path = await download_messages(
+        output_path = download_messages(
             token=token,
             guild_name=guild_name,
             channel_name=channel_name,
@@ -48,4 +47,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
