@@ -102,6 +102,13 @@ def remove_control_chars(s):
     return re.sub(r"[\x00-\x08\x0B\x0C\x0E-\x1F]", "", s)
 
 
+def fix_quotes_heuristic(s):
+    """Fix malformed quotes like '000"".""0' → '000.0'."""
+    # Replace duplicated quotes between numbers/words
+    s = re.sub(r'"([^"]*?)"\s*"\s*\.\s*"\s*"([^"]*?)"', r'"\1.\2"', s)
+    return s
+
+
 def get_config(db):
     try:
         cfg = next(v for k, v in db.RangeIter() if bytearray(b"localConfig_v2") in k)
@@ -113,6 +120,7 @@ def get_config(db):
     try:
         decoded_cfg = cfg[1:].decode("utf-8")
         cleaned_cfg = remove_control_chars(decoded_cfg)
+        cleaned_cfg = fix_quotes_heuristic(cleaned_cfg)
         try:
             cfg = json.loads(cleaned_cfg)
             return cfg
