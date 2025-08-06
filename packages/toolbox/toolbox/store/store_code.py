@@ -105,6 +105,7 @@ class SlackMCP(StoreElement):
         SlackAuthCallback(),
         RegisterSlackMCPCallback(),
         SlackMCPDataStatsCallback(),
+        SyftboxExternalDependencyCallback(),
     ]
 
     def healthcheck(self, mcp: "InstalledMCP") -> bool:

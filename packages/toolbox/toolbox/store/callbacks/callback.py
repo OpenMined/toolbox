@@ -233,11 +233,20 @@ def get_n_embeddings(conn):
     return cursor.fetchone()[0]
 
 
+def get_n_messages(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM messages")
+    return cursor.fetchone()[0]
+
+
 class SlackMCPDataStatsCallback(Callback):
     def on_data_stats(self, mcp: "InstalledMCP") -> dict:
         try:
             conn = _get_slack_connection()
-            return {"# embeddings": get_n_embeddings(conn)}
+            return {
+                "# embeddings": get_n_embeddings(conn),
+                "# messages": get_n_messages(conn),
+            }
         except Exception as e:
             return {"error": str(e)}
 
