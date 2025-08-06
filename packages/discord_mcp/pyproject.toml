@@ -1,0 +1,14 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "discord_mcp"
+version = "0.1.0"
+description = "Discord mcp"
+dependencies = [
+    "aiohttp>=3.8.0",
+]
+
+[project.scripts]
+download-channels = "discord_downloader.download_channels:main"
