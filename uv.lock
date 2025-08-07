@@ -5,7 +5,6 @@ requires-python = ">=3.12"
 [manifest]
 members = [
     "notes-mcp",
-    "obsidian-mcp",
     "slack-mcp",
     "syftbox-queryengine",
     "toolbox",
@@ -721,12 +720,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/0f/52/e1c43c4b5153465fd5d3b4b41bf2d4c7731475e9f668f38d68f848c25c9a/mcp-1.10.0-py3-none-any.whl", hash = "sha256:925c45482d75b1b6f11febddf9736d55edf7739c7ea39b583309f6651cbc9e5c", size = 150894, upload-time = "2025-06-26T13:51:17.342Z" },
 ]
 
-[package.optional-dependencies]
-cli = [
-    { name = "python-dotenv" },
-    { name = "typer" },
-]
-
 [[package]]
 name = "mdurl"
 version = "0.1.2"
@@ -980,17 +973,6 @@ source = { registry = "https://pypi.org/simple" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/da/d3/8057f0587683ed2fcd4dbfbdfdfa807b9160b809976099d36b8f60d08f03/nvidia_nvtx_cu12-12.1.105-py3-none-manylinux1_x86_64.whl", hash = "sha256:dc21cf308ca5691e7c04d962e213f8a4aa9bbfa23d95412f452254c2caeb09e5", size = 99138, upload-time = "2023-04-19T15:48:43.556Z" },
 ]
-
-[[package]]
-name = "obsidian-mcp"
-version = "0.1.0"
-source = { editable = "packages/obsidian_mcp" }
-dependencies = [
-    { name = "mcp", extra = ["cli"] },
-]
-
-[package.metadata]
-requires-dist = [{ name = "mcp", extras = ["cli"], specifier = ">=1.10.0" }]
 
 [[package]]
 name = "packaging"
@@ -1899,7 +1881,6 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "notes-mcp" },
-    { name = "obsidian-mcp" },
     { name = "slack-mcp" },
     { name = "syftbox-queryengine" },
     { name = "toolbox" },
@@ -1914,7 +1895,6 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "notes-mcp", editable = "packages/notes_mcp" },
-    { name = "obsidian-mcp", editable = "packages/obsidian_mcp" },
     { name = "slack-mcp", editable = "packages/slack_mcp" },
     { name = "syftbox-queryengine", editable = "packages/syftbox_queryengine" },
     { name = "toolbox", editable = "packages/toolbox" },
