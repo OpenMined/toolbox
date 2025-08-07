@@ -1,5 +1,3 @@
-import subprocess
-
 import typer
 
 from toolbox.cli import daemon_cli, trigger_cli
@@ -15,44 +13,10 @@ from toolbox.installer import (
     start_mcp_and_requirements,
     stop_mcp,
 )
-from toolbox.launchd import LAUNCHD_PLIST, get_launchd_path
 from toolbox.settings import settings
 from toolbox.store.store_json import STORE
 
 app = typer.Typer(no_args_is_help=True)
-
-
-def setup():
-    """add toolbox to launchd"""
-
-    try:
-        plist_path = get_launchd_path()
-    except RuntimeError as e:
-        print(f"Error: {e}")
-        raise typer.Exit(1)
-
-    plist_path.write_text(LAUNCHD_PLIST)
-    subprocess.run(["launchctl", "load", str(plist_path)])
-    print(f"Daemon installed for startup at {plist_path}")
-    print("To remove toolbox from launchd, run: tb remove")
-
-
-def remove():
-    """remove toolbox from launchd"""
-    try:
-        plist_path = get_launchd_path()
-    except RuntimeError as e:
-        print(f"Error: {e}")
-        raise typer.Exit(1)
-    subprocess.run(["launchctl", "unload", str(plist_path)])
-
-    typer.confirm(
-        "are you sure you want to remove the daemon from launchd? This will stop all toolbox services.",
-        abort=True,
-        default=True,
-    )
-    plist_path.unlink(missing_ok=True)
-    print(f"Daemon removed from launchd at {plist_path}")
 
 
 def install(
@@ -127,8 +91,6 @@ app.command()(reset)
 app.command()(call)
 app.command()(start)
 app.command()(stop)
-app.command()(setup)
-app.command()(remove)
 
 # Add subgroups
 app.add_typer(daemon_cli.app, name="daemon", help="Daemon management commands")

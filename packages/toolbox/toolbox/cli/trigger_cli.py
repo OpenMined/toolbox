@@ -10,7 +10,7 @@ app = typer.Typer(no_args_is_help=True)
 
 @app.command()
 def add(
-    name: str = typer.Option(..., "--name", "-n", help="Name of the trigger"),
+    name: str | None = typer.Option(None, "--name", "-n", help="Name of the trigger"),
     cron_schedule: str = typer.Option(
         ..., "--cron", "-c", help="Cron schedule (e.g., '0 * * * *')"
     ),

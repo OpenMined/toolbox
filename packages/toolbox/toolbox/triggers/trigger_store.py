@@ -5,7 +5,13 @@ from typing import Optional, Self
 from croniter import croniter
 from sqlalchemy import DateTime, Integer, String, create_engine
 from sqlalchemy.engine import Dialect, Engine
-from sqlalchemy.orm import DeclarativeBase, Mapped, Session, mapped_column, sessionmaker
+from sqlalchemy.orm import (
+    DeclarativeBase,
+    Mapped,
+    Session,
+    mapped_column,
+    sessionmaker,
+)
 from sqlalchemy.orm.properties import ForeignKey
 from sqlalchemy.orm.session import sessionmaker as SessionMaker
 from sqlalchemy.sql import func
@@ -104,24 +110,45 @@ class TriggerStore:
 
     def create(
         self,
-        name: str,
+        name: str | None,
         cron_schedule: str | None,
         script_path: str | Path,
         enabled: bool = True,
     ) -> Trigger:
         if not croniter.is_valid(cron_schedule):
             raise ValueError(f"Invalid cron schedule: {cron_schedule}")
-        trigger = Trigger(
-            name=name,
-            cron_schedule=cron_schedule,
-            script_path=str(script_path),
-            enabled=enabled,
-        )
 
         with self.session_factory() as session:
             with session.begin():
-                session.add(trigger)
-                session.flush()  # Get the ID without committing
+                if name is None:
+                    # Use the flush approach to get the actual ID and set the name.
+                    import uuid
+
+                    temp_name = f"temp_{uuid.uuid4().hex[:8]}"
+                    trigger = Trigger(
+                        name=temp_name,
+                        cron_schedule=cron_schedule,
+                        script_path=str(script_path),
+                        enabled=enabled,
+                    )
+                    session.add(trigger)
+                    session.flush()  # Get the actual ID
+
+                    # Now set the real name using the actual ID
+                    new_name = f"trigger-{trigger.id}"
+                    trigger.name = new_name
+                    # Force another flush to ensure the name update is persisted
+                    session.flush()
+                else:
+                    trigger = Trigger(
+                        name=name,
+                        cron_schedule=cron_schedule,
+                        script_path=str(script_path),
+                        enabled=enabled,
+                    )
+                    session.add(trigger)
+                    session.flush()
+
                 session.refresh(trigger)
                 session.expunge(trigger)
                 return trigger

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import typer
 
+from toolbox.launchd import add_to_launchd, remove_from_launchd
 from toolbox.triggers.scheduler import Scheduler
 from toolbox.triggers.trigger_store import get_db
 
@@ -77,6 +78,35 @@ def status():
         print(f"Scheduler is running (PID: {pid})")
     else:
         print("Scheduler is not running")
+
+
+@app.command()
+def install():
+    """Install toolbox daemon to launchd for automatic startup"""
+    try:
+        plist_path = add_to_launchd()
+        print(f"Daemon installed for startup at {plist_path}")
+        print("To remove toolbox daemon from launchd, run: tb daemon uninstall")
+    except RuntimeError as e:
+        print(f"Error: {e}")
+        raise typer.Exit(1)
+
+
+@app.command()
+def uninstall():
+    """Remove toolbox daemon from launchd"""
+    typer.confirm(
+        "Are you sure you want to remove the daemon from launchd? This will stop all toolbox services.",
+        abort=True,
+        default=True,
+    )
+
+    try:
+        plist_path = remove_from_launchd()
+        print(f"Daemon removed from launchd at {plist_path}")
+    except RuntimeError as e:
+        print(f"Error: {e}")
+        raise typer.Exit(1)
 
 
 if __name__ == "__main__":

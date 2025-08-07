@@ -8,6 +8,7 @@ from pathlib import Path
 from croniter import croniter
 from loguru import logger
 
+from toolbox.mcp_installer.uv_utils import find_uv_path
 from toolbox.triggers.trigger_store import Trigger, TriggerDB
 
 
@@ -81,12 +82,17 @@ class Scheduler:
         execution = self.db.executions.create(trigger.id)
 
         try:
-            # Run the script with uv
+            # Find UV path and run the script
+            uv_path = find_uv_path()
+            if uv_path is None:
+                raise FileNotFoundError("UV not found in PATH or common locations")
+
+            uv_cmd = str(uv_path)
             logger.info(
-                f"Executing trigger {trigger.name} with uv run python {trigger.script_path}"
+                f"Executing trigger {trigger.name} with {uv_cmd} run python {trigger.script_path}"
             )
             result = subprocess.run(
-                ["uv", "run", "python", trigger.script_path],
+                [uv_cmd, "run", "python", trigger.script_path],
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5 minute timeout
