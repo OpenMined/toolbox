@@ -8,8 +8,7 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Generator
 from urllib.parse import quote, urlencode
 
-import requests
-from requests import HTTPError
+import httpx
 
 from discord_downloader.exceptions import (
     AuthenticationException,
@@ -60,17 +59,20 @@ class DiscordClient:
         self.token = token
         self.rate_limit_preference = rate_limit_preference
         self._resolved_token_kind: Optional[TokenKind] = None
-        self._session: Optional[requests.Session] = None
+        self._session = httpx.Client(timeout=30.0)
+
+    def close(self):
+        """Close the HTTP session."""
+        if self._session:
+            self._session.close()
 
     def __enter__(self):
-        """Context manager entry."""
-        self._session = requests.Session()
+        """Context manager entry for backward compatibility."""
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Context manager exit."""
-        if self._session:
-            self._session.close()
+        """Context manager exit for backward compatibility."""
+        self.close()
 
     def _should_respect_rate_limits(self, token_kind: TokenKind) -> bool:
         """Check if rate limits should be respected for the given token kind."""
@@ -122,7 +124,7 @@ class DiscordClient:
     ) -> Dict[str, Any]:
         """Make a request to the Discord API with retry logic and rate limiting."""
         if not self._session:
-            raise RuntimeError("Client not initialized. Use 'with' syntax.")
+            raise RuntimeError("Client session is closed.")
 
         if token_kind is None:
             token_kind = self._resolve_token_kind()
@@ -136,7 +138,7 @@ class DiscordClient:
         for attempt in range(self.MAX_RETRIES + 1):
             try:
                 response = self._session.request(method, url, headers=headers, **kwargs)
-                
+
                 # Handle rate limiting before checking response status
                 if self._should_respect_rate_limits(token_kind):
                     self._handle_rate_limiting(response)
@@ -167,7 +169,7 @@ class DiscordClient:
                         )
                         time.sleep(delay)
                         continue
-                elif not response.ok:
+                elif response.status_code >= 400:
                     error_text = response.text
                     raise DiscordException(
                         f"Request to '{endpoint}' failed with status {response.status_code}: {error_text}"
@@ -176,7 +178,7 @@ class DiscordClient:
                 # Parse JSON response
                 return response.json()
 
-            except (requests.RequestException, requests.Timeout) as e:
+            except (httpx.RequestError, httpx.TimeoutException) as e:
                 if attempt == self.MAX_RETRIES:
                     raise DiscordException(
                         f"Request failed after {self.MAX_RETRIES} retries: {e}"
@@ -191,7 +193,7 @@ class DiscordClient:
 
         raise DiscordException("Maximum retries exceeded")
 
-    def _handle_rate_limiting(self, response: requests.Response) -> None:
+    def _handle_rate_limiting(self, response: httpx.Response) -> None:
         """Handle Discord's advisory rate limiting."""
         remaining = response.headers.get("X-RateLimit-Remaining")
         reset_after = response.headers.get("X-RateLimit-Reset-After")
@@ -218,42 +220,6 @@ class DiscordClient:
     def get_current_user(self) -> Dict[str, Any]:
         """Get the current authenticated user."""
         return self._make_request("GET", "users/@me")
-
-    def get_user_guilds(self) -> Generator[Dict[str, Any], None, None]:
-        """Get all guilds for the authenticated user."""
-        # Add Direct Messages as a special "guild"
-        yield {
-            "id": "@me",
-            "name": "Direct Messages",
-            "icon": None,
-        }
-
-        after = "0"
-        while True:
-            params = {"limit": "100", "after": after}
-            response = self._make_request(
-                "GET", f"users/@me/guilds?{urlencode(params)}"
-            )
-
-            if not response:
-                break
-
-            for guild in response:
-                yield guild
-                after = guild["id"]
-
-            if len(response) < 100:
-                break
-
-    def get_guild(self, guild_id: str) -> Dict[str, Any]:
-        """Get guild information."""
-        if guild_id == "@me":
-            return {
-                "id": "@me",
-                "name": "Direct Messages",
-                "icon": None,
-            }
-        return self._make_request("GET", f"guilds/{guild_id}")
 
     def get_guild_channels(
         self, guild_id: str
@@ -323,9 +289,7 @@ class DiscordClient:
         discord_epoch = 1420070400000  # Discord epoch: January 1, 2015
         snowflake = str((timestamp_ms - discord_epoch) << 22)
 
-        for message in self.get_messages(
-            channel_id, after=snowflake, before=before
-        ):
+        for message in self.get_messages(channel_id, after=snowflake, before=before):
             # Parse message timestamp
             message_time = datetime.fromisoformat(
                 message["timestamp"].replace("Z", "+00:00")
@@ -335,3 +299,39 @@ class DiscordClient:
                 since = since.replace(tzinfo=message_time.tzinfo)
             if message_time >= since:
                 yield message
+
+    def get_user_guilds(self) -> Generator[Dict[str, Any], None, None]:
+        """Get all guilds for the authenticated user."""
+        # Add Direct Messages as a special "guild"
+        yield {
+            "id": "@me",
+            "name": "Direct Messages", 
+            "icon": None,
+        }
+
+        after = "0"
+        while True:
+            params = {"limit": "100", "after": after}
+            response = self._make_request(
+                "GET", f"users/@me/guilds?{urlencode(params)}"
+            )
+
+            if not response:
+                break
+
+            for guild in response:
+                yield guild
+                after = guild["id"]
+
+            if len(response) < 100:
+                break
+
+    def get_guild(self, guild_id: str) -> Dict[str, Any]:
+        """Get guild information."""
+        if guild_id == "@me":
+            return {
+                "id": "@me",
+                "name": "Direct Messages",
+                "icon": None,
+            }
+        return self._make_request("GET", f"guilds/{guild_id}")

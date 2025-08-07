@@ -3,31 +3,30 @@
 import json
 import os
 from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Any
 
-from discord_downloader.client import DiscordClient
+from discord_mcp.client import DiscordClient
 
 
 def download_messages(
     token: str,
     guild_name: str,
     channel_name: str,
-    output_dir: str = "/tmp",
     days_back: int = 365,
-) -> str:
-    """Download messages from a Discord channel to a JSON file.
+) -> Dict[str, Any]:
+    """Download messages from a Discord channel.
     
     Args:
         token: Discord token
         guild_name: Name of the Discord server/guild
         channel_name: Name of the channel to download messages from
-        output_dir: Directory to save the JSON file
         days_back: Number of days back to download messages (default: 365 for 1 year)
     
     Returns:
-        Path to the created JSON file
+        Dictionary containing messages and metadata
     """
-    with DiscordClient(token) as client:
+    client = DiscordClient(token)
+    try:
         # Find the guild by name
         guild_id = None
         guild_info = None
@@ -60,8 +59,8 @@ def download_messages(
         for message in client.get_messages_since(channel_id, since_date):
             messages.append(message)
         
-        # Prepare output data
-        output_data = {
+        # Prepare and return data
+        return {
             "metadata": {
                 "guild": guild_info,
                 "channel": channel_info,
@@ -74,38 +73,29 @@ def download_messages(
             },
             "messages": messages,
         }
-        
-        # Save to JSON file
-        os.makedirs(output_dir, exist_ok=True)
-        filename = f"messages_{guild_name}_{channel_name}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-        output_path = os.path.join(output_dir, filename)
-        
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(output_data, f, indent=2, ensure_ascii=False)
-        
-        return output_path
+    finally:
+        client.close()
 
 
 def download_messages_with_users(
     token: str,
     guild_name: str,
     channel_name: str,
-    output_dir: str = "/tmp",
     days_back: int = 365,
-) -> str:
-    """Download messages from a Discord channel along with user data to a JSON file.
+) -> Dict[str, Any]:
+    """Download messages from a Discord channel along with user data.
     
     Args:
         token: Discord token
         guild_name: Name of the Discord server/guild
         channel_name: Name of the channel to download messages from
-        output_dir: Directory to save the JSON file
         days_back: Number of days back to download messages (default: 365 for 1 year)
     
     Returns:
-        Path to the created JSON file
+        Dictionary containing messages, users, and metadata
     """
-    with DiscordClient(token) as client:
+    client = DiscordClient(token)
+    try:
         # Find the guild by name
         guild_id = None
         guild_info = None
@@ -168,8 +158,8 @@ def download_messages_with_users(
         # Filter out None values and collect valid users
         users = [user for user in user_cache.values() if user is not None]
         
-        # Prepare output data
-        output_data = {
+        # Prepare and return data
+        return {
             "metadata": {
                 "guild": guild_info,
                 "channel": channel_info,
@@ -184,34 +174,25 @@ def download_messages_with_users(
             "messages": messages,
             "users": users,
         }
-        
-        # Save to JSON file
-        os.makedirs(output_dir, exist_ok=True)
-        filename = f"messages_with_users_{guild_name}_{channel_name}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-        output_path = os.path.join(output_dir, filename)
-        
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(output_data, f, indent=2, ensure_ascii=False)
-        
-        return output_path
+    finally:
+        client.close()
 
 
 def download_channels(
     token: str,
     guild_name: str,
-    output_dir: str = "/tmp",
-) -> str:
-    """Download channel information from a Discord server to a JSON file.
+) -> Dict[str, Any]:
+    """Download channel information from a Discord server.
     
     Args:
         token: Discord token
         guild_name: Name of the Discord server/guild
-        output_dir: Directory to save the JSON file
     
     Returns:
-        Path to the created JSON file
+        Dictionary containing channels and metadata
     """
-    with DiscordClient(token) as client:
+    client = DiscordClient(token)
+    try:
         # Find the guild by name
         guild_id = None
         guild_info = None
@@ -233,8 +214,8 @@ def download_channels(
         for channel in client.get_guild_channels(guild_id):
             channels.append(channel)
         
-        # Prepare output data
-        output_data = {
+        # Prepare and return data
+        return {
             "metadata": {
                 "guild": guild_info,
                 "export_date": datetime.utcnow().isoformat() + "Z",
@@ -242,36 +223,27 @@ def download_channels(
             },
             "channels": channels,
         }
-        
-        # Save to JSON file
-        os.makedirs(output_dir, exist_ok=True)
-        filename = f"channels_{guild_name}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-        output_path = os.path.join(output_dir, filename)
-        
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(output_data, f, indent=2, ensure_ascii=False)
-        
-        return output_path
+    finally:
+        client.close()
 
 
 def download_users_from_channel(
     token: str,
     guild_name: str,
     channel_name: str,
-    output_dir: str = "/tmp",
-) -> str:
-    """Download all users from a Discord channel to a JSON file.
+) -> Dict[str, Any]:
+    """Download all users from a Discord channel.
     
     Args:
         token: Discord token
         guild_name: Name of the Discord server/guild
         channel_name: Name of the channel to get users from
-        output_dir: Directory to save the JSON file
     
     Returns:
-        Path to the created JSON file
+        Dictionary containing users and metadata
     """
-    with DiscordClient(token) as client:
+    client = DiscordClient(token)
+    try:
         # Find the guild by name
         guild_id = None
         guild_info = None
@@ -318,8 +290,8 @@ def download_users_from_channel(
         users = list(user_cache.values())
         print(f"Found {len(users)} unique users in channel")
         
-        # Prepare output data
-        output_data = {
+        # Prepare and return data
+        return {
             "metadata": {
                 "guild": guild_info,
                 "channel": channel_info,
@@ -328,13 +300,40 @@ def download_users_from_channel(
             },
             "users": users,
         }
+    finally:
+        client.close()
+
+
+def download_guilds(
+    token: str,
+) -> Dict[str, Any]:
+    """Download all guilds (servers) for the authenticated user.
+    
+    Args:
+        token: Discord token
+    
+    Returns:
+        Dictionary containing guilds and metadata
+    """
+    client = DiscordClient(token)
+    
+    try:
+        # Get current user info
+        user_info = client.get_current_user()
         
-        # Save to JSON file
-        os.makedirs(output_dir, exist_ok=True)
-        filename = f"users_{guild_name}_{channel_name}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.json"
-        output_path = os.path.join(output_dir, filename)
+        # Collect all guilds
+        guilds = []
+        for guild in client.get_user_guilds():
+            guilds.append(guild)
         
-        with open(output_path, "w", encoding="utf-8") as f:
-            json.dump(output_data, f, indent=2, ensure_ascii=False)
-        
-        return output_path
+        # Prepare and return data
+        return {
+            "metadata": {
+                "user": user_info,
+                "export_date": datetime.utcnow().isoformat() + "Z",
+                "guild_count": len(guilds),
+            },
+            "guilds": guilds,
+        }
+    finally:
+        client.close()

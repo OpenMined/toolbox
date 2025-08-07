@@ -1,0 +1,12 @@
+# Discord MCP project commands
+
+# Run unit tests (excludes live tests by default)
+test:
+    #!/usr/bin/env bash
+    pytest
+
+# Run live tests that require Discord API access
+test_live:
+    #!/usr/bin/env bash
+    # DO NOT RUN THIS UNLESS EXPLICITLY ASKED FOR
+    pytest -m live -v

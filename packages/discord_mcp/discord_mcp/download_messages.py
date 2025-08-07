@@ -25,11 +25,11 @@ def main():
         channel_name = get_env_var("DISCORD_CHANNEL_NAME")
         output_dir = get_env_var("OUTPUT_DIR", "/tmp")
         days_back = int(get_env_var("DAYS_BACK", "365"))
-        
+
         print(f"Downloading messages from '{guild_name}' -> '{channel_name}'")
         print(f"Going back {days_back} days")
         print(f"Output directory: {output_dir}")
-        
+
         # Download messages
         output_path = download_messages(
             token=token,
@@ -38,9 +38,9 @@ def main():
             output_dir=output_dir,
             days_back=days_back,
         )
-        
+
         print(f"Messages downloaded successfully to: {output_path}")
-        
+
     except Exception as e:
         print(f"Error downloading messages: {e}", file=sys.stderr)
         sys.exit(1)
