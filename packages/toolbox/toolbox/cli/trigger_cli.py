@@ -1,11 +1,32 @@
 from pathlib import Path
 
 import typer
+from rich.console import Console
 from sqlalchemy.exc import IntegrityError
 
 from toolbox.triggers.trigger_store import get_db
 
+console = Console()
+
 app = typer.Typer(no_args_is_help=True)
+
+
+def print_execution(execution):
+    """Print a single execution with simple formatting"""
+    if execution.completed_at:
+        status_icon = "✓" if execution.exit_code == 0 else "✗"
+        status_color = "green" if execution.exit_code == 0 else "red"
+
+        console.print(
+            f"[{status_color}]{status_icon}[/{status_color}] {execution.completed_at} (exit code: {execution.exit_code})"
+        )
+
+        if execution.logs.strip():
+            console.print(execution.logs.strip())
+        else:
+            console.print("[dim]No logs[/dim]")
+    else:
+        console.print(f"⏳ {execution.created_at} [yellow](running)[/yellow]")
 
 
 @app.command()
@@ -22,7 +43,7 @@ def add(
     db = get_db()
 
     # Verify script path exists
-    path = Path(script_path)
+    path = Path(script_path).expanduser().resolve().absolute()
     if not path.exists():
         typer.echo(f"Error: Script path '{script_path}' does not exist", err=True)
         raise typer.Exit(1)
@@ -85,8 +106,11 @@ def list():
 @app.command()
 def show(
     name: str = typer.Argument(..., help="Name of the trigger to show"),
+    num_executions: int = typer.Option(
+        1, "--num-executions", "-n", help="Number of recent executions to show"
+    ),
 ):
-    """Show a trigger"""
+    """Show a trigger with recent executions"""
     db = get_db()
     trigger = db.triggers.get_by_name(name)
 
@@ -94,29 +118,32 @@ def show(
         typer.echo(f"Error: Trigger '{name}' not found", err=True)
         raise typer.Exit(1)
 
-    status = "enabled" if trigger.enabled else "disabled"
-    typer.echo(f"Trigger: {trigger.name}")
-    typer.echo(f"  ID: {trigger.id}")
-    typer.echo(f"  Status: {status}")
-    typer.echo(f"  Schedule: {trigger.cron_schedule}")
-    typer.echo(f"  Script: {trigger.script_path}")
-    typer.echo(f"  Created: {trigger.created_at}")
+    # Show trigger info
+    status_color = "green" if trigger.enabled else "red"
+    status_text = "enabled" if trigger.enabled else "disabled"
+
+    console.print(f"[bold blue]Trigger: {trigger.name}[/bold blue]")
+    console.print(f"  [bold]ID:[/bold] {trigger.id}")
+    console.print(
+        f"  [bold]Status:[/bold] [{status_color}]{status_text}[/{status_color}]"
+    )
+    console.print(f"  [bold]Schedule:[/bold] {trigger.cron_schedule}")
+    console.print(f"  [bold]Script:[/bold] {trigger.script_path}")
+    console.print(f"  [bold]Created:[/bold] {trigger.created_at}")
 
     # Show recent executions
-    executions = db.executions.get_all(trigger_id=trigger.id, limit=5)
+    executions = db.executions.get_all(trigger_id=trigger.id, limit=num_executions)
     if executions:
-        typer.echo("\nRecent executions:")
-        for ex in executions:
-            if ex.completed_at:
-                status = "✓" if ex.exit_code == 0 else "✗"
-                typer.echo(f"  {status} {ex.completed_at} (exit: {ex.exit_code})")
-                # print tail of logs (ex.logs)
-                last_log_lines = "\n".join(ex.logs.split("\n")[-10:])
-                typer.echo(f"\n  Logs: {last_log_lines}")
-            else:
-                typer.echo(f"  ⏳ {ex.created_at} (running)")
+        console.print(f"\n[bold]Recent executions (showing {len(executions)}):[/bold]")
+
+        for i, ex in enumerate(executions):
+            print_execution(ex)
+
+            # Add spacing between executions if showing multiple
+            if i < len(executions) - 1:
+                console.print()
     else:
-        typer.echo("\nNo executions found")
+        console.print("\n[dim]No executions found[/dim]")
 
 
 @app.command()

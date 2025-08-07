@@ -92,7 +92,7 @@ class Scheduler:
                 f"Executing trigger {trigger.name} with {uv_cmd} run python {trigger.script_path}"
             )
             result = subprocess.run(
-                [uv_cmd, "run", "python", trigger.script_path],
+                [uv_cmd, "run", trigger.script_path],
                 capture_output=True,
                 text=True,
                 timeout=300,  # 5 minute timeout

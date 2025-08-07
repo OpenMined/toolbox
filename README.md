@@ -84,6 +84,56 @@ tb log <appname>
 | slack-mcp | claude | proxy-to-om-enclave | Slack Messages | Slack Messages | `tb install slack-mcp` |
 
 
+# Triggers
+
+Toolbox can run scripts defined by you on a schedule. This is useful for automating tasks as part of your MCP pipeline.
+
+First, to be able to run triggers, you need to install the toolbox daemon:
+
+```
+tb daemon install
+```
+
+To uninstall and remove from launchd:
+
+```
+tb daemon uninstall
+```
+
+To see the status of the daemon:
+
+```
+tb daemon status
+```
+
+As example, we have provided a script to search github for repositories with the keyword "MCP".
+
+```
+# Run `search_github_trigger.py` daily at 12:00
+tb trigger install --name "github-trending" --script-path "examples/search_github_trigger.py" --cron-schedule "0 12 * * *"
+```
+
+To uninstall a trigger:
+
+```
+tb trigger uninstall "github-trending"
+```
+
+To show all triggers:
+
+```
+tb trigger list
+```
+
+To show the status and past executions of a trigger:
+
+```
+tb trigger show github-trending
+```
+
+
+
+
 # Troubleshooting screenpipe
 If you dont seen audio recordings under `tb show meeting-notes-mcp`. The following things may help
 
