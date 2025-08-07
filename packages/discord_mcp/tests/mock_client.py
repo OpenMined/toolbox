@@ -31,7 +31,7 @@ class MockDiscordClient(DiscordClient):
         self._session = None  # No HTTP session needed
         
         # Load test data for mocking API responses
-        self.test_assets_path = DISCORD_PACKAGE_PATH / "test_assets"
+        self.test_assets_path = Path(__file__).parent / "test_assets"
         self._test_data = {
             'messages': self._load_test_data("messages_test_data.json"),
             'messages_with_users': self._load_test_data("messages_with_users_test_data.json"), 

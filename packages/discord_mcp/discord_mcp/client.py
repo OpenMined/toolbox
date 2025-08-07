@@ -10,7 +10,7 @@ from urllib.parse import quote, urlencode
 
 import httpx
 
-from discord_downloader.exceptions import (
+from discord_mcp.exceptions import (
     AuthenticationException,
     DiscordException,
     ForbiddenException,
@@ -281,6 +281,7 @@ class DiscordClient:
         self,
         channel_id: str,
         since: datetime,
+        until: Optional[datetime] = None,
         before: Optional[str] = None,
     ) -> Generator[Dict[str, Any], None, None]:
         """Get messages from a channel since a specific datetime."""
@@ -288,8 +289,14 @@ class DiscordClient:
         timestamp_ms = int(since.timestamp() * 1000)
         discord_epoch = 1420070400000  # Discord epoch: January 1, 2015
         snowflake = str((timestamp_ms - discord_epoch) << 22)
+        
+        # Convert until datetime to snowflake if provided
+        until_snowflake = before
+        if until and not before:
+            until_ms = int(until.timestamp() * 1000)
+            until_snowflake = str((until_ms - discord_epoch) << 22)
 
-        for message in self.get_messages(channel_id, after=snowflake, before=before):
+        for message in self.get_messages(channel_id, after=snowflake, before=until_snowflake):
             # Parse message timestamp
             message_time = datetime.fromisoformat(
                 message["timestamp"].replace("Z", "+00:00")
@@ -297,8 +304,16 @@ class DiscordClient:
             # Convert since to UTC if it's naive
             if since.tzinfo is None:
                 since = since.replace(tzinfo=message_time.tzinfo)
+            if until and until.tzinfo is None:
+                until = until.replace(tzinfo=message_time.tzinfo)
+            
+            # Check if message is in the time range
             if message_time >= since:
-                yield message
+                if until is None or message_time <= until:
+                    yield message
+                elif message_time > until:
+                    # We've gone beyond the until time, stop
+                    break
 
     def get_user_guilds(self) -> Generator[Dict[str, Any], None, None]:
         """Get all guilds for the authenticated user."""
