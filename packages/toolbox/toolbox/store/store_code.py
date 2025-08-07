@@ -5,9 +5,15 @@ from typing import TYPE_CHECKING
 import requests
 from toolbox.store.callbacks.auth.auth_slack_callback import SlackAuthCallback
 from toolbox.store.callbacks.whatsapp_callback import InstallWhatsappDesktopMCPCallback
+from toolbox.store.callbacks.pdf_callback import (
+    InstallPDFMCPCallback,
+    PDFMCPExternalDependencyCallback,
+    PDFMCPInstallationSummaryCallback,
+)
 
 if TYPE_CHECKING:
     from toolbox.installed_mcp import InstalledMCP
+    from toolbox.store.installation_context import InstallationContext
 from toolbox.settings import TOOLBOX_WORKSPACE_DIR
 from toolbox.store.callbacks.callback import (
     Callback,
@@ -25,6 +31,9 @@ from toolbox.store.callbacks.callback import (
     SyftboxExternalDependencyCallback,
     TextInputEnvRequestedSecretCallback,
 )
+
+
+# PDF MCP callbacks are now imported from pdf_callback.py
 
 WHATSAPP_DESKTOP_SQLITE_DB_PATH = (
     Path(
@@ -140,6 +149,24 @@ class GithubMCP(StoreElement):
     ]
 
 
+class PDFMCP(StoreElement):
+    name: str = "pdf-mcp"
+    local_package_path: Path = Path(
+        TOOLBOX_WORKSPACE_DIR / "packages/pdf_mcp"
+    ).expanduser()
+    package_url: str = "https://github.com/OpenMined/toolbox"
+    subdirectory: str = "packages/pdf_mcp"
+    branch: str = "main"
+    callbacks: list[Callback] = [
+        PDFMCPInstallationSummaryCallback(),
+        PDFMCPExternalDependencyCallback(),
+        InstallPDFMCPCallback(),
+    ]
+
+    def healthcheck(self, mcp: "InstalledMCP") -> bool:
+        return True
+
+
 # TODO: make generic
 STORE_ELEMENTS = {
     "github-mcp": GithubMCP(),
@@ -147,4 +174,5 @@ STORE_ELEMENTS = {
     "syftbox-queryengine-mcp": SyftboxQueryengineMCP(),
     "slack-mcp": SlackMCP(),
     "whatsapp-desktop-mcp": WhatsappDesktopMCP(),
+    "pdf-mcp": PDFMCP(),
 }
