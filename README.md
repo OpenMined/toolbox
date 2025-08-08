@@ -29,6 +29,12 @@ uv python install --reinstall
 ```
 to [fix python in uv](https://github.com/astral-sh/python-build-standalone/pull/414)
 
+You can also try, if `#include <string>` fails
+```
+CXXFLAGS="-isystem $(xcrun --show-sdk-path)/usr/include/c++/v1" uv pip install -e .
+```
+
+
 # Alpha example
 
 ```
