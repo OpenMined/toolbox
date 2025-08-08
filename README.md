@@ -68,6 +68,13 @@ tb log <appname>
 | slack-mcp | claude | proxy-to-om-enclave | Slack Messages | Slack Messages | `tb install slack-mcp` |
 
 
+# Triggers
+
+Toolbox can run scripts on a schedule to automate tasks in your MCP pipeline. See the [triggers documentation](docs/triggers.md) for setup and usage instructions.
+
+
+
+
 # Troubleshooting screenpipe
 If you dont seen audio recordings under `tb show meeting-notes-mcp`. The following things may help
 
