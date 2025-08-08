@@ -78,7 +78,7 @@ def get_time_windows_to_fetch(
     return windows
 
 
-def run_discord_mesage_dump_background_worker_single(
+def run_discord_mesage_download_and_write_background_worker_single(
     conn, client: DiscordClient, guild_names: List[str] = None, days_back: int = 100
 ):
     """
@@ -111,7 +111,9 @@ def run_discord_mesage_dump_background_worker_single(
 
     print(f"Database message range: {earliest_message_ts} to {latest_message_ts}")
 
-    windows_to_fetch = get_time_windows_to_fetch(earliest_message_ts, latest_message_ts, days_back)
+    windows_to_fetch = get_time_windows_to_fetch(
+        earliest_message_ts, latest_message_ts, days_back
+    )
 
     if not windows_to_fetch:
         print("No new time windows to fetch")
@@ -215,7 +217,7 @@ def run_discord_mesage_dump_background_worker_single(
     )
 
 
-def run_discord_mesage_dump_background_worker_loop(
+def run_discord_mesage_download_and_write_background_worker_loop(
     guild_names: List[str] = None, sleep_interval: int = 300, days_back: int = 100
 ):
     """
@@ -235,7 +237,7 @@ def run_discord_mesage_dump_background_worker_loop(
             with get_discord_connection() as conn:
                 client = get_discord_client()
                 try:
-                    run_discord_mesage_dump_background_worker_single(
+                    run_discord_mesage_download_and_write_background_worker_single(
                         conn, client, guild_names, days_back
                     )
                 finally:

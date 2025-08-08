@@ -90,41 +90,49 @@ class MockDiscordClient(DiscordClient):
             return iter([])
 
         all_messages = messages_data["messages"]
-        
+
         # Determine the time window
         if until is None:
-            until = since + timedelta(hours=24)  # Default to 24 hours if no until specified
-            
+            until = since + timedelta(
+                hours=24
+            )  # Default to 24 hours if no until specified
+
         # Convert since/until to UTC if they're naive
         if since.tzinfo is None:
             since = since.replace(tzinfo=datetime.now().astimezone().tzinfo)
         if until.tzinfo is None:
             until = until.replace(tzinfo=since.tzinfo)
-            
+
         # Calculate time span for distributing messages
         time_span = until - since
-        
+
         # Take a subset of messages to work with (limit to reasonable number)
         messages_to_use = all_messages[:100]  # Use first 100 messages
-        
+
         if not messages_to_use:
             return iter([])
-            
+
         # Create patched messages with timestamps distributed between since and until
         patched_messages = []
         for i, message in enumerate(messages_to_use):
             # Create a deep copy to avoid modifying original test data
             patched_message = copy.deepcopy(message)
-            
+
             # Calculate new timestamp: distribute messages evenly across the time span
-            progress = i / max(1, len(messages_to_use) - 1) if len(messages_to_use) > 1 else 0
-            new_timestamp = since + timedelta(seconds=time_span.total_seconds() * progress)
-            
+            progress = (
+                i / max(1, len(messages_to_use) - 1) if len(messages_to_use) > 1 else 0
+            )
+            new_timestamp = since + timedelta(
+                seconds=time_span.total_seconds() * progress
+            )
+
             # Format timestamp in Discord's ISO format
-            patched_message["timestamp"] = new_timestamp.isoformat().replace("+00:00", "Z")
-            
+            patched_message["timestamp"] = new_timestamp.isoformat().replace(
+                "+00:00", "Z"
+            )
+
             patched_messages.append(patched_message)
-            
+
         return iter(patched_messages)
 
     def _make_request(
@@ -134,6 +142,7 @@ class MockDiscordClient(DiscordClient):
         token_kind: Optional[TokenKind] = None,
         **kwargs,
     ) -> Dict[str, Any]:
+        print(f"Mocking request: {method} {endpoint}")
         """Mock the HTTP request by returning test data based on the endpoint.
 
         This method maps Discord API endpoints to our test data, allowing the real
@@ -176,8 +185,6 @@ class MockDiscordClient(DiscordClient):
         elif endpoint_path.startswith("guilds/") and endpoint_path.endswith(
             "/channels"
         ):
-            # Return channels for a guild - use permissions data if requested, otherwise original
-
             permissions_channels = self._test_data.get("permissions_guild_channels", [])
             return permissions_channels
 

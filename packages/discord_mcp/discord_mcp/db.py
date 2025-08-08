@@ -10,16 +10,16 @@ DISCORD_MCP_DB_PATH = HOME / ".discord_mcp" / "db.sqlite"
 DISCORD_MCP_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 
-def _get_discord_connection():
-    conn = sqlite3.connect(DISCORD_MCP_DB_PATH)
+def _get_discord_connection(path: Path = DISCORD_MCP_DB_PATH):
+    conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     create_tables(conn)
     return conn
 
 
 @contextmanager
-def get_discord_connection():
-    conn = _get_discord_connection()
+def get_discord_connection(path: Path = DISCORD_MCP_DB_PATH):
+    conn = _get_discord_connection(path)
     try:
         yield conn
     finally:
@@ -28,7 +28,7 @@ def get_discord_connection():
 
 def create_tables(conn):
     cursor = conn.cursor()
-    
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS guilds (
         id TEXT PRIMARY KEY,
@@ -111,7 +111,7 @@ def upsert_guild(conn, guild: DiscordGuild):
     INSERT OR REPLACE INTO guilds (id, name, icon, description, banner, owner_id, features, verification_level, default_message_notifications, explicit_content_filter, preferred_locale, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """,
-        guild.to_sql_tuple()
+        guild.to_sql_tuple(),
     )
     conn.commit()
 
@@ -123,7 +123,7 @@ def upsert_channel(conn, channel: DiscordChannel):
     INSERT OR REPLACE INTO channels (id, type, guild_id, name, parent_id, topic, position, rate_limit_per_user, permission_overwrites, nsfw, last_message_id, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """,
-        channel.to_sql_tuple()
+        channel.to_sql_tuple(),
     )
     conn.commit()
 
@@ -135,7 +135,7 @@ def upsert_user(conn, user: DiscordUser):
     INSERT OR REPLACE INTO users (id, username, discriminator, avatar, global_name, public_flags, banner, accent_color, created_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     """,
-        user.to_sql_tuple()
+        user.to_sql_tuple(),
     )
     conn.commit()
 
@@ -147,7 +147,7 @@ def upsert_message(conn, message: DiscordMessage):
     INSERT OR REPLACE INTO messages (id, channel_id, author_id, content, timestamp, edited_timestamp, type, pinned, mention_everyone, tts, mentions, mention_roles, attachments, embeds, components, flags)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """,
-        message.to_sql_tuple()
+        message.to_sql_tuple(),
     )
     conn.commit()
 
