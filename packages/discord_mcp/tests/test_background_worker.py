@@ -34,7 +34,8 @@ class TestableDiscordClient(MockDiscordClient):
     
     def _adjust_message_timestamps(self, messages: List[Dict[str, Any]], days_old_start: int, days_old_end: int) -> List[Dict[str, Any]]:
         """Adjust message timestamps to be between days_old_start and days_old_end days ago."""
-        now = datetime.utcnow()
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
         start_time = now - timedelta(days=days_old_start)
         end_time = now - timedelta(days=days_old_end)
         
@@ -46,12 +47,23 @@ class TestableDiscordClient(MockDiscordClient):
             
             # Create a copy of the message with adjusted timestamp
             adjusted_message = message.copy()
-            adjusted_message['timestamp'] = message_time.isoformat() + 'Z'
+            # Format timestamp in Discord format (replace +00:00 with Z)
+            timestamp_str = message_time.isoformat()
+            if timestamp_str.endswith('+00:00'):
+                timestamp_str = timestamp_str.replace('+00:00', 'Z')
+            elif not timestamp_str.endswith('Z'):
+                timestamp_str += 'Z'
+            adjusted_message['timestamp'] = timestamp_str
             
             # Also adjust edited_timestamp if present
             if adjusted_message.get('edited_timestamp'):
                 edited_time = message_time + timedelta(minutes=5)  # Edit 5 minutes later
-                adjusted_message['edited_timestamp'] = edited_time.isoformat() + 'Z'
+                edited_timestamp_str = edited_time.isoformat()
+                if edited_timestamp_str.endswith('+00:00'):
+                    edited_timestamp_str = edited_timestamp_str.replace('+00:00', 'Z')
+                elif not edited_timestamp_str.endswith('Z'):
+                    edited_timestamp_str += 'Z'
+                adjusted_message['edited_timestamp'] = edited_timestamp_str
             
             adjusted_messages.append(adjusted_message)
         
@@ -68,7 +80,7 @@ class TestableDiscordClient(MockDiscordClient):
             days_old_start, days_old_end = 4, 1
         
         if 'messages' not in messages_data:
-            return []
+            return iter([])
         
         # Use only a small subset of messages for testing (first 10 messages)
         test_messages = messages_data['messages'][:10]
@@ -130,7 +142,8 @@ class TestBackgroundWorker:
         start_time, end_time = windows[0]
         
         # Should cover the last 7 days
-        now = datetime.utcnow()
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
         expected_start = now - timedelta(days=7)
         
         # Allow some tolerance for test execution time
@@ -139,7 +152,8 @@ class TestBackgroundWorker:
     
     def test_time_window_logic_with_data(self):
         """Test time window calculation when database has existing data."""
-        now = datetime.utcnow()
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
         
         # Simulate existing data from 5 days ago to 2 days ago
         earliest_ts = datetime_to_discord_timestamp(now - timedelta(days=5))
@@ -189,11 +203,8 @@ class TestBackgroundWorker:
             # Verify the timestamps are roughly 7-4 days old
             earliest_dt = parse_discord_timestamp(first_earliest)
             latest_dt = parse_discord_timestamp(first_latest)
-            now = datetime.utcnow()
-            
-            # Make now timezone-aware to match parsed timestamps
-            if earliest_dt.tzinfo is not None and now.tzinfo is None:
-                now = now.replace(tzinfo=earliest_dt.tzinfo)
+            from datetime import timezone
+            now = datetime.now(timezone.utc)
             
             earliest_days_old = (now - earliest_dt).days
             latest_days_old = (now - latest_dt).days
@@ -314,16 +325,17 @@ class TestMockClientExtensions:
         
         # Test first batch
         client.set_data_set('first_batch')
+        from datetime import timezone
         messages_1 = list(client.get_messages_since(
             "test_channel", 
-            datetime.utcnow() - timedelta(days=10)
+            datetime.now(timezone.utc) - timedelta(days=10)
         ))
         
         # Test second batch  
         client.set_data_set('second_batch')
         messages_2 = list(client.get_messages_since(
             "test_channel",
-            datetime.utcnow() - timedelta(days=10) 
+            datetime.now(timezone.utc) - timedelta(days=10) 
         ))
         
         assert len(messages_1) > 0, "First batch should have messages"
@@ -340,7 +352,8 @@ class TestMockClientExtensions:
         client = TestableDiscordClient("test_token")
         client.set_data_set('first_batch')
         
-        now = datetime.utcnow()
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
         since = now - timedelta(days=10)
         
         messages = list(client.get_messages_since("test_channel", since))
@@ -349,8 +362,6 @@ class TestMockClientExtensions:
         
         for message in messages:
             msg_time = parse_discord_timestamp(message['timestamp'])
-            if msg_time.tzinfo is not None and now.tzinfo is None:
-                now = now.replace(tzinfo=msg_time.tzinfo)
             days_old = (now - msg_time).days
             
             # Should be between 4-7 days old for first batch

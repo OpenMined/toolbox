@@ -350,3 +350,21 @@ class DiscordClient:
                 "icon": None,
             }
         return self._make_request("GET", f"guilds/{guild_id}")
+
+    def get_member_roles(self, guild_id: str, user_id: str) -> List[str]:
+        """Get the roles for a guild member."""
+        try:
+            member_data = self._make_request("GET", f"guilds/{guild_id}/members/{user_id}")
+            return member_data.get("roles", [])
+        except Exception as e:
+            logger.warning(f"Could not get member data for guild {guild_id}: {e}")
+            return []
+
+    def get_guild_roles(self, guild_id: str) -> Dict[str, Dict[str, Any]]:
+        """Get all roles in a guild."""
+        try:
+            roles_data = self._make_request("GET", f"guilds/{guild_id}/roles")
+            return {role["id"]: role for role in roles_data}
+        except Exception as e:
+            logger.warning(f"Could not get roles for guild {guild_id}: {e}")
+            return {}

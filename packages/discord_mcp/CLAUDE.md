@@ -51,5 +51,5 @@ just test_live          # Live Discord API tests - DO NOT RUN
 - Unit tests should assert non-empty data to ensure mock is working
 
 ## Environment
-- Requires `DISCORD_TOKEN` environment variable for live tests only
+- Requires `DISCORD_TOKEN` environment variable for live tests only. The token is expected to be present during development
 - Unit tests work without any environment setup
