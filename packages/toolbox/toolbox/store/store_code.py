@@ -1,8 +1,9 @@
 from pathlib import Path
-from pydantic import BaseModel
 from typing import TYPE_CHECKING
 
 import requests
+from pydantic import BaseModel
+
 from toolbox.store.callbacks.auth.auth_slack_callback import SlackAuthCallback
 from toolbox.store.callbacks.whatsapp_callback import InstallWhatsappDesktopMCPCallback
 
@@ -14,10 +15,10 @@ from toolbox.store.callbacks.callback import (
     DeleteNotesMCPCallback,
     DeleteSyftboxQueryengineMCPCallback,
     InstallSyftboxQueryengineMCPCallback,
-    NotesMCPInstallationSummaryCallback,
     MeetingNotesMCPDataStatsCallback,
-    RegisterNotesMCPCallback,
+    NotesMCPInstallationSummaryCallback,
     RegisterNotesMCPAppHeartbeatMCPCallback,
+    RegisterNotesMCPCallback,
     RegisterSlackMCPCallback,
     ScreenpipeExternalDependencyCallback,
     SlackMCPDataStatsCallback,
@@ -138,6 +139,20 @@ class GithubMCP(StoreElement):
             result_name="GITHUB_PERSONAL_ACCESS_TOKEN",
             request_text="To install github mcp, you need a personal access token. Please visit https://github.com/settings/personal-access-tokens to create one.",
         )
+    ]
+
+
+class ObsidianMCP(StoreElement):
+    name: str = "obsidian-mcp"
+    local_package_path: Path = Path(
+        TOOLBOX_WORKSPACE_DIR / "packages/obsidian_mcp"
+    ).expanduser()
+    package_url: str = "https://github.com/OpenMined/toolbox"
+    subdirectory: str = "packages/obsidian_mcp"
+    branch: str = "main"
+
+    callbacks: list[Callback] = [
+        ObsidianFindVaultCallback(),
     ]
 
 

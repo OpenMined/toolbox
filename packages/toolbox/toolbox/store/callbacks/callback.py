@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import secrets
 import sqlite3
@@ -15,7 +16,6 @@ from pydantic import BaseModel
 if TYPE_CHECKING:
     from toolbox.installed_mcp import InstalledMCP
 import time
-
 
 from toolbox.external_dependencies.external_depenencies import (
     screenpipe_installed,
@@ -402,3 +402,52 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
 
         store_element = STORE_ELEMENTS["syftbox-queryengine-mcp"]
         install_python_mcp(store_element, context)
+
+
+class ObsidianFindVaultCallback(Callback):
+    def _get_obsidian_vaults(self):
+        obsidian_path = Path.home() / "Library/Application Support/obsidian"
+        if not obsidian_path.exists():
+            raise FileNotFoundError("Obsidian not found")
+        obsidian_json = obsidian_path / "obsidian.json"
+        if not obsidian_json.exists():
+            raise FileNotFoundError("Obsidian vault settings not found")
+        obsidian_json = json.loads(obsidian_json.read_text())
+        # @LLM, for reference: ❯ cat ~/Library/Application\ Support/obsidian/obsidian.json
+        # {"vaults":{"a36a17e35bf6cf03":{"path":"/Users/eelco/Library/CloudStorage/Dropbox/obsidian/ready-impala","ts":1753868090736,"open":true},"1c60a84262c5e501":{"path":"/Users/eelco/Library/CloudStorage/Dropbox/obsidian/test-vault/test","ts":1754082013773}}}%
+        return obsidian_json["vaults"]
+
+    def choose_vault(self, vaults: dict) -> str:
+        if len(vaults) == 0:
+            vault_path = input("Enter the path to your obsidian vault: ")
+            if not Path(vault_path).is_dir():
+                print("Vault path is not a directory")
+                return self.choose_vault(vaults)
+            return vault_path
+        elif len(vaults) == 1:
+            return list(vaults.values())[0]["path"]
+
+        else:
+            from tabulate import tabulate
+
+            print("Found multiple vaults, please choose one:")
+            vault_list = list(vaults.values())
+            table = [[i + 1, v["path"]] for i, v in enumerate(vault_list)]
+            print(tabulate(table, headers=["#", "Path"], tablefmt="simple"))
+            choice = input("Choose a vault (1-{len(vault_list)}): ")
+            try:
+                idx = int(choice) - 1
+                return vault_list[idx]["path"]
+            except (ValueError, IndexError):
+                print("Invalid choice")
+                return self.choose_vault(vaults)
+
+    def on_input(self, context: InstallationContext):
+        try:
+            vaults = self._get_obsidian_vaults()
+        except Exception as e:
+            print(f"Error getting obsidian vaults: {e}")
+            vaults = {}
+
+        vault_path = self.choose_vault(vaults)
+        context.context_settings["OBSIDIAN_VAULT_PATH"] = vault_path
