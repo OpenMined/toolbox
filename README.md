@@ -30,27 +30,12 @@ uv python install --reinstall
 to [fix python in uv](https://github.com/astral-sh/python-build-standalone/pull/414)
 
 # Alpha example
-This is an alpha version, currently the only functioning app is the meeting-notes-mcp, with the slack-mcp coming soon. The only supported client is Claude Desktop, which is also the default client. Install this app and its dependencies using:
+
 ```
-tb install meeting-notes-mcp --client=claude
+tb install slack-mcp
 ```
-After making some recording using screenpipe you should be able to see your data using
-```
-tb show meeting-notes-mcp
-```
-This should now show you the nr of audio chunks screenpipe recorded and how many are transcribed. When you start talking they should start appearting within 30 seconds. If not, check [troubleshooting screenpipe](#troubleshooting-screenpipe)
 
-Once you have recordings, you can then query them with Claude desktop by asking something like
-
-**"Get me the meeting notes from my latest meeting"**
-
-## Bonus
-If you also install the github mcp server you could also ask
-
-**"Now make tickets for the todo's of that meeting"**
-
-
-# Installing apps
+# Toolbox CLI
 To show apps in store
 ```
 tb list-store
@@ -67,14 +52,13 @@ To show an installed app
 ```
 tb show <appname>
 ```
-To get logs for a local app
+To get logs for a local app (to follow add -f)
 ```
 tb log <appname>
 ```
 
 
 # Store
-
 
 | Name | Clients | Default Deployment | Read Access | Write Access | Install |
 |------|--------|--------------------|-------------|--------------|---------|

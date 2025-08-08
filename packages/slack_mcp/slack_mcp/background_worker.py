@@ -17,7 +17,7 @@ from slack_mcp.overview_utils import (
     get_my_active_channels_from_search,
 )
 
-token = os.getenv("SLACK_BOT_TOKEN")
+token = os.getenv("SLACK_TOKEN")
 d_cookie = os.getenv("SLACK_D_COOKIE")
 
 
