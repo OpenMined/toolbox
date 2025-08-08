@@ -1,0 +1,691 @@
+{
+  "1072196207201501266": {
+    "id": "1072196207201501266",
+    "name": "@everyone",
+    "description": null,
+    "permissions": "1266912340282368",
+    "position": 0,
+    "color": 0,
+    "colors": {
+      "primary_color": 0,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1072197058997538907": {
+    "id": "1072197058997538907",
+    "name": "Staff",
+    "description": null,
+    "permissions": "19785572150982",
+    "position": 23,
+    "color": 6323595,
+    "colors": {
+      "primary_color": 6323595,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1073341144592826482": {
+    "id": "1073341144592826482",
+    "name": "Fletcher",
+    "description": null,
+    "permissions": "28033202777343",
+    "position": 28,
+    "color": 6323595,
+    "colors": {
+      "primary_color": 6323595,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": true,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "tags": {
+      "bot_id": "429368441577930753"
+    },
+    "flags": 0
+  },
+  "1114299315934990358": {
+    "id": "1114299315934990358",
+    "name": "Actively Administering",
+    "description": null,
+    "permissions": "8",
+    "position": 27,
+    "color": 15158332,
+    "colors": {
+      "primary_color": 15158332,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": true,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1114314009542402171": {
+    "id": "1114314009542402171",
+    "name": "AI enthusiast",
+    "description": null,
+    "permissions": "309237763136",
+    "position": 10,
+    "color": 7419530,
+    "colors": {
+      "primary_color": 7419530,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1114315267955249232": {
+    "id": "1114315267955249232",
+    "name": "AI developer",
+    "description": null,
+    "permissions": "309237763136",
+    "position": 9,
+    "color": 3447003,
+    "colors": {
+      "primary_color": 3447003,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1152390637233123369": {
+    "id": "1152390637233123369",
+    "name": "Server Booster",
+    "description": null,
+    "permissions": "140737488355328",
+    "position": 1,
+    "color": 16023551,
+    "colors": {
+      "primary_color": 16023551,
+      "secondary_color": 11816191,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": true,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "tags": {
+      "premium_subscriber": null
+    },
+    "flags": 0
+  },
+  "1214262492272926780": {
+    "id": "1214262492272926780",
+    "name": "Anthropic Staff",
+    "description": null,
+    "permissions": "0",
+    "position": 25,
+    "color": 15105570,
+    "colors": {
+      "primary_color": 15105570,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": true,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1215414492599558145": {
+    "id": "1215414492599558145",
+    "name": "Community Managers",
+    "description": null,
+    "permissions": "0",
+    "position": 26,
+    "color": 52224,
+    "colors": {
+      "primary_color": 52224,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": true,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1215414670119411742": {
+    "id": "1215414670119411742",
+    "name": "FULL ADMIN",
+    "description": null,
+    "permissions": "420013441810430",
+    "position": 24,
+    "color": 15158332,
+    "colors": {
+      "primary_color": 15158332,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1223034332969570407": {
+    "id": "1223034332969570407",
+    "name": "MEE6",
+    "description": null,
+    "permissions": "364870364415",
+    "position": 30,
+    "color": 6323595,
+    "colors": {
+      "primary_color": 6323595,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": true,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "tags": {
+      "bot_id": "159985870458322944"
+    },
+    "flags": 0
+  },
+  "1223938644176408599": {
+    "id": "1223938644176408599",
+    "name": "A\\ Auto Mod",
+    "description": null,
+    "permissions": "364870364415",
+    "position": 34,
+    "color": 6323595,
+    "colors": {
+      "primary_color": 6323595,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": true,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "tags": {
+      "bot_id": "1223937267912146945"
+    },
+    "flags": 0
+  },
+  "1223945553638068325": {
+    "id": "1223945553638068325",
+    "name": "A\\ Hobbyist",
+    "description": null,
+    "permissions": "0",
+    "position": 17,
+    "color": 9936031,
+    "colors": {
+      "primary_color": 9936031,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  },
+  "1223946646682075227": {
+    "id": "1223946646682075227",
+    "name": "A\\ Journeyman",
+    "description": null,
+    "permissions": "0",
+    "position": 18,
+    "color": 12745742,
+    "colors": {
+      "primary_color": 12745742,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1223946833651433583": {
+    "id": "1223946833651433583",
+    "name": "A\\ Expert",
+    "description": null,
+    "permissions": "0",
+    "position": 19,
+    "color": 13222075,
+    "colors": {
+      "primary_color": 13222075,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1223946936353030195": {
+    "id": "1223946936353030195",
+    "name": "A\\ Guru",
+    "description": null,
+    "permissions": "0",
+    "position": 20,
+    "color": 15649024,
+    "colors": {
+      "primary_color": 15649024,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1224160496853323807": {
+    "id": "1224160496853323807",
+    "name": "News - Community",
+    "description": null,
+    "permissions": "0",
+    "position": 4,
+    "color": 11027200,
+    "colors": {
+      "primary_color": 11027200,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  },
+  "1224161131703042068": {
+    "id": "1224161131703042068",
+    "name": "News - ANTHROP\\C",
+    "description": null,
+    "permissions": "0",
+    "position": 6,
+    "color": 11027200,
+    "colors": {
+      "primary_color": 11027200,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  },
+  "1224161290683940864": {
+    "id": "1224161290683940864",
+    "name": "News - Claude.ai",
+    "description": null,
+    "permissions": "0",
+    "position": 5,
+    "color": 11027200,
+    "colors": {
+      "primary_color": 11027200,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  },
+  "1224168347323727995": {
+    "id": "1224168347323727995",
+    "name": "Claude.ai User",
+    "description": null,
+    "permissions": "309304872000",
+    "position": 11,
+    "color": 7419530,
+    "colors": {
+      "primary_color": 7419530,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  },
+  "1224169035877453944": {
+    "id": "1224169035877453944",
+    "name": "Claude Pro User",
+    "description": null,
+    "permissions": "0",
+    "position": 13,
+    "color": 10181046,
+    "colors": {
+      "primary_color": 10181046,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  },
+  "1224169119415537785": {
+    "id": "1224169119415537785",
+    "name": "Claude API User",
+    "description": null,
+    "permissions": "309304872000",
+    "position": 16,
+    "color": 3447003,
+    "colors": {
+      "primary_color": 3447003,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  },
+  "1224188536035606601": {
+    "id": "1224188536035606601",
+    "name": "Community Mods",
+    "description": null,
+    "permissions": "0",
+    "position": 22,
+    "color": 3066993,
+    "colors": {
+      "primary_color": 3066993,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": true,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1225652930934214751": {
+    "id": "1225652930934214751",
+    "name": "Apollo",
+    "description": null,
+    "permissions": "36776045648",
+    "position": 33,
+    "color": 6323595,
+    "colors": {
+      "primary_color": 6323595,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": true,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "tags": {
+      "bot_id": "475744554910351370"
+    },
+    "flags": 0
+  },
+  "1227336701404381277": {
+    "id": "1227336701404381277",
+    "name": "Muted",
+    "description": null,
+    "permissions": "66560",
+    "position": 2,
+    "color": 0,
+    "colors": {
+      "primary_color": 0,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1320862429630038066": {
+    "id": "1320862429630038066",
+    "name": "Allow PM Request",
+    "description": null,
+    "permissions": "0",
+    "position": 21,
+    "color": 1752220,
+    "colors": {
+      "primary_color": 1752220,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1321292693024018456": {
+    "id": "1321292693024018456",
+    "name": "StrawPoll",
+    "description": null,
+    "permissions": "414464732224",
+    "position": 29,
+    "color": 6323595,
+    "colors": {
+      "primary_color": 6323595,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": true,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "tags": {
+      "bot_id": "823271140410916986"
+    },
+    "flags": 0
+  },
+  "1332522048781811784": {
+    "id": "1332522048781811784",
+    "name": "Question of the Week",
+    "description": null,
+    "permissions": "0",
+    "position": 3,
+    "color": 11027200,
+    "colors": {
+      "primary_color": 11027200,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1368396888964862012": {
+    "id": "1368396888964862012",
+    "name": "BetterInvites",
+    "description": null,
+    "permissions": "1101927548960",
+    "position": 32,
+    "color": 6323595,
+    "colors": {
+      "primary_color": 6323595,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": true,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "tags": {
+      "bot_id": "1076936873106231447"
+    },
+    "flags": 0
+  },
+  "1375286693145608334": {
+    "id": "1375286693145608334",
+    "name": "from A\\ site",
+    "description": null,
+    "permissions": "0",
+    "position": 8,
+    "color": 15105570,
+    "colors": {
+      "primary_color": 15105570,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1375287669420069026": {
+    "id": "1375287669420069026",
+    "name": "from Reddit",
+    "description": null,
+    "permissions": "0",
+    "position": 7,
+    "color": 15158332,
+    "colors": {
+      "primary_color": 15158332,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 0
+  },
+  "1375290097888530555": {
+    "id": "1375290097888530555",
+    "name": "BetterSlowmode",
+    "description": null,
+    "permissions": "26624",
+    "position": 31,
+    "color": 6323595,
+    "colors": {
+      "primary_color": 6323595,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": true,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "tags": {
+      "bot_id": "733458562101280788"
+    },
+    "flags": 0
+  },
+  "1389147438568177684": {
+    "id": "1389147438568177684",
+    "name": "Claude Code Coder",
+    "description": null,
+    "permissions": "309304872000",
+    "position": 15,
+    "color": 2123412,
+    "colors": {
+      "primary_color": 2123412,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  },
+  "1389150550695743518": {
+    "id": "1389150550695743518",
+    "name": "Claude Max User",
+    "description": null,
+    "permissions": "0",
+    "position": 14,
+    "color": 11303930,
+    "colors": {
+      "primary_color": 11303930,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  },
+  "1389151421500493866": {
+    "id": "1389151421500493866",
+    "name": "Free Chat User",
+    "description": null,
+    "permissions": "0",
+    "position": 12,
+    "color": 7419530,
+    "colors": {
+      "primary_color": 7419530,
+      "secondary_color": null,
+      "tertiary_color": null
+    },
+    "hoist": false,
+    "managed": false,
+    "mentionable": false,
+    "icon": null,
+    "unicode_emoji": null,
+    "flags": 1
+  }
+}

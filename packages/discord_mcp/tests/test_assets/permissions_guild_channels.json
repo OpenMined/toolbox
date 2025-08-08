@@ -1,0 +1,2723 @@
+[
+  {
+    "id": "1114301961831981107",
+    "type": 0,
+    "last_message_id": "1398445652517720169",
+    "flags": 2048,
+    "guild_id": "1072196207201501266",
+    "name": "welcome",
+    "parent_id": null,
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "default_auto_archive_duration": 10080,
+    "position": 0,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "1115136",
+        "deny": "2098966420716369"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udeaa"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1114305486905409627",
+    "type": 4,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "Community",
+    "parent_id": null,
+    "position": 0,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      }
+    ]
+  },
+  {
+    "id": "1072197729276657744",
+    "type": 5,
+    "last_message_id": "1402714357678215258",
+    "flags": 2048,
+    "last_pin_timestamp": "2024-03-11T18:21:38+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "\ud83d\udce2-announcements",
+    "parent_id": null,
+    "rate_limit_per_user": 0,
+    "topic": "Announcements on Claude features & updates as well as Discord community updates.",
+    "default_auto_archive_duration": 10080,
+    "position": 1,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "377957124096"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "1024",
+        "deny": "380104605696"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "377957173249"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "377957124096"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udce3"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1258541715279712428",
+    "type": 4,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "Mod Reports",
+    "parent_id": null,
+    "position": 1,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "1049600",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1049600"
+      },
+      {
+        "id": "1224188536035606601",
+        "type": 0,
+        "allow": "1049600",
+        "deny": "0"
+      }
+    ]
+  },
+  {
+    "id": "1072198367603601468",
+    "type": 4,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "Admin",
+    "parent_id": null,
+    "position": 2,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "66560"
+      }
+    ]
+  },
+  {
+    "id": "1226774707865653288",
+    "type": 0,
+    "last_message_id": "1400556986654916820",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "\ud83d\udcc5-events",
+    "parent_id": null,
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "default_auto_archive_duration": 10080,
+    "position": 2,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "274877906944",
+        "deny": "103079217152"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "274877906944",
+        "deny": "103079217152"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "274877973504",
+        "deny": "103079266305"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "1024",
+        "deny": "380104605696"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1114305248190808105",
+    "type": 4,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "Open Private Messages",
+    "parent_id": null,
+    "position": 3,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "117760",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "377958171648"
+      }
+    ]
+  },
+  {
+    "id": "1213965282406830120",
+    "type": 5,
+    "last_message_id": "1402699391730716723",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "\ud83d\udcf0-updates",
+    "parent_id": null,
+    "rate_limit_per_user": 0,
+    "topic": "Updates on Anthropic",
+    "default_auto_archive_duration": 10080,
+    "position": 3,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "377957124096"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "377957124096"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "377957173249"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "1024",
+        "deny": "380104605696"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83c\udf10"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1213963666936963115",
+    "type": 4,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "In Progress",
+    "parent_id": null,
+    "position": 4,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "103884524560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      }
+    ]
+  },
+  {
+    "id": "1379505487682470048",
+    "type": 5,
+    "last_message_id": "1403069635569647646",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "\ud83d\udea5-claude-status",
+    "parent_id": null,
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 4,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "103884524560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "309237696576"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1114303258404601886",
+    "type": 4,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "Welcome",
+    "parent_id": null,
+    "position": 5,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "1115200",
+        "deny": "2098966420716305"
+      }
+    ]
+  },
+  {
+    "id": "1320861487157477477",
+    "type": 0,
+    "last_message_id": "1343675272456700025",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "request-pm",
+    "parent_id": null,
+    "rate_limit_per_user": 0,
+    "topic": "If you can see this channel, you have been granted **temporary** access in order to create a private channel in which to exchange private messages with our mods and/or staff members.  Read the instructions below and click the button to create your temporary private channel.  Someone who can help you should message you in the channel it creates soon afterward.",
+    "position": 5,
+    "permission_overwrites": [
+      {
+        "id": "1320862429630038066",
+        "type": 0,
+        "allow": "66560",
+        "deny": "1795488261535825"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "74752",
+        "deny": "377957173312"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      },
+      {
+        "id": "1268711891337744395",
+        "type": 1,
+        "allow": "1024",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "3072"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1213964644008460338",
+    "type": 4,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "News & Events",
+    "parent_id": null,
+    "position": 6,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "103079217152"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "1024",
+        "deny": "70866960384"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "377957173249"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "103079217152"
+      }
+    ]
+  },
+  {
+    "id": "1370289658445041735",
+    "type": 0,
+    "last_message_id": "1403310391999725578",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "\ud83d\udc4b-introduce-yourself",
+    "parent_id": "1114305486905409627",
+    "rate_limit_per_user": 600,
+    "topic": "Please share who you are, where you\u2019re from, and the ways you use Claude!",
+    "default_auto_archive_duration": 4320,
+    "position": 6,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1114305545478877377",
+    "type": 0,
+    "last_message_id": "1403312562287808592",
+    "flags": 0,
+    "last_pin_timestamp": "2025-06-05T15:50:06.510000+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "general",
+    "parent_id": "1114305486905409627",
+    "rate_limit_per_user": 0,
+    "topic": "General topics related to Claude or AI",
+    "default_auto_archive_duration": 10080,
+    "position": 7,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udcac"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1114307166933876748",
+    "type": 4,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "Archive",
+    "parent_id": null,
+    "position": 7,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "377958222912"
+      }
+    ]
+  },
+  {
+    "id": "1082029520846078102",
+    "type": 4,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "Demo",
+    "parent_id": null,
+    "position": 8,
+    "permission_overwrites": [
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      }
+    ]
+  },
+  {
+    "id": "1354425630011166830",
+    "type": 0,
+    "last_message_id": "1403309898070102056",
+    "flags": 0,
+    "last_pin_timestamp": "2025-03-26T12:26:23.080000+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "claude-code",
+    "parent_id": "1114305486905409627",
+    "rate_limit_per_user": 0,
+    "topic": "Anything related to Claude Code.",
+    "position": 8,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1222653313305284780",
+    "type": 0,
+    "last_message_id": "1403266892331745411",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "api",
+    "parent_id": "1114305486905409627",
+    "rate_limit_per_user": 0,
+    "topic": "Topics related to API use or development.",
+    "position": 9,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1354425716845842452",
+    "type": 0,
+    "last_message_id": "1403153629115842590",
+    "flags": 0,
+    "last_pin_timestamp": "2025-03-26T12:51:17+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "mcp",
+    "parent_id": "1114305486905409627",
+    "rate_limit_per_user": 0,
+    "topic": "Topics related to implementation and use of MCP (Model Context Protocol).",
+    "position": 10,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1227020797043019879",
+    "type": 0,
+    "last_message_id": "1403301009543139388",
+    "flags": 0,
+    "last_pin_timestamp": "2025-03-31T08:04:12+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "off-topic",
+    "parent_id": "1114305486905409627",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 11,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1398193788937175123",
+    "type": 0,
+    "last_message_id": "1402936974054129757",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "\ud83c\uddef\ud83c\uddf5-\u65e5\u672c\u8a9e",
+    "parent_id": "1114305486905409627",
+    "rate_limit_per_user": 0,
+    "topic": "\u65e5\u672c\u306e\u30af\u30ed\u30fc\u30c9\u958b\u767a\u8005\u30b3\u30df\u30e5\u30cb\u30c6\u30a3\uff01",
+    "default_auto_archive_duration": 10080,
+    "position": 12,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "0",
+        "deny": "2098686408979201"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1213976011998498816",
+    "type": 15,
+    "last_message_id": "1403132598254829719",
+    "flags": 16,
+    "guild_id": "1072196207201501266",
+    "name": "community-help",
+    "parent_id": "1114305486905409627",
+    "rate_limit_per_user": 0,
+    "topic": "This channel is for getting help from other community members with your questions about using Claude.\n\nFor official help with your Claude account, please go to https://support.anthropic.com/.\n\n***Note***:  Discord moderators **cannot** access your account or provide official support here.",
+    "default_auto_archive_duration": 10080,
+    "position": 13,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "49152",
+        "deny": "2098686408930049"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "49152",
+        "deny": "2098686408930049"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      }
+    ],
+    "nsfw": false,
+    "available_tags": [
+      {
+        "id": "1398237861836226572",
+        "name": "Claude Code",
+        "moderated": false,
+        "emoji_id": "1350250707474841640",
+        "emoji_name": null
+      },
+      {
+        "id": "1364736920655233094",
+        "name": "MCP",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\uddc2\ufe0f"
+      },
+      {
+        "id": "1398236093500887070",
+        "name": "Vibe Coding",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\udcdf"
+      },
+      {
+        "id": "1364735272402555034",
+        "name": "API",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\udee0\ufe0f"
+      },
+      {
+        "id": "1216870515885473912",
+        "name": "Claude Chat",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\udcac"
+      }
+    ],
+    "default_reaction_emoji": {
+      "emoji_id": "1115403084919746560",
+      "emoji_name": null
+    },
+    "default_sort_order": null,
+    "default_forum_layout": 1,
+    "default_tag_setting": "match_some",
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83c\udd98"
+    },
+    "theme_color": null,
+    "template": ""
+  },
+  {
+    "id": "1281536652254384159",
+    "type": 15,
+    "last_message_id": "1402914621366730773",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "share-your-project",
+    "parent_id": "1114305486905409627",
+    "rate_limit_per_user": 0,
+    "topic": "This channel is for sharing your projects using Claude. Please do not posts links to projects that have nothing to do with Anthropic services.",
+    "default_auto_archive_duration": 10080,
+    "position": 14,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "49152",
+        "deny": "2098686408930049"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "49152",
+        "deny": "2098686408930049"
+      }
+    ],
+    "nsfw": false,
+    "available_tags": [],
+    "default_reaction_emoji": {
+      "emoji_id": "1392592859609436385",
+      "emoji_name": null
+    },
+    "default_sort_order": null,
+    "default_forum_layout": 1,
+    "default_tag_setting": "match_some",
+    "icon_emoji": null,
+    "theme_color": null,
+    "template": ""
+  },
+  {
+    "id": "1072198306748448868",
+    "type": 0,
+    "last_message_id": "1392594490262294618",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "staff",
+    "parent_id": "1072198367603601468",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 21,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "66560"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udc6e"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1114301961831981108",
+    "type": 0,
+    "last_message_id": "1403031186028232817",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "moderation",
+    "parent_id": "1072198367603601468",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 22,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "66560"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udc6e"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1223931879712096347",
+    "type": 0,
+    "last_message_id": "1403313013121093632",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "mod-logs",
+    "parent_id": "1072198367603601468",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 23,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "66560"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1216811826352750754",
+    "type": 15,
+    "last_message_id": "1217870401233879271",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "follow-ups",
+    "parent_id": "1072198367603601468",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 24,
+    "permission_overwrites": [
+      {
+        "id": "1215414492599558145",
+        "type": 0,
+        "allow": "429765684304",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "1024",
+        "deny": "0"
+      }
+    ],
+    "nsfw": false,
+    "available_tags": [],
+    "default_reaction_emoji": null,
+    "default_sort_order": null,
+    "default_forum_layout": 0,
+    "default_tag_setting": "match_some",
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udd0d"
+    },
+    "theme_color": null,
+    "template": ""
+  },
+  {
+    "id": "1223416263489880064",
+    "type": 0,
+    "last_message_id": "1403147064707256330",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "ticket-transcripts",
+    "parent_id": "1072198367603601468",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 25,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "66560"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1073339122170732594",
+    "type": 0,
+    "last_message_id": "1375330210173554832",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "bot-testing",
+    "parent_id": "1072198367603601468",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 26,
+    "permission_overwrites": [
+      {
+        "id": "1321292693024018456",
+        "type": 0,
+        "allow": "1024",
+        "deny": "0"
+      },
+      {
+        "id": "1368396888964862012",
+        "type": 0,
+        "allow": "1024",
+        "deny": "0"
+      },
+      {
+        "id": "1375290097888530555",
+        "type": 0,
+        "allow": "1024",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "66560"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1225652930934214751",
+        "type": 0,
+        "allow": "1024",
+        "deny": "0"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83e\udd16"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1395185881954127945",
+    "type": 0,
+    "last_message_id": "1402205926718443624",
+    "flags": 0,
+    "last_pin_timestamp": "2025-07-16T23:30:36.382000+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "428-arkahn-xorxand",
+    "parent_id": "1114305248190808105",
+    "rate_limit_per_user": 0,
+    "topic": "Ticket #428 - Type: \ud83d\udce9 **Open PM** - Claimed by: <@441111288194531328> - Created by: <@343751198467293184>",
+    "position": 30,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "68608"
+      },
+      {
+        "id": "1223937267912146945",
+        "type": 1,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "343751198467293184",
+        "type": 1,
+        "allow": "68608",
+        "deny": "131072"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1395344511000903743",
+    "type": 0,
+    "last_message_id": "1403242663884619787",
+    "flags": 0,
+    "last_pin_timestamp": "2025-07-17T10:00:56.356000+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "430-discord-feedback-chat",
+    "parent_id": "1114305248190808105",
+    "rate_limit_per_user": 0,
+    "topic": "Chat w/high-presence community members RE: incoming Discord changes for feedback, suggestions, etc.",
+    "default_auto_archive_duration": 10080,
+    "position": 31,
+    "permission_overwrites": [
+      {
+        "id": "730152468809384057",
+        "type": 1,
+        "allow": "274878024768",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "68608"
+      },
+      {
+        "id": "1151230208783945818",
+        "type": 1,
+        "allow": "274878024768",
+        "deny": "0"
+      },
+      {
+        "id": "1223937267912146945",
+        "type": 1,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "303049936197517324",
+        "type": 1,
+        "allow": "68608",
+        "deny": "131072"
+      },
+      {
+        "id": "1272933865752887317",
+        "type": 1,
+        "allow": "274878024768",
+        "deny": "0"
+      },
+      {
+        "id": "220354473212641293",
+        "type": 1,
+        "allow": "274878024768",
+        "deny": "0"
+      },
+      {
+        "id": "753315331769892995",
+        "type": 1,
+        "allow": "274878024768",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "219227787356012555",
+        "type": 1,
+        "allow": "274878024768",
+        "deny": "0"
+      },
+      {
+        "id": "358233112179769344",
+        "type": 1,
+        "allow": "274878024768",
+        "deny": "0"
+      },
+      {
+        "id": "134295609287901184",
+        "type": 1,
+        "allow": "274878024768",
+        "deny": "0"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1216513826225389730",
+    "type": 0,
+    "last_message_id": "1375278930054877336",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "dev-resources",
+    "parent_id": "1213963666936963115",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 33,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "103884524560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udcda"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1225182072436428880",
+    "type": 0,
+    "last_message_id": "1253415338570285086",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "drafts",
+    "parent_id": "1213963666936963115",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 34,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "103884524560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1339035767867183154",
+    "type": 15,
+    "last_message_id": null,
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "bot-testing",
+    "parent_id": "1213963666936963115",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 35,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "103884524560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      }
+    ],
+    "nsfw": false,
+    "available_tags": [],
+    "default_reaction_emoji": null,
+    "default_sort_order": null,
+    "default_forum_layout": 0,
+    "default_tag_setting": "match_some",
+    "icon_emoji": null,
+    "theme_color": null,
+    "template": ""
+  },
+  {
+    "id": "1230309527837085777",
+    "type": 0,
+    "last_message_id": "1258554211273150588",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "api-faq",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 36,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "634265738082304"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "65536",
+        "deny": "563327910546496"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1114305823187943506",
+    "type": 15,
+    "last_message_id": "1398282524647755806",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "api-help",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": "**Hey! We\u2019re here to help you build with the Claude API. Post your question below and we\u2019ll come back to you as soon as possible!**",
+    "position": 37,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "377958222912"
+      }
+    ],
+    "nsfw": false,
+    "available_tags": [],
+    "default_reaction_emoji": {
+      "emoji_id": null,
+      "emoji_name": "\ud83d\ude80"
+    },
+    "default_sort_order": null,
+    "default_forum_layout": 0,
+    "default_tag_setting": "match_some",
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udcda"
+    },
+    "theme_color": null,
+    "template": ""
+  },
+  {
+    "id": "1225221752641294337",
+    "type": 0,
+    "last_message_id": "1398197240907956274",
+    "flags": 0,
+    "last_pin_timestamp": "2024-04-04T00:46:22+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "ask-the-community",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 38,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "377958222912"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1114316780937167030",
+    "type": 0,
+    "last_message_id": "1258545007070285966",
+    "flags": 0,
+    "last_pin_timestamp": "2023-06-12T20:25:42+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "community-rules",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 39,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "377958222912"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udccc"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1213965409284399115",
+    "type": 5,
+    "last_message_id": "1397317488571584512",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "discord-updates",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "default_auto_archive_duration": 10080,
+    "position": 40,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "377957124096"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "1024",
+        "deny": "380104605696"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "377957124096"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "65536",
+        "deny": "377957174273"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udce2"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1225513651675594754",
+    "type": 0,
+    "last_message_id": "1387495967040995511",
+    "flags": 0,
+    "last_pin_timestamp": "2025-01-21T08:13:33+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "featured-projects",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": "Projects featured here have been selected by our staff and then won, by community vote, the Project of the Month or Project of the Year.  Please see the pinned message(s) in #share-your-project for contest rules & requirements.",
+    "default_auto_archive_duration": 10080,
+    "position": 41,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "103079217152"
+      },
+      {
+        "id": "1321292693024018456",
+        "type": 0,
+        "allow": "274877958144",
+        "deny": "0"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "103079217152"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "65536",
+        "deny": "377957174273"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "1024",
+        "deny": "70866960384"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1114306512580513975",
+    "type": 15,
+    "last_message_id": "1397944697280008265",
+    "flags": 16,
+    "guild_id": "1072196207201501266",
+    "name": "feedback",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 10,
+    "topic": "**Hey! Have an idea for a new or improved feature?  Experiencing some strange behavior you can't explain?  Ideas for this community?  We\u2019re all ears!  Create a positive, constructive post with feedback on any of the taggable subjects, along with screenshots where applicable, we will share it with the relevant team members here at Anthropic.**",
+    "position": 42,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "377958222912"
+      }
+    ],
+    "nsfw": false,
+    "available_tags": [
+      {
+        "id": "1114310504698089522",
+        "name": "Claude Chat",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\udc64"
+      },
+      {
+        "id": "1114310559500882100",
+        "name": "API Feedback",
+        "moderated": false,
+        "emoji_id": "1115403084919746560",
+        "emoji_name": null
+      },
+      {
+        "id": "1205657462632353895",
+        "name": "Discord Feedback",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\ude08"
+      },
+      {
+        "id": "1276288234065891418",
+        "name": "iPhone App",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83c\udf4e"
+      },
+      {
+        "id": "1276288279095935058",
+        "name": "Android App",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83e\udd16"
+      },
+      {
+        "id": "1302725298294624306",
+        "name": "Windows App",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83e\ude9f"
+      },
+      {
+        "id": "1352410002416992376",
+        "name": "Claude Web Search",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\udd78\ufe0f"
+      },
+      {
+        "id": "1352411188658704424",
+        "name": "Claude Code",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\udee0\ufe0f"
+      },
+      {
+        "id": "1362496779647586475",
+        "name": "Documentation",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\udcd1"
+      },
+      {
+        "id": "1362783968310857828",
+        "name": "Bug Report",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83e\udeb2"
+      },
+      {
+        "id": "1366924631805788262",
+        "name": "NOT FEEDBACK",
+        "moderated": true,
+        "emoji_id": null,
+        "emoji_name": "\u274c"
+      },
+      {
+        "id": "1368776870878777504",
+        "name": "Feature Request",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\udca1"
+      },
+      {
+        "id": "1379263850968514602",
+        "name": "Claude Voice",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": "\ud83d\udcac"
+      }
+    ],
+    "default_reaction_emoji": {
+      "emoji_id": "1115403084919746560",
+      "emoji_name": null
+    },
+    "default_sort_order": 0,
+    "default_forum_layout": 1,
+    "default_tag_setting": "match_some",
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83e\udd14"
+    },
+    "theme_color": null,
+    "template": ""
+  },
+  {
+    "id": "1230309431112237178",
+    "type": 0,
+    "last_message_id": "1258553924613439601",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "general-faq",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 43,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "634265738033152"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "65536",
+        "deny": "563327910546496"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1278144735264903178",
+    "type": 0,
+    "last_message_id": "1398187310293450804",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "model-changes",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": "For reporting suspect model changes/regressions. Please post details! That means share your prompt, the results before the change, AND the results after the change. Have others test your prompt, and their own similar prompt to see if they get the same result.\n\"Model changed, Claude bad now,\" is not actionable feedback!",
+    "position": 44,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "377958222912"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1114306142814867496",
+    "type": 0,
+    "last_message_id": "1284851010841477204",
+    "flags": 0,
+    "last_pin_timestamp": "2023-06-05T22:16:43+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "project-history",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": "We\u2019d love to see and celebrate how you're building with the Claude API. Show us your projects by posting below!",
+    "position": 45,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "51200"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "65536",
+        "deny": "52224"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udce2"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1126936352353689641",
+    "type": 0,
+    "last_message_id": "1225159896572366858",
+    "flags": 0,
+    "last_pin_timestamp": "2023-07-07T18:11:29+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "prompt-directory",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": "Use this channel to share your favorite prompts, brainstorm new ideas, and seek advice from other builders and AI enthusiasts.",
+    "position": 46,
+    "permission_overwrites": [
+      {
+        "id": "1215414670119411742",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1049600"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udcd6"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1213976880311443457",
+    "type": 15,
+    "last_message_id": "1397715464603566120",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "prompt-discussion",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": "Use this channel to share your favorite prompts, brainstorm new ideas, and seek advice from other builders and AI enthusiasts.",
+    "position": 47,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1375286693145608334",
+        "type": 0,
+        "allow": "49152",
+        "deny": "2098686408930049"
+      },
+      {
+        "id": "1375287669420069026",
+        "type": 0,
+        "allow": "49152",
+        "deny": "2098686408930049"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "65536",
+        "deny": "1024"
+      }
+    ],
+    "nsfw": false,
+    "available_tags": [
+      {
+        "id": "1215439035707949066",
+        "name": "Need help!",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": null
+      },
+      {
+        "id": "1215439068113150043",
+        "name": "Cool idea",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": null
+      },
+      {
+        "id": "1215439099431878737",
+        "name": "Showing off",
+        "moderated": false,
+        "emoji_id": null,
+        "emoji_name": null
+      }
+    ],
+    "default_reaction_emoji": {
+      "emoji_id": "1115403084919746560",
+      "emoji_name": null
+    },
+    "default_sort_order": null,
+    "default_forum_layout": 1,
+    "default_tag_setting": "match_some",
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udcdd"
+    },
+    "theme_color": null,
+    "template": ""
+  },
+  {
+    "id": "1331849336140726413",
+    "type": 0,
+    "last_message_id": "1394780726926512190",
+    "flags": 0,
+    "last_pin_timestamp": "2025-07-15T20:40:39.112000+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "\u2753question-of-the-week",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 30,
+    "topic": "The \"Question of the Week\" is a great way to get to know your fellow community members, and stimulate engaging, meaningful conversation.  When responding, please keep your response brief, but as long as you need to answer completely. Please keep your responses to ONE message, but feel free to comment on others' responses.  And as always, stay positive, constructive, and relatively safe for work.",
+    "default_auto_archive_duration": 10080,
+    "position": 48,
+    "permission_overwrites": [
+      {
+        "id": "1224169119415537785",
+        "type": 0,
+        "allow": "0",
+        "deny": "103079217152"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "2048",
+        "deny": "2147483648"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "65536",
+        "deny": "103079218176"
+      },
+      {
+        "id": "1224168347323727995",
+        "type": 0,
+        "allow": "0",
+        "deny": "103079217152"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1331850025411678239",
+    "type": 0,
+    "last_message_id": "1392156362787782656",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "\u2753qotw-repo",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": "For Staff Members to submit their ideas for the Question of the Week.\nWe will pull from this channel every Monday to post in the #:question:question-of-the-week channel.  Please use searching to see if the question is already here or already used.  We will delete and re-add the questions we use, adding a strikethrough to the text to keep track.",
+    "position": 49,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "66560"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1131614788380786829",
+    "type": 0,
+    "last_message_id": "1393002908496298215",
+    "flags": 0,
+    "last_pin_timestamp": "2023-07-21T02:05:07+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "responsible-deployment",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": "Safety is core to Anthropic\u2019s mission and we\u2019re committed to building an ecosystem where users can safely interact with and build on top of our products in a helpful, honest and harmless way. You\u2019ve received API access because you share our commitment to working towards responsible AI deployment. Our #responsible-deployment channel is a space for builders to share tips on staying safe, and to ensure that their applications adhere to our acceptable use policy (AUP).",
+    "position": 50,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "377958222912"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\ude80"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1310435291785330778",
+    "type": 0,
+    "last_message_id": "1331163339769778187",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "support",
+    "parent_id": "1114307166933876748",
+    "rate_limit_per_user": 0,
+    "topic": "Our Discord community is a great place to ask questions and collaborate with other Anthropic AI users and developers from around the world.  However, Discord is NOT a way to interface with Anthropic's Support Team.  Please familiarize yourself with the information below to find out where and how to get the help you need with Claude, the Anthropic API, or with your account.",
+    "default_auto_archive_duration": 10080,
+    "position": 51,
+    "permission_overwrites": [
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "66560",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "377958222912"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1082138828166398002",
+    "type": 0,
+    "last_message_id": "1082173138873356389",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "anthropic-claude-demo",
+    "parent_id": "1082029520846078102",
+    "rate_limit_per_user": 0,
+    "topic": "Claude will auto_respond here.",
+    "position": 52,
+    "permission_overwrites": [
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83e\udd16"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1082174072168906833",
+    "type": 0,
+    "last_message_id": "1082176223205150781",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "anthropic-claude",
+    "parent_id": "1082029520846078102",
+    "rate_limit_per_user": 0,
+    "topic": "auto_respond",
+    "position": 53,
+    "permission_overwrites": [
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83c\udf0c"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1082176811322069132",
+    "type": 0,
+    "last_message_id": "1082180143193260042",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "anthropic-claude",
+    "parent_id": "1082029520846078102",
+    "rate_limit_per_user": 0,
+    "topic": "auto_respond",
+    "position": 54,
+    "permission_overwrites": [
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83c\udf0c"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1082180767259562074",
+    "type": 0,
+    "last_message_id": "1082182056055947374",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "anthropic",
+    "parent_id": "1082029520846078102",
+    "rate_limit_per_user": 0,
+    "topic": "auto_respond",
+    "position": 55,
+    "permission_overwrites": [
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83c\udf31"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1072196208044552214",
+    "type": 0,
+    "last_message_id": "1113631692872237139",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "ask-claude",
+    "parent_id": "1082029520846078102",
+    "rate_limit_per_user": 0,
+    "topic": "Say hi to your AI assistant Claude, and ask away with any questions! This is a fun channel to test, learn and adapt how Claude can be helpful to you, which is also known as prompt engineering.",
+    "position": 56,
+    "permission_overwrites": [
+      {
+        "id": "1215414670119411742",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1049600"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83e\udd14"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1075667972217131029",
+    "type": 0,
+    "last_message_id": "1076764651884388382",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "claude-red-teaming",
+    "parent_id": "1082029520846078102",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 57,
+    "permission_overwrites": [
+      {
+        "id": "1215414670119411742",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1049600"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83d\udd34"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1082546095982399511",
+    "type": 0,
+    "last_message_id": "1082546840660099102",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "discord-demo-day",
+    "parent_id": "1082029520846078102",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 58,
+    "permission_overwrites": [
+      {
+        "id": "1215414670119411742",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1049600"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83c\udf89"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1082472690117525605",
+    "type": 0,
+    "last_message_id": "1082542540160499772",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "matt-testing",
+    "parent_id": "1082029520846078102",
+    "rate_limit_per_user": 0,
+    "topic": "auto_respond",
+    "position": 59,
+    "permission_overwrites": [
+      {
+        "id": "1215414670119411742",
+        "type": 0,
+        "allow": "0",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1049600"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      }
+    ],
+    "nsfw": false,
+    "icon_emoji": {
+      "id": null,
+      "name": "\ud83e\uddea"
+    },
+    "theme_color": null
+  },
+  {
+    "id": "1400952855443017819",
+    "type": 0,
+    "last_message_id": "1400960584920596603",
+    "flags": 0,
+    "last_pin_timestamp": "2025-08-01T21:26:30.020000+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "442-kaliyl-webhead",
+    "parent_id": "1258541715279712428",
+    "rate_limit_per_user": 0,
+    "topic": "Ticket #442 - Type: \ud83d\udce8 **Report** - Closed by: <@303049936197517324> - Claimed by: <@303049936197517324> - Created by: <@134295609287901184>",
+    "position": 60,
+    "permission_overwrites": [
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "68608"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1224188536035606601",
+        "type": 0,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "1223937267912146945",
+        "type": 1,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "134295609287901184",
+        "type": 1,
+        "allow": "66560",
+        "deny": "2048"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1402705494652747836",
+    "type": 0,
+    "last_message_id": "1402736100778315797",
+    "flags": 0,
+    "guild_id": "1072196207201501266",
+    "name": "anthropic-novichron",
+    "parent_id": "1213963666936963115",
+    "rate_limit_per_user": 0,
+    "topic": null,
+    "position": 61,
+    "permission_overwrites": [
+      {
+        "id": "441111288194531328",
+        "type": 1,
+        "allow": "1024",
+        "deny": "0"
+      },
+      {
+        "id": "672706267470626826",
+        "type": 1,
+        "allow": "1024",
+        "deny": "0"
+      },
+      {
+        "id": "1384689128762773648",
+        "type": 1,
+        "allow": "1024",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "303049936197517324",
+        "type": 1,
+        "allow": "1024",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "1024"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1402816009668399194",
+    "type": 0,
+    "last_message_id": "1402816329743859775",
+    "flags": 0,
+    "last_pin_timestamp": "2025-08-07T00:50:00.450000+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "448-lugia19",
+    "parent_id": "1258541715279712428",
+    "rate_limit_per_user": 0,
+    "topic": "Ticket #448 - Type: \ud83d\udce8 **Report** - Closed by: <@219227787356012555> - Created by: <@219227787356012555>",
+    "position": 62,
+    "permission_overwrites": [
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "68608"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "219227787356012555",
+        "type": 1,
+        "allow": "66560",
+        "deny": "2048"
+      },
+      {
+        "id": "1223937267912146945",
+        "type": 1,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "1224188536035606601",
+        "type": 0,
+        "allow": "68608",
+        "deny": "0"
+      }
+    ],
+    "nsfw": false
+  },
+  {
+    "id": "1403190191857864849",
+    "type": 0,
+    "last_message_id": "1403210327117660210",
+    "flags": 0,
+    "last_pin_timestamp": "2025-08-08T01:36:52.878000+00:00",
+    "guild_id": "1072196207201501266",
+    "name": "451-lugia19",
+    "parent_id": "1258541715279712428",
+    "rate_limit_per_user": 0,
+    "topic": "Ticket #451 - Type: \ud83d\udce8 **Report** - Closed by: <@441111288194531328> - Created by: <@219227787356012555>",
+    "position": 63,
+    "permission_overwrites": [
+      {
+        "id": "219227787356012555",
+        "type": 1,
+        "allow": "66560",
+        "deny": "2048"
+      },
+      {
+        "id": "1072197058997538907",
+        "type": 0,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "1227336701404381277",
+        "type": 0,
+        "allow": "0",
+        "deny": "2048"
+      },
+      {
+        "id": "1224188536035606601",
+        "type": 0,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "1223937267912146945",
+        "type": 1,
+        "allow": "68608",
+        "deny": "0"
+      },
+      {
+        "id": "1072196207201501266",
+        "type": 0,
+        "allow": "0",
+        "deny": "68608"
+      }
+    ],
+    "nsfw": false
+  }
+]

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(just test:*)",
+      "Bash(python:*)",
+      "Bash(pytest:*)",
+      "Bash(mv:*)",
+      "Bash(git add:*)",
+      "Bash(cp:*)",
+      "Bash(time python -m pytest:*)",
+      "Bash(chmod:*)",
+      "Bash(ls:*)"
+    ],
+    "deny": []
+  }
+}
