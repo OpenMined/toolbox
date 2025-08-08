@@ -70,50 +70,7 @@ tb log <appname>
 
 # Triggers
 
-Toolbox can run scripts defined by you on a schedule. This is useful for automating tasks as part of your MCP pipeline.
-
-First, to be able to run triggers, you need to install the toolbox daemon. This will add the toolbox daemon to your launchd, so it will start automatically when you login.
-
-```
-tb daemon install
-```
-
-To uninstall and remove from launchd:
-
-```
-tb daemon uninstall
-```
-
-To see the status of the daemon:
-
-```
-tb daemon status
-```
-
-As example, we have provided a script to search github for repositories with the keyword "MCP".
-
-```
-# Run `search_github_trigger.py` daily at 12:00
-tb trigger add --name "github-trending" --script "examples/search_github_trigger.py" --cron "0 12 * * *"
-```
-
-To uninstall a trigger:
-
-```
-tb trigger uninstall "github-trending"
-```
-
-To show all triggers:
-
-```
-tb trigger list
-```
-
-To show the status and last 5 executions of a trigger:
-
-```
-tb trigger show github-trending -n 5
-```
+Toolbox can run scripts on a schedule to automate tasks in your MCP pipeline. See the [triggers documentation](docs/triggers.md) for setup and usage instructions.
 
 
 

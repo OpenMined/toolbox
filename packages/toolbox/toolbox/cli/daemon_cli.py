@@ -12,7 +12,7 @@ app = typer.Typer(no_args_is_help=True)
 
 @app.command()
 def run_foreground(log_file: Path = typer.Option(None, "--log-file")):
-    """Run the trigger daemon in foreground"""
+    """Run the toolbox daemon in foreground"""
     trigger_db = get_db()
     scheduler = Scheduler(trigger_db)
     if log_file is None:
@@ -22,7 +22,7 @@ def run_foreground(log_file: Path = typer.Option(None, "--log-file")):
 
 @app.command()
 def start():
-    """Start the trigger daemon in background"""
+    """Start the toolbox daemon in background"""
     trigger_db = get_db()
     scheduler = Scheduler(trigger_db)
 
@@ -51,7 +51,7 @@ def start():
 
 @app.command()
 def stop():
-    """Stop the trigger daemon"""
+    """Stop the toolbox daemon"""
     trigger_db = get_db()
     scheduler = Scheduler(trigger_db)
 
@@ -93,13 +93,18 @@ def install():
 
 
 @app.command()
-def uninstall():
+def uninstall(
+    confirm: bool = typer.Option(
+        True, "--confirm", "-y", help="Confirm before uninstalling the daemon"
+    ),
+):
     """Remove toolbox daemon from launchd"""
-    typer.confirm(
-        "Are you sure you want to remove the daemon from launchd? This will stop all toolbox services.",
-        abort=True,
-        default=True,
-    )
+    if not confirm:
+        typer.confirm(
+            "Are you sure you want to remove the daemon from launchd? This will stop all toolbox services.",
+            abort=True,
+            default=True,
+        )
 
     try:
         plist_path = remove_from_launchd()

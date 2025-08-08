@@ -73,6 +73,10 @@ def list_store():
 def reset():
     reset_mcp(conn)
 
+    from toolbox.cli.daemon_cli import uninstall
+
+    uninstall(confirm=True)
+
 
 def log(name: str, follow: bool = typer.Option(False, "--follow", "-f")):
     log_mcp(conn, name, follow=follow)

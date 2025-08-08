@@ -11,6 +11,8 @@ from loguru import logger
 from toolbox.mcp_installer.uv_utils import find_uv_path
 from toolbox.triggers.trigger_store import Trigger, TriggerDB
 
+DEFAULT_TRIGGER_TIMEOUT = 300  # Default timeout for trigger execution in seconds
+
 
 def setup_logger(log_file: Path | None = None):
     """Setup loguru logger with optional file output"""
@@ -95,7 +97,7 @@ class Scheduler:
                 [uv_cmd, "run", trigger.script_path],
                 capture_output=True,
                 text=True,
-                timeout=300,  # 5 minute timeout
+                timeout=DEFAULT_TRIGGER_TIMEOUT,
             )
 
             # Store results
