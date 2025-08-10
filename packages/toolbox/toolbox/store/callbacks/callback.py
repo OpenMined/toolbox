@@ -405,7 +405,7 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
 
 
 class ObsidianFindVaultCallback(Callback):
-    vault_path: str | None = None
+    vault_path: Path | None = None
 
     def _is_valid_obsidian_vault(self, path: str) -> bool:
         """Check if path exists and has .obsidian subfolder"""
@@ -466,8 +466,8 @@ class ObsidianFindVaultCallback(Callback):
         if "OBSIDIAN_VAULT_PATH" in os.environ:
             vault_path = os.environ["OBSIDIAN_VAULT_PATH"]
             if self._is_valid_obsidian_vault(vault_path):
-                self.vault_path = vault_path
-                print(f"Using Obsidian vault from environment: {vault_path}")
+                self.vault_path = Path(vault_path).resolve()
+                print(f"Using Obsidian vault from environment: {self.vault_path}")
                 return
             else:
                 print(
@@ -479,15 +479,18 @@ class ObsidianFindVaultCallback(Callback):
         if vaults:
             vault_path = self._select_vault_from_config(vaults)
             if self._is_valid_obsidian_vault(vault_path):
-                self.vault_path = vault_path
+                self.vault_path = Path(vault_path).resolve()
                 return
             else:
                 print(f"Selected vault path is invalid: {vault_path}")
 
         # 3. Ask user for manual input
-        self.vault_path = self._ask_user_for_vault_path()
+        vault_path = self._ask_user_for_vault_path()
+        self.vault_path = Path(vault_path).resolve()
 
     def on_install_init(self, context: InstallationContext, json_body: dict):
         if "env" not in json_body:
             json_body["env"] = {}
-        json_body["env"]["OBSIDIAN_VAULT_PATH"] = self.vault_path
+        if self.vault_path is None:
+            raise ValueError("Vault path was not set during input phase")
+        json_body["env"]["OBSIDIAN_VAULT_PATH"] = str(self.vault_path)
