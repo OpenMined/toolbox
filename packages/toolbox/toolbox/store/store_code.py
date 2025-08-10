@@ -17,6 +17,7 @@ from toolbox.store.callbacks.callback import (
     InstallSyftboxQueryengineMCPCallback,
     MeetingNotesMCPDataStatsCallback,
     NotesMCPInstallationSummaryCallback,
+    ObsidianFindVaultCallback,
     RegisterNotesMCPAppHeartbeatMCPCallback,
     RegisterNotesMCPCallback,
     RegisterSlackMCPCallback,
@@ -163,4 +164,5 @@ STORE_ELEMENTS = {
     "syftbox-queryengine-mcp": SyftboxQueryengineMCP(),
     "slack-mcp": SlackMCP(),
     "whatsapp-desktop-mcp": WhatsappDesktopMCP(),
+    "obsidian-mcp": ObsidianMCP(),
 }
