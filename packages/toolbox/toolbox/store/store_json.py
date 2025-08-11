@@ -156,7 +156,7 @@ STORE = {
         "json_bodies_for_client_for_deployment_method": {
             "all": {
                 "proxy-to-local-http": {
-                    "args": ["mcp-remote", "http://127.0.0.1:8004/mcp/mcp"],
+                    "args": ["mcp-remote", "http://127.0.0.1:8007/mcp/mcp"],
                     "command": "npx",
                 }
             }
@@ -164,7 +164,7 @@ STORE = {
         "mcp_deployment_methods": {"all": "infered"},
         "deployment": {
             "type": "python",
-            "module": "obsidian_mcp.mcp_server",
+            "module": "obsidian_mcp.app",
         },
         "default_settings": {
             "default_read_access": ["Obsidian Vault Files"],

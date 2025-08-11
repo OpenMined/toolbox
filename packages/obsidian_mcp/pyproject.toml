@@ -8,7 +8,9 @@ authors = [
 ]
 requires-python = ">=3.12"
 dependencies = [
+    "fastapi[standard]>=0.116.1",
     "mcp[cli]>=1.10.0",
+    "uvicorn>=0.35.0",
 ]
 
 [build-system]

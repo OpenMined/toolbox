@@ -494,3 +494,9 @@ class ObsidianFindVaultCallback(Callback):
         if self.vault_path is None:
             raise ValueError("Vault path was not set during input phase")
         json_body["env"]["OBSIDIAN_VAULT_PATH"] = str(self.vault_path)
+
+    def on_run_mcp(self, context: "InstallationContext"):
+        from toolbox.store.store_code import STORE_ELEMENTS
+
+        store_element = STORE_ELEMENTS["obsidian-mcp"]
+        install_python_mcp(store_element, context)

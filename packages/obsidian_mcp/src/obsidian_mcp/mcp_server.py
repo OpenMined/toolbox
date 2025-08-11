@@ -59,6 +59,8 @@ async def app_lifespan(server: FastMCP) -> AsyncIterator[AppContext]:
 mcp = FastMCP(
     "obsidian-mcp",
     lifespan=app_lifespan,
+    stateless_http=True,
+    port=8007,
 )
 
 
@@ -410,4 +412,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    mcp.run(transport="streamable-http", mount_path="/mcp")
