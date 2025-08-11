@@ -60,29 +60,8 @@ class TestableDiscordClient(MockDiscordClient):
             # Distribute messages evenly across the time window
             time_fraction = i / max(len(messages) - 1, 1)
             message_time = start_time + (end_time - start_time) * time_fraction
-
-            # Create a copy of the message with adjusted timestamp
             adjusted_message = message.copy()
-            # Format timestamp in Discord format (replace +00:00 with Z)
-            timestamp_str = message_time.isoformat()
-            if timestamp_str.endswith("+00:00"):
-                timestamp_str = timestamp_str.replace("+00:00", "Z")
-            elif not timestamp_str.endswith("Z"):
-                timestamp_str += "Z"
-            adjusted_message["timestamp"] = timestamp_str
-
-            # Also adjust edited_timestamp if present
-            if adjusted_message.get("edited_timestamp"):
-                edited_time = message_time + timedelta(
-                    minutes=5
-                )  # Edit 5 minutes later
-                edited_timestamp_str = edited_time.isoformat()
-                if edited_timestamp_str.endswith("+00:00"):
-                    edited_timestamp_str = edited_timestamp_str.replace("+00:00", "Z")
-                elif not edited_timestamp_str.endswith("Z"):
-                    edited_timestamp_str += "Z"
-                adjusted_message["edited_timestamp"] = edited_timestamp_str
-
+            adjusted_message["timestamp"] = message_time.isoformat()
             adjusted_messages.append(adjusted_message)
 
         return adjusted_messages
@@ -109,19 +88,13 @@ class TestableDiscordClient(MockDiscordClient):
         # Filter messages based on time window (since and until)
         filtered_messages = []
         for message in messages:
-            message_time = datetime.fromisoformat(
-                message["timestamp"].replace("Z", "+00:00")
-            )
-            if since.tzinfo is None:
-                since = since.replace(tzinfo=message_time.tzinfo)
-            if until and until.tzinfo is None:
-                until = until.replace(tzinfo=message_time.tzinfo)
+            message_time = datetime.fromisoformat(message["timestamp"])
 
             if message_time >= since:
                 if until is None or message_time <= until:
                     filtered_messages.append(message)
 
-        return iter(filtered_messages)
+        return filtered_messages
 
 
 class TestBackgroundWorker:
@@ -186,7 +159,6 @@ class TestBackgroundWorker:
         assert abs((older_start - (now - timedelta(days=7))).total_seconds()) < 60
         assert abs((older_end - (now - timedelta(days=5))).total_seconds()) < 60
 
-    @patch.dict("os.environ", {"DISCORD_TOKEN": "test_token"})
     def test_background_worker_single_run_two_batches(self):
         """Test that background worker correctly handles two time-separated batches of messages."""
 
@@ -268,7 +240,6 @@ class TestBackgroundWorker:
                 f"✅ Time range expanded from {(now - latest_dt).days} to {latest_days_old} days old"
             )
 
-    @patch.dict("os.environ", {"DISCORD_TOKEN": "test_token"})
     def test_all_data_stored_correctly(self):
         """Test that messages, users, channels, and guilds are all stored correctly."""
         client = TestableDiscordClient("test_token")
