@@ -26,12 +26,7 @@ from discord_mcp.db import (
 )
 
 from tests.mock_client import MockDiscordClient
-
-
-def get_random_tmp_file():
-    """Generate a random temporary filename under /tmp."""
-    rand_str = "".join(random.choices(string.ascii_letters + string.digits, k=12))
-    return Path(f"/tmp/tmp_{rand_str}")
+from tests.utils import get_random_tmp_file
 
 
 class TestableDiscordClient(MockDiscordClient):
