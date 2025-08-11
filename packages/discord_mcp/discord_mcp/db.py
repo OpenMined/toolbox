@@ -1,9 +1,15 @@
 import json
 import sqlite3
+import uuid
 from contextlib import contextmanager
 from pathlib import Path
 from datetime import datetime, timedelta
+from collections import defaultdict
+from typing import Optional
 
+import numpy as np
+import sqlite_vec
+from sqlite_vec import serialize_float32
 from rapidfuzz import process
 from discord_mcp.models import DiscordMessage, DiscordUser, DiscordChannel, DiscordGuild
 
@@ -11,10 +17,21 @@ HOME = Path.home()
 DISCORD_MCP_DB_PATH = HOME / ".discord_mcp" / "db.sqlite"
 DISCORD_MCP_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
+EMBEDDINGS_TABLE = "message_embeddings_vec"
+EMBEDDINGS_LEN = 768
+
+
+def deserialize_float32(blob: bytes) -> list[float]:
+    return np.frombuffer(blob, dtype=np.float32).tolist()
+
 
 def _get_discord_connection(path: Path = DISCORD_MCP_DB_PATH):
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
+    
+    conn.enable_load_extension(True)
+    sqlite_vec.load(conn)
+    conn.enable_load_extension(False)
     create_tables(conn)
     return conn
 
@@ -100,6 +117,24 @@ def create_tables(conn):
         flags INTEGER,
         FOREIGN KEY (channel_id) REFERENCES channels(id),
         FOREIGN KEY (author_id) REFERENCES users(id)
+    )
+    """)
+
+    cursor.execute(
+        f"""
+            create virtual table if not exists {EMBEDDINGS_TABLE} using vec0(
+                sample_embedding float[{EMBEDDINGS_LEN}],
+                chunk_text text,
+                chunk_id text,
+            );
+        """
+    )
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS chunk_messages (
+        chunk_id TEXT NOT NULL,
+        message_id TEXT NOT NULL,
+        PRIMARY KEY (chunk_id, message_id),
+        FOREIGN KEY (message_id) REFERENCES messages(id)
     )
     """)
 
@@ -285,3 +320,118 @@ def get_user_id_for_name(conn, query: str, top_n: int = 5) -> list[dict]:
         })
     
     return result
+
+
+def get_messages_without_embeddings(conn, limit=10):
+    """Get messages that don't have embeddings yet"""
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+    SELECT messages.* 
+    FROM messages
+    LEFT JOIN chunk_messages ON messages.id = chunk_messages.message_id
+    WHERE chunk_messages.chunk_id IS NULL
+    LIMIT ?
+    """,
+        (limit,),
+    )
+    return [DiscordMessage.from_sql_row(msg) for msg in cursor.fetchall()]
+
+
+def get_latest_message_timestamp(conn):
+    """Get the timestamp of the latest message for rate limiting"""
+    cursor = conn.cursor()
+    cursor.execute("SELECT MAX(timestamp) AS max_timestamp FROM messages")
+    result = cursor.fetchone()
+    return result[0] if result[0] else None
+
+
+def upsert_chunks(conn, chunks):
+    """Insert or update chunks with embeddings"""
+    for chunk in chunks:
+        if chunk.get("embedding") is None:
+            raise ValueError("Chunk embedding is required")
+
+    cursor = conn.cursor()
+    cursor.executemany(
+        f"""
+    INSERT OR REPLACE INTO {EMBEDDINGS_TABLE} (chunk_id, sample_embedding, chunk_text)
+    VALUES (?, ?, ?)
+    """,
+        [
+            (
+                chunk["chunk_id"],
+                serialize_float32(chunk["embedding"]),
+                chunk["chunk_text"],
+            )
+            for chunk in chunks
+        ],
+    )
+    cursor.executemany(
+        """
+    INSERT OR REPLACE INTO chunk_messages (chunk_id, message_id)
+    VALUES (?, ?)
+    """,
+        [
+            (chunk["chunk_id"], message_id)
+            for chunk in chunks
+            for message_id in chunk["message_ids"]
+        ],
+    )
+    conn.commit()
+
+
+def get_matching_chunks(conn, query_embedding: list[float], limit=10):
+    """Get chunks matching the query embedding"""
+    cursor = conn.cursor()
+    cursor.execute(
+        f"""
+    SELECT chunks.chunk_id, chunks.chunk_text, chunks.sample_embedding as embedding, chunk_messages.message_id
+    FROM (
+    SELECT * FROM {EMBEDDINGS_TABLE} WHERE sample_embedding match ?
+    ORDER BY distance
+    LIMIT ?
+    ) as chunks
+    JOIN chunk_messages ON chunks.chunk_id = chunk_messages.chunk_id
+    """,
+        (serialize_float32(query_embedding), limit),
+    )
+    all_rows = cursor.fetchall()
+    rows_for_chunk = defaultdict(list)
+    for row in all_rows:
+        rows_for_chunk[row["chunk_id"]].append(row)
+
+    res = []
+    for chunk_id, rows in rows_for_chunk.items():
+        chunk = {
+            "chunk_id": chunk_id,
+            "message_ids": [row["message_id"] for row in rows],
+            "chunk_text": rows[0]["chunk_text"],
+            "embedding": deserialize_float32(rows[0]["embedding"]),
+        }
+        res.append(chunk)
+
+    return res
+
+
+def get_chunk_messages(conn, chunks):
+    """Get full message details for chunks"""
+    cursor = conn.cursor()
+    res = []
+    for chunk in chunks:
+        placeholders = ",".join(["?"] * len(chunk["message_ids"]))
+        cursor.execute(
+            f"""
+        SELECT * FROM messages WHERE id IN ({placeholders})
+        """,
+            chunk["message_ids"],
+        )
+        messages = [DiscordMessage.from_sql_row(msg) for msg in cursor.fetchall()]
+        chunk_with_messages = {
+            "chunk_id": chunk["chunk_id"],
+            "message_ids": chunk["message_ids"],
+            "chunk_text": chunk["chunk_text"],
+            "messages": messages,
+        }
+        res.append(chunk_with_messages)
+    return res
