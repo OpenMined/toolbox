@@ -8,7 +8,7 @@ using the Discord REST API with rate limiting and retry logic.
 from pathlib import Path
 
 from discord_mcp.client import DiscordClient
-from discord_mcp.api import download_messages, download_messages_with_users, download_channels, download_users_from_channel, download_guilds
+from discord_mcp.api import download_messages, download_messages_with_users, download_channels, download_guilds
 
 # Path constants for accessing test assets and repo root
 DISCORD_PACKAGE_PATH = Path(__file__).parent
@@ -20,7 +20,6 @@ __all__ = [
     "download_messages", 
     "download_messages_with_users", 
     "download_channels", 
-    "download_users_from_channel",
     "download_guilds",
     "DISCORD_PACKAGE_PATH",
     "DISCORD_REPO_PATH"

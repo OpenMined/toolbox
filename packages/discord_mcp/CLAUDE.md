@@ -31,7 +31,7 @@ just test_live          # Live Discord API tests - DO NOT RUN
 ### Core Components
 - **DiscordClient**: Real Discord API client using httpx
 - **MockDiscordClient**: Test client that inherits from DiscordClient but mocks HTTP calls
-- **API Functions**: download_messages, download_channels, download_users_from_channel, download_guilds
+- **API Functions**: download_messages, download_channels, download_guilds
 
 ### Test Structure
 - **Unit Tests** (`tests/test_unit_api.py`): Use MockDiscordClient with test fixtures

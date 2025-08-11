@@ -43,9 +43,6 @@ class MockDiscordClient(DiscordClient):
                 "messages_with_users_test_data.json"
             ),
             "channels": self._load_test_data("channels_test_data.json"),
-            "users_from_channel": self._load_test_data(
-                "users_from_channel_test_data.json"
-            ),
             "guilds": self._load_test_data("guilds_test_data.json"),
             # Permission-related test data
             "permissions_current_user": self._load_test_data(
@@ -275,11 +272,11 @@ class MockDiscordClient(DiscordClient):
                         return user
 
             # Look in users from channel data
-            users_data = self._test_data.get("users_from_channel", {})
-            if "users" in users_data:
-                for user in users_data["users"]:
-                    if user["id"] == user_id:
-                        return user
+            # users_data = self._test_data.get("users_from_channel", {})
+            # if "users" in users_data:
+            #     for user in users_data["users"]:
+            #         if user["id"] == user_id:
+            #             return user
 
             # User not found - raise NotFoundException like real API would
             raise NotFoundException(f"Request to 'users/{user_id}' failed: not found")
