@@ -92,18 +92,14 @@ class TestableDiscordClient(MockDiscordClient):
     ):
         """Override to return time-appropriate test data."""
         # Get base messages data
+        messages_data = self._load_test_data("messages_with_users_test_data.json")
         if self.current_data_set == "first_batch":
-            messages_data = self._load_test_data("messages_with_users_test_data.json")
+            # Use only a small subset of messages for testing (first 10 messages)
+            test_messages = messages_data["messages"][:10]
             days_old_start, days_old_end = 7, 4
         else:  # second_batch
-            messages_data = self._load_test_data("messages_with_users_test_data.json")
             days_old_start, days_old_end = 4, 1
-
-        if "messages" not in messages_data:
-            return iter([])
-
-        # Use only a small subset of messages for testing (first 10 messages)
-        test_messages = messages_data["messages"][:10]
+            test_messages = messages_data["messages"][10:20]
 
         # Adjust timestamps to be the right age
         messages = self._adjust_message_timestamps(
@@ -126,12 +122,6 @@ class TestableDiscordClient(MockDiscordClient):
                     filtered_messages.append(message)
 
         return iter(filtered_messages)
-
-    def get_guild_channels(self, guild_id: str):
-        """Override to return only one test channel to speed up testing."""
-        # Get the full channel list from parent
-        all_channels = list(super().get_guild_channels(guild_id))
-        return all_channels
 
 
 class TestBackgroundWorker:
