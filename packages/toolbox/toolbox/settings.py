@@ -1,9 +1,11 @@
 from pathlib import Path
+
 from pydantic import Field
 from pydantic_settings import BaseSettings
 
 TOOLBOX_DIR = Path(__file__).parent.parent
 TOOLBOX_WORKSPACE_DIR = TOOLBOX_DIR.parent.parent
+TOOLBOX_SETTINGS_DIR = Path.home() / ".toolbox"
 
 
 class Settings(BaseSettings):

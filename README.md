@@ -29,6 +29,12 @@ uv python install --reinstall
 ```
 to [fix python in uv](https://github.com/astral-sh/python-build-standalone/pull/414)
 
+You can also try, if `#include <string>` fails
+```
+CXXFLAGS="-isystem $(xcrun --show-sdk-path)/usr/include/c++/v1" uv pip install -e .
+```
+
+
 # Alpha example
 
 ```
@@ -66,6 +72,13 @@ tb log <appname>
 | meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
 | whatsapp-desktop-mcp | claude | proxy-to-om-enclave | WhatsApp Messages | WhatsApp Messages | `tb install whatsapp-desktop-mcp` |
 | slack-mcp | claude | proxy-to-om-enclave | Slack Messages | Slack Messages | `tb install slack-mcp` |
+
+
+# Triggers
+
+Toolbox can run scripts on a schedule to automate tasks in your MCP pipeline. See the [triggers documentation](docs/triggers.md) for setup and usage instructions.
+
+
 
 
 # Troubleshooting screenpipe

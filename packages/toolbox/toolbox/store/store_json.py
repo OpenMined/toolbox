@@ -1,7 +1,7 @@
 import platform
 
-from packages.toolbox.toolbox.store.store_code import STORE_ELEMENTS
 from toolbox.settings import settings
+from toolbox.store.store_code import STORE_ELEMENTS
 
 DEFAULT_LOCAL_MACHINE_NAME = platform.node()
 MANAGED_BY_INHERIT_CLIENT = "INHERIT_CLIENT"
