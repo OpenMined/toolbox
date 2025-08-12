@@ -10,7 +10,8 @@
       "Bash(cp:*)",
       "Bash(time python -m pytest:*)",
       "Bash(chmod:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(timeout 20 python -m discord_mcp.app)"
     ],
     "deny": []
   }
