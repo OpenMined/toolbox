@@ -39,6 +39,8 @@ async def embeddings(request: list[EmbeddingRequest]):
         return [
             {"chunk_id": str(x.chunk_id), "embedding": [0.0] * 768} for x in request
         ]
+    if len(request) == 0:
+        return []
 
     inputs = tokenizer(
         [x.prompt for x in request],
@@ -57,7 +59,7 @@ async def embeddings(request: list[EmbeddingRequest]):
         mask_expanded = attention_mask.unsqueeze(-1).expand(last_hidden.size()).float()
         sum_embeddings = torch.sum(last_hidden * mask_expanded, 1)
         sum_mask = torch.clamp(mask_expanded.sum(1), min=1e-9)
-        embeddings = (sum_embeddings / sum_mask).squeeze().tolist()
+        embeddings = (sum_embeddings / sum_mask).tolist()
 
     return [
         {"chunk_id": str(x.chunk_id), "embedding": embedding}

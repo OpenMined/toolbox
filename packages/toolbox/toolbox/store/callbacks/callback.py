@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import secrets
 import sqlite3
@@ -15,7 +16,6 @@ from pydantic import BaseModel
 if TYPE_CHECKING:
     from toolbox.installed_mcp import InstalledMCP
 import time
-
 
 from toolbox.external_dependencies.external_depenencies import (
     screenpipe_installed,
@@ -244,6 +244,12 @@ def get_n_embeddings_slack(conn):
     return cursor.fetchone()[0]
 
 
+def get_n_messages_slack(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM messages")
+    return cursor.fetchone()[0]
+
+
 def get_n_embeddings_discord(conn):
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM message_embeddings_vec")
@@ -260,7 +266,10 @@ class SlackMCPDataStatsCallback(Callback):
     def on_data_stats(self, mcp: "InstalledMCP") -> dict:
         try:
             conn = _get_slack_connection()
-            return {"# embeddings": get_n_embeddings_slack(conn)}
+            return {
+                "# embeddings": get_n_embeddings_slack(conn),
+                "# messages": get_n_messages_slack(conn),
+            }
         except Exception as e:
             return {"error": str(e)}
 
@@ -433,4 +442,103 @@ class InstallSyftboxQueryengineMCPCallback(Callback):
         from toolbox.store.store_code import STORE_ELEMENTS
 
         store_element = STORE_ELEMENTS["syftbox-queryengine-mcp"]
+        install_python_mcp(store_element, context)
+
+
+class ObsidianFindVaultCallback(Callback):
+    vault_path: Path | None = None
+
+    def _is_valid_obsidian_vault(self, path: str) -> bool:
+        """Check if path exists and has .obsidian subfolder"""
+        vault_path = Path(path)
+        return (
+            vault_path.exists()
+            and vault_path.is_dir()
+            and (vault_path / ".obsidian").exists()
+        )
+
+    def _get_obsidian_vaults_from_config(self) -> dict:
+        """Get vaults from obsidian.json config file"""
+        obsidian_path = Path.home() / "Library/Application Support/obsidian"
+        obsidian_json = obsidian_path / "obsidian.json"
+
+        if not obsidian_json.exists():
+            return {}
+
+        try:
+            config = json.loads(obsidian_json.read_text())
+            return config.get("vaults", {})
+        except (json.JSONDecodeError, KeyError):
+            return {}
+
+    def _select_vault_from_config(self, vaults: dict) -> str:
+        """Let user select from available vaults in config"""
+        vault_list = list(vaults.values())
+
+        if len(vault_list) == 1:
+            return vault_list[0]["path"]
+
+        print("Found multiple Obsidian vaults:")
+        for i, vault in enumerate(vault_list, 1):
+            print(f"{i}. {vault['path']}")
+
+        while True:
+            try:
+                choice = input(f"Choose a vault (1-{len(vault_list)}): ")
+                idx = int(choice) - 1
+                if 0 <= idx < len(vault_list):
+                    return vault_list[idx]["path"]
+                print(f"Please enter a number between 1 and {len(vault_list)}")
+            except ValueError:
+                print("Please enter a valid number")
+
+    def _ask_user_for_vault_path(self) -> str:
+        """Ask user to manually enter vault path"""
+        while True:
+            path = input("Enter the path to your Obsidian vault: ").strip()
+            if self._is_valid_obsidian_vault(path):
+                return path
+            print(
+                "Invalid vault path. Please ensure the path exists and contains a .obsidian folder."
+            )
+
+    def on_input(self, context: InstallationContext):
+        # 1. Check for existing env var
+        if "OBSIDIAN_VAULT_PATH" in os.environ:
+            vault_path = os.environ["OBSIDIAN_VAULT_PATH"]
+            if self._is_valid_obsidian_vault(vault_path):
+                self.vault_path = Path(vault_path).resolve()
+                print(f"Using Obsidian vault from environment: {self.vault_path}")
+                return
+            else:
+                print(
+                    f"Environment variable OBSIDIAN_VAULT_PATH points to invalid vault: {vault_path}"
+                )
+
+        # 2. Check obsidian.json config
+        vaults = self._get_obsidian_vaults_from_config()
+        if vaults:
+            vault_path = self._select_vault_from_config(vaults)
+            if self._is_valid_obsidian_vault(vault_path):
+                self.vault_path = Path(vault_path).resolve()
+                return
+            else:
+                print(f"Selected vault path is invalid: {vault_path}")
+
+        # 3. Ask user for manual input
+        vault_path = self._ask_user_for_vault_path()
+        self.vault_path = Path(vault_path).resolve()
+
+    def on_install_init(self, context: InstallationContext, json_body: dict):
+        if "env" not in json_body:
+            json_body["env"] = {}
+        if self.vault_path is None:
+            raise ValueError("Vault path was not set during input phase")
+        json_body["env"]["OBSIDIAN_VAULT_PATH"] = str(self.vault_path)
+        context.context_settings["OBSIDIAN_VAULT_PATH"] = str(self.vault_path)
+
+    def on_run_mcp(self, context: "InstallationContext"):
+        from toolbox.store.store_code import STORE_ELEMENTS
+
+        store_element = STORE_ELEMENTS["obsidian-mcp"]
         install_python_mcp(store_element, context)

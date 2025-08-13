@@ -1,5 +1,7 @@
+import os
 from typing import TYPE_CHECKING
 
+from toolbox.settings import settings
 from slack_sdk import WebClient
 from toolbox.mcp_installer.python_package_installer import install_python_mcp
 from toolbox.store.callbacks.auth.auth_slack import do_browser_auth
@@ -36,6 +38,7 @@ def gather_tokens_and_cookie(context: "InstallationContext"):
 
     workspaces = [x["name"].lower() for x in tokens.values()]
     if len(workspaces) == 0:
+        print("No Slack workspaces found in leveldb")
         raise ValueError("No Slack workspaces found")
     workspace = user_choose_workspace(workspaces)
     slack_token = [
@@ -56,7 +59,7 @@ Choose 1 or 2: """
         print(f"""
 Go to https://{workspace}.slack.com
 Run the following code in console:
-console.log(JSON.parse(localStorage.localConfig_v2).teams[document.location.pathname.match(/^\/client\/([A-Z0-9]+)/)[1]].token)
+console.log(JSON.parse(localStorage.localConfig_v2).teams[document.location.pathname.match(/^\\/client\\/([A-Z0-9]+)/)[1]].token)
 and paste the result here
 """)
         slack_token = input("Enter Slack token: ")
@@ -73,22 +76,35 @@ and copy the value of the d cookie.
 
 class SlackAuthCallback(Callback):
     def on_install_init(self, context: "InstallationContext", json_body: dict):
-        try:
-            slack_token, slack_d_cookie = gather_tokens_and_cookie(context)
+        if settings.skip_slack_auth:
+            print("Skipping Slack authentication, reading from env")
+            slack_token = os.getenv("SLACK_TOKEN")
+            slack_d_cookie = os.getenv("SLACK_D_COOKIE")
             context.context_settings["SLACK_TOKEN"] = slack_token
             context.context_settings["SLACK_D_COOKIE"] = slack_d_cookie
-            raise Exception("Authentication successful")
-        except Exception as e:
-            print(
-                "Failed to read slack cookie from keychain, trying other auth methods"
-            )
-            workspace = input("Enter Slack workspace name: ")
-            slack_token, slack_d_cookie = user_choose_manual_input_or_playwright_auth(
-                workspace
-            )
+        else:
+            try:
+                slack_token, slack_d_cookie = gather_tokens_and_cookie(context)
+                context.context_settings["SLACK_TOKEN"] = slack_token
+                context.context_settings["SLACK_D_COOKIE"] = slack_d_cookie
+            except Exception as e:
+                if settings.verbose > 0:
+                    import traceback
 
-            context.context_settings["SLACK_TOKEN"] = slack_token
-            context.context_settings["SLACK_D_COOKIE"] = slack_d_cookie
+                    print(
+                        f"Failed to read slack cookie from keychain, trying other auth methods {traceback.format_exc()}"
+                    )
+                else:
+                    print(
+                        "Failed to read slack cookie from keychain, trying other auth methods"
+                    )
+                workspace = input("Enter Slack workspace name: ")
+                slack_token, slack_d_cookie = (
+                    user_choose_manual_input_or_playwright_auth(workspace)
+                )
+
+                context.context_settings["SLACK_TOKEN"] = slack_token
+                context.context_settings["SLACK_D_COOKIE"] = slack_d_cookie
 
         headers = {
             "Cookie": f"d={slack_d_cookie}",
