@@ -10,6 +10,7 @@ dependencies = [
     "syftbox_queryengine",
     "slack_mcp",
     "whatsapp_desktop_mcp",
+    "obsidian_mcp",
 ]
 
 [build-system]
@@ -22,6 +23,7 @@ notes_mcp = { workspace = true }
 slack_mcp = { workspace = true }
 whatsapp_desktop_mcp = { workspace = true }
 syftbox_queryengine = { workspace = true }
+obsidian_mcp = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*"]

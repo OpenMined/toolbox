@@ -3,11 +3,11 @@ import platform
 import secrets
 import shutil
 import sqlite3
-from pathlib import Path
 import textwrap
+from pathlib import Path
 
-from pydantic import BaseModel
 import requests
+from pydantic import BaseModel
 from tabulate import tabulate
 
 from toolbox.db import db_get_mcps, db_get_mcps_by_name, db_upsert_mcp
@@ -25,10 +25,10 @@ from toolbox.mcp_clients.mcp_clients import (
     check_mcp_client_installation,
     current_claude_desktop_config,
 )
+from toolbox.settings import settings
 from toolbox.store.installation_context import InstallationContext
 from toolbox.store.store_code import STORE_ELEMENTS
 from toolbox.store.store_json import STORE, check_name
-from toolbox.settings import settings
 from toolbox.toolbox_requirements import has_npx, has_uv
 
 
@@ -158,6 +158,7 @@ def install_mcp(
         if client == "claude":
             if mcp.has_client_json:
                 add_mcp_to_claude_desktop_config(mcp)
+
             context.on_run_mcp()
             db_upsert_mcp(conn, mcp)
         else:
