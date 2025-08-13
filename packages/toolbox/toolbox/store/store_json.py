@@ -1,6 +1,5 @@
 import platform
 
-from toolbox.settings import settings
 from toolbox.store.store_code import STORE_ELEMENTS
 
 DEFAULT_LOCAL_MACHINE_NAME = platform.node()
@@ -180,6 +179,31 @@ STORE = {
             "default_deployment_method": "proxy-to-local-http",
         },
     },
+    "pdf-mcp": {
+        "url": "https://github.com/OpenMined/toolbox/tree/main/packages/pdf_mcp",
+        "json_bodies_for_client_for_deployment_method": {
+            "all": {
+                "proxy-to-local-http": {
+                    "args": ["mcp-remote", "http://127.0.0.1:8006/mcp/mcp"],
+                    "command": "npx",
+                }
+            }
+        },
+        "mcp_deployment_methods": {"all": "infered"},
+        "deployment": {
+            "type": "python",
+            "module": "pdf_mcp.app",
+        },
+        "default_settings": {
+            "default_read_access": ["PDF Documents"],
+            "default_write_access": [],
+            "default_model": None,
+            "default_proxy": "mcp-remote",
+            "default_host": "local",
+            "default_managed_by": "toolbox (local)",
+            "default_deployment_method": "proxy-to-local-http",
+        },
+    },
     "obsidian-mcp": {
         "url": "https://github.com/OpenMined/toolbox/tree/main/packages/obsidian_mcp",
         "json_bodies_for_client_for_deployment_method": {
@@ -193,11 +217,11 @@ STORE = {
         "mcp_deployment_methods": {"all": "infered"},
         "deployment": {
             "type": "python",
-            "module": "obsidian_mcp.app",
+            "module": "pdf_mcp.app",
         },
         "default_settings": {
-            "default_read_access": ["Obsidian Vault Files"],
-            "default_write_access": ["Obsidian Vault Files"],
+            "default_read_access": ["PDF Documents"],
+            "default_write_access": [],
             "default_model": None,
             "default_proxy": "mcp-remote",
             "default_host": "local",
