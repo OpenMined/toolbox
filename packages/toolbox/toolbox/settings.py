@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     request_syftbox_login: bool = Field(default=False)
     skip_slack_auth: bool = Field(default=False)
     do_whatsapp_desktop_check: bool = Field(default=True)
+    use_discord_env_var: bool = Field(default=True)
 
 
 settings = Settings()

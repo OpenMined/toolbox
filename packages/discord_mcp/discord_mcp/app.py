@@ -5,16 +5,21 @@ from threading import Thread
 import uvicorn
 from fastapi import FastAPI
 
+from discord_mcp.background_worker import (
+    run_discord_mesage_download_and_write_background_worker_loop,
+)
+from discord_mcp.embedding_background_worker import (
+    start_embedding_background_worker_embedding,
+)
 from discord_mcp.mcp_server import mcp
-from discord_mcp.embedding_background_worker import start_embedding_background_worker
 
 
-def background_worker_loop():
-    """Background worker that does nothing (placeholder)."""
-    import time
-    while True:
-        print("Background worker running...")
-        time.sleep(60)  # Sleep for 1 minute
+def start_background_worker_download_and_write():
+    """Background worker that downloads and writes messages to the database."""
+    Thread(
+        target=run_discord_mesage_download_and_write_background_worker_loop,
+        daemon=True,
+    ).start()
 
 
 @asynccontextmanager
@@ -22,13 +27,12 @@ async def lifespan(app: FastAPI):
     async with contextlib.AsyncExitStack() as stack:
         # Start embedding background worker
         print("Starting embedding background worker...")
-        embedding_thread = start_embedding_background_worker()
+        embedding_thread = start_embedding_background_worker_embedding()
         print(f"Started embedding background worker: {embedding_thread}")
-        
+
         # Start background thread that does nothing (original placeholder)
-        thread = Thread(target=background_worker_loop, daemon=True)
-        thread.start()
-        
+        start_background_worker_download_and_write()
+
         await stack.enter_async_context(mcp.session_manager.run())
         yield
 

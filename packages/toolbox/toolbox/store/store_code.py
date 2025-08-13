@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import TYPE_CHECKING
 
 import requests
+from toolbox.store.callbacks.auth.auth_discord_callback import DiscordAuthCallback
 from toolbox.store.callbacks.auth.auth_slack_callback import SlackAuthCallback
 from toolbox.store.callbacks.whatsapp_callback import InstallWhatsappDesktopMCPCallback
 
@@ -13,6 +14,7 @@ from toolbox.store.callbacks.callback import (
     Callback,
     DeleteNotesMCPCallback,
     DeleteSyftboxQueryengineMCPCallback,
+    DiscordMCPDataStatsCallback,
     InstallSyftboxQueryengineMCPCallback,
     NotesMCPInstallationSummaryCallback,
     MeetingNotesMCPDataStatsCallback,
@@ -111,6 +113,23 @@ class SlackMCP(StoreElement):
         return True
 
 
+class DiscordMCP(StoreElement):
+    name: str = "discord-mcp"
+    local_package_path: Path = Path(
+        TOOLBOX_WORKSPACE_DIR / "packages/discord_mcp"
+    ).expanduser()
+    package_url: str = "https://github.com/OpenMined/toolbox"
+    subdirectory: str = "packages/discord_mcp"
+    branch: str = "main"
+    callbacks: list[Callback] = [
+        DiscordAuthCallback(),
+        DiscordMCPDataStatsCallback(),
+    ]
+
+    def healthcheck(self, mcp: "InstalledMCP") -> bool:
+        return True
+
+
 class WhatsappDesktopMCP(StoreElement):
     name: str = "whatsapp-desktop-mcp"
     local_package_path: Path = Path(
@@ -146,5 +165,6 @@ STORE_ELEMENTS = {
     "meeting-notes-mcp": NotesMCP(),
     "syftbox-queryengine-mcp": SyftboxQueryengineMCP(),
     "slack-mcp": SlackMCP(),
+    "discord-mcp": DiscordMCP(),
     "whatsapp-desktop-mcp": WhatsappDesktopMCP(),
 }

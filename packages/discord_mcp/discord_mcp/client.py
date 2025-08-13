@@ -132,7 +132,18 @@ class DiscordClient:
         url = f"{self.BASE_URL}/{endpoint.lstrip('/')}"
         headers = {
             "Authorization": self._get_auth_header(token_kind),
-            "User-Agent": "discord-downloader/1.0.0",
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0.0.0 Safari/537.36"
+            ),
+            "Accept": "*/*",
+            "Accept-Language": "en-US,en;q=0.9",
+            "Referer": "https://discord.com/channels/@me",
+            "Origin": "https://discord.com",
+            "Sec-Fetch-Dest": "empty",
+            "Sec-Fetch-Mode": "cors",
+            "Sec-Fetch-Site": "same-origin",
         }
 
         for attempt in range(self.MAX_RETRIES + 1):
@@ -289,14 +300,16 @@ class DiscordClient:
         timestamp_ms = int(since.timestamp() * 1000)
         discord_epoch = 1420070400000  # Discord epoch: January 1, 2015
         snowflake = str((timestamp_ms - discord_epoch) << 22)
-        
+
         # Convert until datetime to snowflake if provided
         until_snowflake = before
         if until and not before:
             until_ms = int(until.timestamp() * 1000)
             until_snowflake = str((until_ms - discord_epoch) << 22)
 
-        for message in self.get_messages(channel_id, after=snowflake, before=until_snowflake):
+        for message in self.get_messages(
+            channel_id, after=snowflake, before=until_snowflake
+        ):
             # Parse message timestamp
             message_time = datetime.fromisoformat(
                 message["timestamp"].replace("Z", "+00:00")
@@ -306,7 +319,7 @@ class DiscordClient:
                 since = since.replace(tzinfo=message_time.tzinfo)
             if until and until.tzinfo is None:
                 until = until.replace(tzinfo=message_time.tzinfo)
-            
+
             # Check if message is in the time range
             if message_time >= since:
                 if until is None or message_time <= until:
@@ -320,7 +333,7 @@ class DiscordClient:
         # Add Direct Messages as a special "guild"
         yield {
             "id": "@me",
-            "name": "Direct Messages", 
+            "name": "Direct Messages",
             "icon": None,
         }
 
@@ -354,7 +367,9 @@ class DiscordClient:
     def get_member_roles(self, guild_id: str, user_id: str) -> List[str]:
         """Get the roles for a guild member."""
         try:
-            member_data = self._make_request("GET", f"guilds/{guild_id}/members/{user_id}")
+            member_data = self._make_request(
+                "GET", f"guilds/{guild_id}/members/{user_id}"
+            )
             return member_data.get("roles", [])
         except Exception as e:
             logger.warning(f"Could not get member data for guild {guild_id}: {e}")
