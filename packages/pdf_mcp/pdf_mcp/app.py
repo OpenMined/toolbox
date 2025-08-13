@@ -16,14 +16,15 @@ async def lifespan(app: FastAPI):
     async with contextlib.AsyncExitStack() as stack:
         # Start MCP server first, then initialize RAG engine in background
         await stack.enter_async_context(mcp.session_manager.run())
-        
+
         # Initialize RAG engine synchronously to ensure proper event loop context
         import asyncio
-        logger = __import__('logging').getLogger(__name__)
+
+        logger = __import__("logging").getLogger(__name__)
         logger.info("Starting RAG engine initialization...")
         await initialize_rag_engine()
         logger.info("RAG engine initialization completed")
-        
+
         try:
             yield
         finally:

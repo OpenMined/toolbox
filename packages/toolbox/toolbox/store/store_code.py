@@ -9,6 +9,7 @@ from toolbox.store.callbacks.auth.auth_slack_callback import SlackAuthCallback
 from toolbox.store.callbacks.whatsapp_callback import InstallWhatsappDesktopMCPCallback
 from toolbox.store.callbacks.pdf_callback import (
     InstallPDFMCPCallback,
+    PDFMCPDataStatsCallback,
     PDFMCPExternalDependencyCallback,
     PDFMCPInstallationSummaryCallback,
 )
@@ -183,6 +184,7 @@ class PDFMCP(StoreElement):
         PDFMCPInstallationSummaryCallback(),
         PDFMCPExternalDependencyCallback(),
         InstallPDFMCPCallback(),
+        PDFMCPDataStatsCallback(),
     ]
 
     def healthcheck(self, mcp: "InstalledMCP") -> bool:
