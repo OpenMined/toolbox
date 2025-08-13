@@ -29,28 +29,19 @@ uv python install --reinstall
 ```
 to [fix python in uv](https://github.com/astral-sh/python-build-standalone/pull/414)
 
+You can also try, if `#include <string>` fails
+```
+CXXFLAGS="-isystem $(xcrun --show-sdk-path)/usr/include/c++/v1" uv pip install -e .
+```
+
+
 # Alpha example
-This is an alpha version, currently the only functioning app is the meeting-notes-mcp, with the slack-mcp coming soon. The only supported client is Claude Desktop, which is also the default client. Install this app and its dependencies using:
+
 ```
-tb install meeting-notes-mcp --client=claude
+tb install slack-mcp
 ```
-After making some recording using screenpipe you should be able to see your data using
-```
-tb show meeting-notes-mcp
-```
-This should now show you the nr of audio chunks screenpipe recorded and how many are transcribed. When you start talking they should start appearting within 30 seconds. If not, check [troubleshooting screenpipe](#troubleshooting-screenpipe)
 
-Once you have recordings, you can then query them with Claude desktop by asking something like
-
-**"Get me the meeting notes from my latest meeting"**
-
-## Bonus
-If you also install the github mcp server you could also ask
-
-**"Now make tickets for the todo's of that meeting"**
-
-
-# Installing apps
+# Toolbox CLI
 To show apps in store
 ```
 tb list-store
@@ -67,7 +58,7 @@ To show an installed app
 ```
 tb show <appname>
 ```
-To get logs for a local app
+To get logs for a local app (to follow add -f)
 ```
 tb log <appname>
 ```
@@ -75,13 +66,21 @@ tb log <appname>
 
 # Store
 
-
 | Name | Clients | Default Deployment | Read Access | Write Access | Install |
 |------|--------|--------------------|-------------|--------------|---------|
-| github-mcp | claude | stdio | Issues, PRs, Settings | Issues, PRs, Settings | `tb install github-mcp` |
-| meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
-| whatsapp-desktop-mcp | claude | proxy-to-om-enclave | WhatsApp Messages | WhatsApp Messages | `tb install whatsapp-desktop-mcp` |
 | slack-mcp | claude | proxy-to-om-enclave | Slack Messages | Slack Messages | `tb install slack-mcp` |
+| discord-mcp | claude | proxy-to-om-enclave | Discord Messages | Discord Messages | `tb install slack-mcp` |
+| obsidian-mcp | claude | proxy-to-om-enclave | Obsidian notes | Obsidian Notes | `tb install slack-mcp` |
+| github-mcp | claude | stdio | Issues, PRs, Settings | Issues, PRs, Settings | `tb install github-mcp` |
+| whatsapp-desktop-mcp | claude | proxy-to-om-enclave | WhatsApp Messages | WhatsApp Messages | `tb install whatsapp-desktop-mcp` |
+| meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
+
+
+# Triggers
+
+Toolbox can run scripts on a schedule to automate tasks in your MCP pipeline. See the [triggers documentation](docs/triggers.md) for setup and usage instructions.
+
+
 
 
 # Troubleshooting screenpipe

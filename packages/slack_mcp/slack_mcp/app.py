@@ -25,6 +25,7 @@ async def lifespan(app: FastAPI):
 # app.router.lifespan_context = lifespan
 
 if __name__ == "__main__":
+    print(settings)
     app = FastSyftBox(
         lifespan=lifespan,
         app_name="slack-mcp",

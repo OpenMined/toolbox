@@ -1,7 +1,6 @@
 import platform
 
 from toolbox.store.store_code import STORE_ELEMENTS
-from toolbox.settings import settings
 
 DEFAULT_LOCAL_MACHINE_NAME = platform.node()
 MANAGED_BY_INHERIT_CLIENT = "INHERIT_CLIENT"
@@ -126,6 +125,35 @@ STORE = {
             "default_deployment_method": "proxy-to-local-http",
         },
     },
+    "discord-mcp": {
+        "url": "https://github.com/OpenMined/toolbox/tree/main/packages/discord_mcp",
+        "json_bodies_for_client_for_deployment_method": {
+            "all": {
+                "proxy-to-local-http": {
+                    "args": ["mcp-remote", "http://127.0.0.1:8008/mcp/mcp"],
+                    "command": "npx",
+                }
+            }
+        },
+        "external_dependencies": ["syftbox"],
+        "context_settings": {
+            "discord_webserver_url": "http://20.224.153.50:8008/",
+        },
+        "mcp_deployment_methods": {"all": "infered"},
+        "deployment": {
+            "type": "python",
+            "module": "discord_mcp.app",
+        },
+        "default_settings": {
+            "default_read_access": ["Discord Messages, Channels, Users"],
+            "default_write_access": ["Discord Messages, Channels, Users"],
+            "default_model": None,
+            "default_proxy": "mcp-remote",
+            "default_host": "local",
+            "default_managed_by": "toolbox (local)",
+            "default_deployment_method": "proxy-to-local-http",
+        },
+    },
     "whatsapp-desktop-mcp": {
         "url": "https://github.com/OpenMined/toolbox/tree/main/packages/whatsapp_desktop_mcp",
         "json_bodies_for_client_for_deployment_method": {
@@ -157,6 +185,31 @@ STORE = {
             "all": {
                 "proxy-to-local-http": {
                     "args": ["mcp-remote", "http://127.0.0.1:8006/mcp/mcp"],
+                    "command": "npx",
+                }
+            }
+        },
+        "mcp_deployment_methods": {"all": "infered"},
+        "deployment": {
+            "type": "python",
+            "module": "pdf_mcp.app",
+        },
+        "default_settings": {
+            "default_read_access": ["PDF Documents"],
+            "default_write_access": [],
+            "default_model": None,
+            "default_proxy": "mcp-remote",
+            "default_host": "local",
+            "default_managed_by": "toolbox (local)",
+            "default_deployment_method": "proxy-to-local-http",
+        },
+    },
+    "obsidian-mcp": {
+        "url": "https://github.com/OpenMined/toolbox/tree/main/packages/obsidian_mcp",
+        "json_bodies_for_client_for_deployment_method": {
+            "all": {
+                "proxy-to-local-http": {
+                    "args": ["mcp-remote", "http://127.0.0.1:8007/mcp/mcp"],
                     "command": "npx",
                 }
             }
