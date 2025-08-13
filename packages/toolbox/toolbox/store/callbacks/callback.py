@@ -227,13 +227,36 @@ def _get_slack_connection():
     return conn
 
 
-def get_n_embeddings(conn):
+def _get_discord_connection():
+    discord_mcp_db_path = HOME / ".discord_mcp" / "db.sqlite"
+    conn = sqlite3.connect(discord_mcp_db_path)
+    conn.row_factory = sqlite3.Row
+
+    conn.enable_load_extension(True)
+    sqlite_vec.load(conn)
+    conn.enable_load_extension(False)
+    return conn
+
+
+def get_n_embeddings_slack(conn):
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM message_embeddings_vec")
     return cursor.fetchone()[0]
 
 
-def get_n_messages(conn):
+def get_n_messages_slack(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM messages")
+    return cursor.fetchone()[0]
+
+
+def get_n_embeddings_discord(conn):
+    cursor = conn.cursor()
+    cursor.execute("SELECT COUNT(*) FROM message_embeddings_vec")
+    return cursor.fetchone()[0]
+
+
+def get_n_messages_discord(conn):
     cursor = conn.cursor()
     cursor.execute("SELECT COUNT(*) FROM messages")
     return cursor.fetchone()[0]
@@ -244,11 +267,29 @@ class SlackMCPDataStatsCallback(Callback):
         try:
             conn = _get_slack_connection()
             return {
-                "# embeddings": get_n_embeddings(conn),
-                "# messages": get_n_messages(conn),
+                "# embeddings": get_n_embeddings_slack(conn),
+                "# messages": get_n_messages_slack(conn),
             }
         except Exception as e:
             return {"error": str(e)}
+
+
+class DiscordMCPDataStatsCallback(Callback):
+    def on_data_stats(self, mcp: "InstalledMCP") -> dict:
+        res = {}
+        try:
+            conn = _get_discord_connection()
+            res["# channels"] = get_n_embeddings_discord(conn)
+        except Exception as e:
+            res["error"] = str(e)
+
+        try:
+            conn = _get_discord_connection()
+            res["# messages"] = get_n_messages_discord(conn)
+        except Exception as e:
+            res["error"] = str(e)
+
+        return res
 
 
 class ScreenpipeExternalDependencyCallback(Callback):
