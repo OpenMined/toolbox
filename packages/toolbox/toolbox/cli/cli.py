@@ -1,5 +1,9 @@
+import rich
 import typer
+from rich.console import Console
+from rich.rule import Rule
 
+from toolbox.analytics import cli_analytics
 from toolbox.cli import daemon_cli, trigger_cli
 from toolbox.db import conn
 from toolbox.installer import (
@@ -13,12 +17,40 @@ from toolbox.installer import (
     start_mcp_and_requirements,
     stop_mcp,
 )
+from toolbox.launchd import is_daemon_installed
 from toolbox.settings import settings
+from toolbox.setup import run_setup
 from toolbox.store.store_json import STORE
 
 app = typer.Typer(no_args_is_help=True)
 
 
+def ensure_setup():
+    """Run first-time setup if needed"""
+    if settings.first_time_setup:
+        run_setup()
+        rich.print(Rule())
+
+
+@app.callback(invoke_without_command=True)
+def main(ctx: typer.Context):
+    """Toolbox - A privacy-first tool for installing MCP servers"""
+    ensure_setup()
+
+
+def setup():
+    run_setup()
+
+
+def show_settings():
+    # CLI to show settings
+    console = Console()
+    settings_dump = settings.model_dump()
+    for k, v in settings_dump.items():
+        console.print(f"{k}: {v}")
+
+
+@cli_analytics()
 def install(
     name: str,
     use_local_deployments: bool = typer.Option(
@@ -50,6 +82,7 @@ def install(
     install_mcp(conn, name, clients=clients)
 
 
+@cli_analytics()
 def list():
     list_installed(conn)
 
@@ -66,6 +99,7 @@ def stop(name: str):
     stop_mcp(name, conn)
 
 
+@cli_analytics()
 def list_store():
     list_apps_in_store()
 
@@ -86,6 +120,8 @@ def call(app_name: str, endpoint: str):
     call_mcp(conn, app_name, endpoint)
 
 
+app.command()(setup)
+app.command(name="settings")(show_settings)
 app.command()(list_store)
 app.command()(install)
 app.command()(list)
