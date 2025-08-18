@@ -6,19 +6,6 @@ from rich.panel import Panel
 
 from toolbox.settings import settings
 
-
-def setup_required(func):
-    """Decorator that runs setup if this is the first time using toolbox"""
-
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        if settings.first_time_setup:
-            run_setup()
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
 WELCOME_MESSAGE = """🧰 Welcome to Toolbox!
 
 A privacy-first tool to install MCP servers and background agents for your personal data.
@@ -29,7 +16,6 @@ A privacy-first tool to install MCP servers and background agents for your perso
 
 
 ANALYTICS_MESSAGE = """[yellow]📊 Help us improve Toolbox[/yellow]
-
 We collect anonymous analytics to understand:
 [dim]• Which MCP servers are most popular
 • How the CLI is used
