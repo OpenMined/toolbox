@@ -1,6 +1,4 @@
 import json
-import os
-import pathlib
 import re
 import shutil
 import sys
@@ -75,7 +73,7 @@ def get_slack_d_cookie_and_test_with_token(slack_token):
             return xoxd_cookie
         else:
             print("Got slack cookie from browser, but failed to authenticate")
-    except Exception as e:
+    except Exception:
         print("Could not read slack cookie from browser")
 
     raise ValueError("Failed to read slack cookie from keychain or browser")

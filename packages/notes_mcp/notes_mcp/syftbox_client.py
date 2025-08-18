@@ -1,9 +1,7 @@
-import sqlite3
-from typing import Dict, Optional
+from typing import Optional
 
 from fastsyftbox.simple_client import SimpleRPCClient
 
-from notes_mcp import db
 from notes_mcp.settings import settings
 
 

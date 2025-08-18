@@ -1,6 +1,3 @@
-import uuid
-
-from slack_mcp.models import Chunk
 from slack_mcp.settings import settings
 from slack_mcp.syftbox_client import create_authenticated_client
 

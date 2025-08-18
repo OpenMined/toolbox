@@ -6,7 +6,6 @@ from httpx import Client
 from syftbox_queryengine.db import (
     get_all_heartbeat_entries,
     get_query_engine_connection,
-    upsert_heartbeat_entry,
 )
 
 stop_event = Event()

@@ -1,13 +1,10 @@
 import json
-import platform
 import secrets
 import shutil
 import sqlite3
-import textwrap
 from pathlib import Path
 
 import requests
-from pydantic import BaseModel
 from tabulate import tabulate
 
 from toolbox.db import db_get_mcps, db_get_mcps_by_name, db_upsert_mcp
@@ -15,7 +12,6 @@ from toolbox.external_dependencies.external_depenencies import (
     get_existing_syftbox_email_from_config,
 )
 from toolbox.installed_mcp import (
-    HOME,
     INSTALLED_HEADERS,
     InstalledMCP,
     create_clickable_file_link,

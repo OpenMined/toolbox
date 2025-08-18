@@ -14,19 +14,17 @@ Requirements:
 """
 
 import asyncio
-from pathlib import Path
-from pprint import pprint
 import re
 import sys
 import time
-from typing import Optional, Tuple, List, Dict
-from urllib.parse import urlparse, parse_qs
-from urllib.parse import parse_qs
+from pathlib import Path
+from pprint import pprint
+from typing import Dict, List, Optional, Tuple
+from urllib.parse import parse_qs, urlparse
 
 import typer
-from playwright.async_api import async_playwright, Page, Request, Response, Cookie
+from playwright.async_api import Cookie, Page, Request, async_playwright
 from slack_sdk import WebClient
-
 
 MACOS_CHROME_USER_DATA_DIR = Path(
     "~/Library/Application Support/Google/Chrome"

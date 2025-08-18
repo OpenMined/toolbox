@@ -1,13 +1,9 @@
 import re
-import subprocess
-import sys
 from pathlib import Path
 
 import psutil
-import os
 
-from toolbox.mcp_installer.uv_utils import prepare_env_with_uv, set_uv_path_in_env
-from toolbox.utils.utils import DEFAULT_LOG_FILE, installation_dir_from_name
+from toolbox.utils.utils import installation_dir_from_name
 
 HOME = Path.home()
 

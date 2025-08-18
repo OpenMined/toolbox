@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastsyftbox import FastSyftBox
 from fastsyftbox.simple_client import DEV_DEFAULT_OWNER_EMAIL, default_dev_data_dir
+from loguru import logger
 from pydantic import BaseModel
 from syft_core import SyftClientConfig
 
@@ -23,16 +24,15 @@ from syftbox_queryengine.db import (
 from syftbox_queryengine.heartbeat import send_heartbeat
 from syftbox_queryengine.models import (
     AudioChunkDB,
+    AudioChunksResult,
     FilesToSyncResponse,
     FileToSync,
     MeetingModel,
     SubmitResult,
-    AudioChunksResult,
     TranscriptionStoreRequest,
 )
 from syftbox_queryengine.settings import settings
 from syftbox_queryengine.sync import get_files_to_sync
-from loguru import logger
 
 APP_NAME = "data-syncer"
 

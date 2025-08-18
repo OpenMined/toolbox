@@ -1,6 +1,5 @@
 import platform
 
-from toolbox.settings import settings
 from toolbox.store.store_code import STORE_ELEMENTS
 
 DEFAULT_LOCAL_MACHINE_NAME = platform.node()

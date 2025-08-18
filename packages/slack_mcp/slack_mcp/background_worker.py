@@ -7,9 +7,9 @@ from slack_sdk import WebClient
 from tqdm import tqdm
 
 from slack_mcp.db import (
-    get_slack_connection,
     get_earliest_timestamp_from_db,
     get_latest_timestamp_from_db,
+    get_slack_connection,
     upsert_message,
 )
 from slack_mcp.overview_utils import (

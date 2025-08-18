@@ -1,10 +1,9 @@
 import base64
-import os
 import random
 import threading
 import time
 import traceback
-from concurrent.futures import Future, ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 import httpx

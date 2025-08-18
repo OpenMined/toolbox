@@ -9,9 +9,9 @@ import urllib
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from toolbox import db
 from pydantic import BaseModel
 
+from toolbox import db
 from toolbox.mcp_clients.mcp_clients import (
     current_claude_desktop_config,
     write_claude_desktop_config,
@@ -297,7 +297,7 @@ class InstalledMCP(BaseModel):
                 logs = f"...(cut off)\n{last_lines_str}"
         else:
             logs = "No logs available"
-        return f"""        
+        return f"""
 {ANSI_BOLD}Logs:{ANSI_RESET} ({self.log_file})
 
 {logs}
