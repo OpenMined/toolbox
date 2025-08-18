@@ -3,7 +3,7 @@ import typer
 from rich.console import Console
 from rich.rule import Rule
 
-from toolbox.analytics import cli_analytics
+from toolbox.analytics import track_cli_command
 from toolbox.cli import daemon_cli, trigger_cli
 from toolbox.db import conn
 from toolbox.installer import (
@@ -50,7 +50,7 @@ def show_settings():
         console.print(f"{k}: {v}")
 
 
-@cli_analytics()
+@track_cli_command()
 def install(
     name: str,
     use_local_deployments: bool = typer.Option(
@@ -82,7 +82,7 @@ def install(
     install_mcp(conn, name, clients=clients)
 
 
-@cli_analytics()
+@track_cli_command()
 def list():
     list_installed(conn)
 
@@ -99,17 +99,24 @@ def stop(name: str):
     stop_mcp(name, conn)
 
 
-@cli_analytics()
+@track_cli_command()
 def list_store():
     list_apps_in_store()
 
 
+@track_cli_command()
 def reset():
+    from toolbox.analytics import get_anonymous_user_id, set_anonymous_user_id
+
+    analytics_id = get_anonymous_user_id()
+
     reset_mcp(conn)
 
     from toolbox.cli.daemon_cli import uninstall
 
-    uninstall(confirm=True)
+    uninstall()
+
+    set_anonymous_user_id(analytics_id)
 
 
 def log(name: str, follow: bool = typer.Option(False, "--follow", "-f")):

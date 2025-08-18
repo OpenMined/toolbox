@@ -1,102 +1,96 @@
 import os
-import platform
+import traceback
 import uuid
 from functools import wraps
 from typing import Any, Dict, Optional
 
-from posthog import Posthog, identify_context, scoped
+from posthog import Posthog, identify_context
 
+from toolbox import __version__
 from toolbox.settings import TOOLBOX_SETTINGS_DIR, settings
 
+# PostHog configuration
+# safe to hardcode, its a public write-only key
+POSTHOG_PUBLIC_KEY = os.getenv(
+    "POSTHOG_API_KEY", default="phc_TropYqZrmdCFGIawoLCB7auDIfBMwjTNJlJbd4EJuQg"
+)
+POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
+TOOLBOX_TEST_USER = os.getenv("TOOLBOX_TEST_USER", "false").lower() in (
+    "true",
+    "1",
+)
 
-def get_user_id() -> str:
-    """Generate stable anonymous ID using config directory"""
+posthog = Posthog(
+    project_api_key=POSTHOG_PUBLIC_KEY,
+    host=POSTHOG_HOST,
+)
+
+
+def _get_analytics_id_file():
+    """Get the analytics ID file path"""
     config_dir = TOOLBOX_SETTINGS_DIR
     config_dir.mkdir(exist_ok=True)
+    return config_dir / ".analytics_id"
 
-    id_file = config_dir / ".analytics_id"
+
+def get_anonymous_user_id() -> str:
+    """Generate stable anonymous ID using config directory"""
+    id_file = _get_analytics_id_file()
 
     if id_file.exists():
         return id_file.read_text().strip()
 
-    # Generate new anonymous ID
+    # Generate new ID
     new_id = str(uuid.uuid4())
-    id_file.write_text(new_id)
+    set_anonymous_user_id(new_id)
     return new_id
 
 
-# PostHog configuration
-PROJECT_API_KEY = os.getenv("POSTHOG_API_KEY")
-if not PROJECT_API_KEY:
-    # Fallback for development - in production this should be required
-    PROJECT_API_KEY = "phc_TropYqZrmdCFGIawoLCB7auDIfBMwjTNJlJbd4EJuQg"
+def set_anonymous_user_id(user_id: str) -> None:
+    """Set the anonymous user ID"""
+    id_file = _get_analytics_id_file()
+    id_file.write_text(user_id)
 
-HOST = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
 
-posthog = Posthog(
-    project_api_key=PROJECT_API_KEY,
-    host=HOST,
-    debug=os.getenv("TOOLBOX_DEBUG", "false").lower() == "true",
-)
-
-# Disable in test environments
-if os.getenv("TOOLBOX_ENVIRONMENT") == "test" or not settings.analytics_enabled:
+if not settings.analytics_enabled:
     posthog.disabled = True
 
 
-def safe_capture(
+def posthog_safe_capture(
     event_name: str,
     properties: Optional[Dict[str, Any]] = None,
     distinct_id: Optional[str] = None,
+    flush: bool = False,
 ) -> None:
+    properties = properties or {}
+    properties["toolbox_version"] = __version__
+    properties["toolbox_test_user"] = TOOLBOX_TEST_USER
+
     try:
-        # Use provided distinct_id, our persistent user ID, or let PostHog handle anonymous tracking
-        user_id = distinct_id or get_user_id()
+        user_id = distinct_id or get_anonymous_user_id()
         posthog.capture(
             event_name,
-            properties={
-                **(properties or {}),
-                "os": platform.system(),
-                "python_version": platform.python_version(),
-                "$process_person_profile": False,
-            },
+            properties=properties,
             distinct_id=user_id,
         )
+        if flush:
+            posthog.flush()
     except Exception:
-        if os.getenv("TOOLBOX_DEBUG", "false").lower() == "true":
-            import traceback
-
-            traceback.print_exc()
+        pass
 
 
-def track_cli_command(command_name: str, args: dict = None):
-    """Track when a CLI command is invoked"""
-    if command_name:
-        properties = {
-            "command": command_name,
-            "$process_person_profile": False,
-        }
-
-        # Add command arguments if provided
-        if args:
-            properties.update(args)
-
-        safe_capture("cli_command", properties)
-
-
-def cli_analytics(command_name: str = None):
+def track_cli_command(command_name: str = None):
     """Decorator to track command execution with structured arguments and error handling"""
 
-    def decorator(func):
+    def _track(func):
         @wraps(func)
-        @scoped(fresh=True, capture_exceptions=True)
         def wrapper(*args, **kwargs):
             # If analytics are disabled, this is a no-op
             if not settings.analytics_enabled:
                 return func(*args, **kwargs)
 
             # Get stable user ID and identify the user in this context
-            user_id = get_user_id()
+            user_id = get_anonymous_user_id()
             identify_context(user_id)
 
             cmd_name = command_name or func.__name__
@@ -112,30 +106,31 @@ def cli_analytics(command_name: str = None):
                 result = func(*args, **kwargs)
 
                 # Track successful completion
-                safe_capture(
-                    "cli command_completed",
+                posthog_safe_capture(
+                    "cli command",
                     properties={
                         "command": cmd_name,
                         **safe_kwargs,
                     },
+                    flush=True,
                 )
-                posthog.flush()
                 return result
 
             except Exception as e:
-                # Track error
-                safe_capture(
-                    "cli command_error",
+                # log error to posthog and re-raise
+                posthog_safe_capture(
+                    "cli error",
                     properties={
                         "command": cmd_name,
                         "error_type": type(e).__name__,
-                        "error_message": str(e)[-1000:],  # Truncate long errors
+                        "error_message": str(e),  # Truncate long errors
+                        "traceback": traceback.format_exc(),
                         **safe_kwargs,
                     },
+                    flush=True,
                 )
-                posthog.flush()
                 raise
 
         return wrapper
 
-    return decorator
+    return _track

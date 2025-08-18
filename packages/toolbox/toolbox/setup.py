@@ -4,7 +4,7 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from toolbox.settings import TOOLBOX_CONFIG_FILE, settings
+from toolbox.settings import settings
 
 
 def setup_required(func):
@@ -27,8 +27,6 @@ A privacy-first tool to install MCP servers and background agents for your perso
 • List available apps with [cyan]tb list-store[/cyan]  
 • View installed apps with [cyan]tb list[/cyan]"""
 
-DAEMON_MESSAGE = """[green]✅ Daemon installed to launchd and will run automatically[/green]
-   To uninstall: [yellow]tb daemon uninstall[/yellow]"""
 
 ANALYTICS_MESSAGE = """[yellow]📊 Help us improve Toolbox[/yellow]
 
@@ -45,7 +43,12 @@ def run_setup():
     console.print(
         Panel(WELCOME_MESSAGE, title="Toolbox", border_style="blue", padding=(1, 2))
     )
-    console.print(DAEMON_MESSAGE)
+
+    # Install daemon
+    from toolbox.cli.daemon_cli import install as daemon_install
+
+    daemon_install()
+
     console.print()
     console.print(ANALYTICS_MESSAGE)
 

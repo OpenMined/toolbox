@@ -2,8 +2,9 @@ import subprocess
 from pathlib import Path
 
 import typer
+from rich.console import Console
 
-from toolbox.launchd import add_to_launchd, remove_from_launchd
+from toolbox.launchd import add_to_launchd, is_daemon_installed, remove_from_launchd
 from toolbox.triggers.scheduler import Scheduler
 from toolbox.triggers.trigger_store import get_db
 
@@ -83,34 +84,36 @@ def status():
 @app.command()
 def install():
     """Install toolbox daemon to launchd for automatic startup"""
+    console = Console()
+
+    if is_daemon_installed():
+        console.print("[yellow]Daemon is already installed[/yellow]")
+        return
+
     try:
-        plist_path = add_to_launchd()
-        print(f"Daemon installed for startup at {plist_path}")
-        print("To remove toolbox daemon from launchd, run: tb daemon uninstall")
+        add_to_launchd()
+        console.print(
+            "[green]✅ Daemon installed to launchd and will run automatically[/green]"
+        )
+        console.print("   To uninstall: [yellow]tb daemon uninstall[/yellow]")
     except RuntimeError as e:
-        print(f"Error: {e}")
+        console.print(f"[red]Error: {e}[/red]")
         raise typer.Exit(1)
 
 
 @app.command()
-def uninstall(
-    confirm: bool = typer.Option(
-        True, "--confirm", "-y", help="Confirm before uninstalling the daemon"
-    ),
-):
+def uninstall():
     """Remove toolbox daemon from launchd"""
-    if not confirm:
-        typer.confirm(
-            "Are you sure you want to remove the daemon from launchd? This will stop all toolbox services.",
-            abort=True,
-            default=True,
-        )
+    console = Console()
+    if not is_daemon_installed():
+        console.print("[yellow]Daemon is not installed[/yellow]")
+        return
 
     try:
         plist_path = remove_from_launchd()
-        print(f"Daemon removed from launchd at {plist_path}")
+        console.print(f"[green]Daemon removed from launchd at {plist_path}[/green]")
     except RuntimeError as e:
-        print(f"Error: {e}")
+        console.print(f"[red]Error: {e}[/red]")
         raise typer.Exit(1)
 
 

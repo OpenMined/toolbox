@@ -301,7 +301,7 @@ def reset_mcp(conn: sqlite3.Connection):
     toolbox_dir = Path.home() / ".toolbox"
     if toolbox_dir.exists():
         shutil.rmtree(toolbox_dir, ignore_errors=True)
-        print(f"Removed toolbox directory: {toolbox_dir}")
+        print(f"Reset toolbox directory: {toolbox_dir}")
 
 
 def log_mcp(conn: sqlite3.Connection, name: str, follow: bool = False):
