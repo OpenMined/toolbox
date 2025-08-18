@@ -4,6 +4,7 @@ import typer
 from rich.console import Console
 from sqlalchemy.exc import IntegrityError
 
+from toolbox.analytics import track_cli_command
 from toolbox.triggers.trigger_store import get_db
 
 console = Console()
@@ -30,6 +31,7 @@ def print_execution(execution):
 
 
 @app.command()
+@track_cli_command("trigger add")
 def add(
     name: str | None = typer.Option(None, "--name", "-n", help="Name of the trigger"),
     cron_schedule: str = typer.Option(
@@ -69,6 +71,7 @@ def add(
 
 
 @app.command()
+@track_cli_command("trigger list")
 def list():
     """List all triggers"""
     from tabulate import tabulate
@@ -104,6 +107,7 @@ def list():
 
 
 @app.command()
+@track_cli_command("trigger show")
 def show(
     name: str = typer.Argument(..., help="Name of the trigger to show"),
     num_executions: int = typer.Option(
@@ -147,6 +151,7 @@ def show(
 
 
 @app.command()
+@track_cli_command("trigger enable")
 def enable(
     name: str = typer.Argument(..., help="Name of the trigger to enable"),
 ):
@@ -171,6 +176,7 @@ def enable(
 
 
 @app.command()
+@track_cli_command("trigger disable")
 def disable(
     name: str = typer.Argument(..., help="Name of the trigger to disable"),
 ):
@@ -195,6 +201,7 @@ def disable(
 
 
 @app.command()
+@track_cli_command("trigger remove")
 def remove(
     name: str = typer.Argument(..., help="Name of the trigger to remove"),
 ):
@@ -210,6 +217,7 @@ def remove(
 
 
 @app.command()
+@track_cli_command("trigger reset")
 def reset():
     """Reset the trigger database"""
     db = get_db()

@@ -38,10 +38,12 @@ def main(ctx: typer.Context):
     ensure_setup()
 
 
+@track_cli_command()
 def setup():
     run_setup()
 
 
+@track_cli_command()
 def show_settings():
     # CLI to show settings
     console = Console()
@@ -87,14 +89,17 @@ def list():
     list_installed(conn)
 
 
+@track_cli_command()
 def show(name: str, settings: bool = typer.Option(False, "--settings", "-s")):
     show_mcp(conn, name, settings=settings)
 
 
+@track_cli_command()
 def start(name: str):
     start_mcp_and_requirements(name, conn)
 
 
+@track_cli_command()
 def stop(name: str):
     stop_mcp(name, conn)
 
@@ -119,10 +124,12 @@ def reset():
     set_anonymous_user_id(analytics_id)
 
 
+@track_cli_command()
 def log(name: str, follow: bool = typer.Option(False, "--follow", "-f")):
     log_mcp(conn, name, follow=follow)
 
 
+@track_cli_command()
 def call(app_name: str, endpoint: str):
     call_mcp(conn, app_name, endpoint)
 
