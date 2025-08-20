@@ -1,14 +1,13 @@
 """Mock Discord client for testing that inherits from real client but mocks API calls."""
 
+import copy
 import json
 from datetime import datetime, timedelta
-from typing import Dict, Any, Optional
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
-import copy
+from typing import Any, Dict, Optional
+from urllib.parse import parse_qs
 
-from discord_mcp import DISCORD_PACKAGE_PATH
-from discord_mcp.client import DiscordClient, TokenKind, RateLimitPreference
+from discord_mcp.client import DiscordClient, RateLimitPreference, TokenKind
 from discord_mcp.exceptions import NotFoundException
 
 

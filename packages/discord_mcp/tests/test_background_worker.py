@@ -1,23 +1,17 @@
 """Unit tests for Discord background worker functionality."""
 
-import json
-import random
-import sqlite3
-import string
 import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any, Dict, List
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
-import pytest
 from discord_mcp.background_worker import (
     datetime_to_discord_timestamp,
     get_time_windows_to_fetch,
     parse_discord_timestamp,
     run_discord_mesage_download_and_write_background_worker_single,
 )
-from discord_mcp.client import DiscordClient
 from discord_mcp.db import (
     get_discord_connection,
     get_earliest_timestamp_from_db,
@@ -215,7 +209,7 @@ class TestBackgroundWorker:
 
             # Second run uses same message IDs so count stays the same (upsert replaces)
             # But we verify the time range has expanded to cover both batches
-            second_earliest_dt = parse_discord_timestamp(second_earliest)
+            second_earliest_dt = parse_discord_timestamp(second_earliest)  # noqa: F841
             second_latest_dt = parse_discord_timestamp(second_latest)
 
             # Time range should have expanded - latest should be newer (closer to now)
@@ -275,8 +269,8 @@ class TestBackgroundWorker:
 
             # Verify data integrity - every message should have a valid author
             cursor.execute("""
-                SELECT COUNT(*) FROM messages m 
-                LEFT JOIN users u ON m.author_id = u.id 
+                SELECT COUNT(*) FROM messages m
+                LEFT JOIN users u ON m.author_id = u.id
                 WHERE u.id IS NULL
             """)
             orphaned_messages = cursor.fetchone()[0]
@@ -284,8 +278,8 @@ class TestBackgroundWorker:
 
             # Verify every message has a valid channel
             cursor.execute("""
-                SELECT COUNT(*) FROM messages m 
-                LEFT JOIN channels c ON m.channel_id = c.id 
+                SELECT COUNT(*) FROM messages m
+                LEFT JOIN channels c ON m.channel_id = c.id
                 WHERE c.id IS NULL
             """)
             orphaned_messages = cursor.fetchone()[0]

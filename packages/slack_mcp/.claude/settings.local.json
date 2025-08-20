@@ -1,8 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(python:*)"
-    ],
+    "allow": ["Bash(python:*)"],
     "deny": []
   }
 }

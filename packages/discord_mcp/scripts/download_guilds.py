@@ -18,19 +18,19 @@ def main():
     if not token:
         print("Error: DISCORD_TOKEN environment variable not set", file=sys.stderr)
         sys.exit(1)
-    
+
     try:
         # Download guilds
         result = download_guilds(token=token)
-        
+
         # Save to file
         output_path = "/tmp/guilds_test_data.json"
         with open(output_path, "w", encoding="utf-8") as f:
             json.dump(result, f, indent=2, ensure_ascii=False)
-        
+
         print(f"Guilds saved to: {output_path}")
         print(f"Guild count: {result['metadata']['guild_count']}")
-        
+
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

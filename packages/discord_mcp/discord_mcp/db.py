@@ -1,17 +1,15 @@
-import json
 import sqlite3
-import uuid
-from contextlib import contextmanager
-from pathlib import Path
-from datetime import datetime, timedelta
 from collections import defaultdict
-from typing import Optional
+from contextlib import contextmanager
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 import sqlite_vec
-from sqlite_vec import serialize_float32
 from rapidfuzz import process
-from discord_mcp.models import DiscordMessage, DiscordUser, DiscordChannel, DiscordGuild
+from sqlite_vec import serialize_float32
+
+from discord_mcp.models import DiscordChannel, DiscordGuild, DiscordMessage, DiscordUser
 
 HOME = Path.home()
 DISCORD_MCP_DB_PATH = HOME / ".discord_mcp" / "db.sqlite"
@@ -28,7 +26,7 @@ def deserialize_float32(blob: bytes) -> list[float]:
 def _get_discord_connection(path: Path = DISCORD_MCP_DB_PATH):
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
-    
+
     conn.enable_load_extension(True)
     sqlite_vec.load(conn)
     conn.enable_load_extension(False)
@@ -209,17 +207,22 @@ def get_message_count(conn):
     return cursor.fetchone()[0]
 
 
-def get_messages_from_channel(conn, channel_id: str, n_days_old: int) -> list[DiscordMessage]:
+def get_messages_from_channel(
+    conn, channel_id: str, n_days_old: int
+) -> list[DiscordMessage]:
     """Get messages from a specific channel within the last n days"""
     cursor = conn.cursor()
     cutoff_date = (datetime.now() - timedelta(days=n_days_old)).isoformat()
-    
-    cursor.execute("""
-        SELECT * FROM messages 
+
+    cursor.execute(
+        """
+        SELECT * FROM messages
         WHERE channel_id = ? AND timestamp >= ?
         ORDER BY timestamp DESC
-    """, (channel_id, cutoff_date))
-    
+    """,
+        (channel_id, cutoff_date),
+    )
+
     return [DiscordMessage.from_sql_row(row) for row in cursor.fetchall()]
 
 
@@ -227,14 +230,17 @@ def get_messages_from_dm(conn, author_id: str, n_days_old: int) -> list[DiscordM
     """Get messages from DMs with a specific user within the last n days"""
     cursor = conn.cursor()
     cutoff_date = (datetime.now() - timedelta(days=n_days_old)).isoformat()
-    
-    cursor.execute("""
+
+    cursor.execute(
+        """
         SELECT m.* FROM messages m
         JOIN channels c ON m.channel_id = c.id
         WHERE c.type = 1 AND m.author_id = ? AND m.timestamp >= ?
         ORDER BY m.timestamp DESC
-    """, (author_id, cutoff_date))
-    
+    """,
+        (author_id, cutoff_date),
+    )
+
     return [DiscordMessage.from_sql_row(row) for row in cursor.fetchall()]
 
 
@@ -242,13 +248,16 @@ def get_messages_from_all_channels(conn, n_days_old: int) -> list[DiscordMessage
     """Get messages from all channels within the last n days"""
     cursor = conn.cursor()
     cutoff_date = (datetime.now() - timedelta(days=n_days_old)).isoformat()
-    
-    cursor.execute("""
-        SELECT * FROM messages 
+
+    cursor.execute(
+        """
+        SELECT * FROM messages
         WHERE timestamp >= ?
         ORDER BY timestamp DESC
-    """, (cutoff_date,))
-    
+    """,
+        (cutoff_date,),
+    )
+
     return [DiscordMessage.from_sql_row(row) for row in cursor.fetchall()]
 
 
@@ -269,56 +278,58 @@ def get_users(conn) -> list[DiscordUser]:
 def get_user_id_for_name(conn, query: str, top_n: int = 5) -> list[dict]:
     """Get user or channel ID for a name using fuzzy matching (similar to slack mcp)"""
     cursor = conn.cursor()
-    
+
     # Get all users and channels for matching
     cursor.execute("SELECT id, username, global_name FROM users")
     users = cursor.fetchall()
-    
+
     cursor.execute("SELECT id, name FROM channels WHERE name IS NOT NULL")
     channels = cursor.fetchall()
-    
+
     # Build name to ID mapping like in slack MCP
     name_to_id = {}
     all_names = []
-    
+
     # Add users (both username and global_name if available)
     for user in users:
         user_dict = dict(user)
-        username = user_dict.get('username', '')
-        global_name = user_dict.get('global_name', '')
-        
+        username = user_dict.get("username", "")
+        global_name = user_dict.get("global_name", "")
+
         if username:
-            name_to_id[username] = {'id': user_dict['id'], 'type': 'user'}
+            name_to_id[username] = {"id": user_dict["id"], "type": "user"}
             all_names.append(username)
-        
+
         if global_name and global_name != username:
-            name_to_id[global_name] = {'id': user_dict['id'], 'type': 'user'}
+            name_to_id[global_name] = {"id": user_dict["id"], "type": "user"}
             all_names.append(global_name)
-    
+
     # Add channels
     for channel in channels:
         channel_dict = dict(channel)
-        channel_name = channel_dict.get('name', '')
-        
+        channel_name = channel_dict.get("name", "")
+
         if channel_name:
-            name_to_id[channel_name] = {'id': channel_dict['id'], 'type': 'channel'}
+            name_to_id[channel_name] = {"id": channel_dict["id"], "type": "channel"}
             all_names.append(channel_name)
-    
+
     # Use rapidfuzz to find matches like in slack MCP
     matches = process.extract(query, all_names, limit=top_n)
-    
+
     # Format results
     result = []
     for name, score, _ in matches:
         match_info = name_to_id[name]
-        result.append({
-            'query': query,
-            'name': name,
-            'score': score,
-            'id': match_info['id'],
-            'type': match_info['type']
-        })
-    
+        result.append(
+            {
+                "query": query,
+                "name": name,
+                "score": score,
+                "id": match_info["id"],
+                "type": match_info["type"],
+            }
+        )
+
     return result
 
 
@@ -327,7 +338,7 @@ def get_messages_without_embeddings(conn, limit=10):
     cursor = conn.cursor()
     cursor.execute(
         """
-    SELECT messages.* 
+    SELECT messages.*
     FROM messages
     LEFT JOIN chunk_messages ON messages.id = chunk_messages.message_id
     WHERE chunk_messages.chunk_id IS NULL

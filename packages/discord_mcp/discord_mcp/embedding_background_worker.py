@@ -1,14 +1,15 @@
-import time
 import threading
+import time
 import uuid
 from datetime import datetime, timedelta
-from typing import List, Dict, Any
+from typing import Any, Dict, List
+
 import requests
 
 from discord_mcp.db import (
     get_discord_connection,
-    get_messages_without_embeddings,
     get_latest_message_timestamp,
+    get_messages_without_embeddings,
     upsert_chunks,
 )
 from discord_mcp.settings import settings
@@ -63,7 +64,7 @@ def check_rate_limit(conn) -> bool:
 
     # Parse the ISO timestamp and check if it's within the last hour
     try:
-        latest_dt = datetime.fromisoformat(latest_timestamp.replace("Z", "+00:00"))
+        latest_dt = datetime.fromisoformat(latest_timestamp.replace("Z", "+00:00"))  # noqa: F841
         one_hour_ago = datetime.now() - timedelta(hours=1)
 
         # Count messages from the last hour (simplified check)
@@ -71,7 +72,7 @@ def check_rate_limit(conn) -> bool:
         cursor = conn.cursor()
         cursor.execute(
             """
-            SELECT COUNT(*) FROM messages 
+            SELECT COUNT(*) FROM messages
             WHERE timestamp >= ?
         """,
             (one_hour_ago.isoformat(),),

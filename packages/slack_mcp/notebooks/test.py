@@ -1,7 +1,6 @@
 # part 1
-from pathlib import Path
 import sqlite3
-
+from pathlib import Path
 
 cookie_file = Path("/Users/koen/Library/Application Support/Slack/Cookies").expanduser()
 conn = sqlite3.connect(f"file:{cookie_file}")

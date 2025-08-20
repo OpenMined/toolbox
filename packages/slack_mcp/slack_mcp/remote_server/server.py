@@ -1,10 +1,8 @@
 import sqlite3
 import threading
 import traceback
-from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, Depends, FastAPI, HTTPException
-from slack_mcp.remote_server.background_worker import poll_for_chunks_to_index
+from fastapi import APIRouter, Depends, HTTPException
 from slack_mcp.remote_server.server_db import get_indexer_db, insert_user
 from slack_mcp.remote_server.server_models import UserRegistration, UserResponse
 
@@ -30,7 +28,7 @@ def register_user(
             return UserResponse(
                 id=user_id, email=request.email, message="User registered successfully"
             )
-    except Exception as e:
+    except Exception:
         print(traceback.format_exc())
         raise HTTPException(
             status_code=500, detail=f"Failed to register user: {traceback.format_exc()}"

@@ -17,7 +17,6 @@ from toolbox.installer import (
     start_mcp_and_requirements,
     stop_mcp,
 )
-from toolbox.launchd import is_daemon_installed
 from toolbox.settings import settings
 from toolbox.setup import run_setup
 from toolbox.store.store_json import STORE

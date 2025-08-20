@@ -1,12 +1,10 @@
 import logging
 import os
 import traceback
-from datetime import datetime, timedelta
 
 from mcp.server.fastmcp import FastMCP
 
 from discord_mcp import db
-from discord_mcp.models import DiscordMessage, DiscordChannel, DiscordUser
 from discord_mcp.embedding_background_worker import get_embedding
 
 DISCORD_MCP_PORT = os.getenv("DISCORD_MCP_PORT", 8008)
@@ -55,7 +53,7 @@ def get_users() -> dict:
 @mcp.tool()
 def get_history(channel_id: str, last_n_days: int = 30) -> dict:
     """Get Discord message history for a channel ID
-    
+
     Args:
         channel_id: The Discord channel ID
         last_n_days: Number of days back to get messages (default 30)
@@ -72,7 +70,7 @@ def get_history(channel_id: str, last_n_days: int = 30) -> dict:
 @mcp.tool()
 def get_user_id_for_name(query: str, top_n: int = 5) -> dict:
     """Get user or channel ID for a name using fuzzy matching
-    
+
     Args:
         query: The name to search for
         top_n: Number of top matches to return
@@ -89,7 +87,7 @@ def get_user_id_for_name(query: str, top_n: int = 5) -> dict:
 @mcp.tool()
 def search_messages(query: str, limit: int = 10) -> dict:
     """Search Discord messages using semantic similarity (RAG)
-    
+
     Args:
         query: The search query
         limit: Maximum number of results to return (default 10)
@@ -98,23 +96,23 @@ def search_messages(query: str, limit: int = 10) -> dict:
         with db.get_discord_connection() as conn:
             # Get embedding for the query
             query_embedding = get_embedding(query)
-            
+
             # Find matching chunks
             matching_chunks = db.get_matching_chunks(conn, query_embedding, limit)
-            
+
             # Get full message details for the chunks
             chunks_with_messages = db.get_chunk_messages(conn, matching_chunks)
-            
+
             return {
                 "query": query,
                 "results": [
                     {
                         "chunk_id": chunk["chunk_id"],
                         "chunk_text": chunk["chunk_text"],
-                        "messages": [msg.model_dump() for msg in chunk["messages"]]
+                        "messages": [msg.model_dump() for msg in chunk["messages"]],
                     }
                     for chunk in chunks_with_messages
-                ]
+                ],
             }
     except Exception:
         logger.error(traceback.format_exc())

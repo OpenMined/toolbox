@@ -1,5 +1,6 @@
-from fastmcp import Client
 import asyncio
+
+from fastmcp import Client
 
 # The Client automatically uses StreamableHttpTransport for HTTP URLs
 client = Client("http://127.0.0.1:8000/mcp/mcp")

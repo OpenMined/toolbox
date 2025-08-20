@@ -1,5 +1,4 @@
 import threading
-import traceback
 from concurrent.futures import Future, ThreadPoolExecutor
 from typing import Callable, Set
 

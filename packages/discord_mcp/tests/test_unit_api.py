@@ -1,14 +1,14 @@
 """Unit tests for Discord API functionality using mock client."""
 
-import pytest
 from unittest.mock import patch
 
 from discord_mcp.api import (
-    download_messages,
-    download_messages_with_users,
     download_channels,
     download_guilds,
+    download_messages,
+    download_messages_with_users,
 )
+
 from tests.mock_client import MockDiscordClient
 
 

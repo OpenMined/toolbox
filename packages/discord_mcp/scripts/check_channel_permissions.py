@@ -69,7 +69,7 @@ def main():
             sys.exit(1)
 
         # Overall summary
-        print(f"\n🎉 Analysis Complete!")
+        print("\n🎉 Analysis Complete!")
         print("=" * 50)
 
         total_accessible = 0
@@ -87,7 +87,7 @@ def main():
         print(f"\n📈 Overall: {total_accessible}/{total_channels} channels accessible")
 
         # Show ACCESSIBLE channels with names
-        print(f"\n✅ ACCESSIBLE CHANNELS:")
+        print("\n✅ ACCESSIBLE CHANNELS:")
         for guild_id, data in all_results.items():
             accessible_channels = []
             channels = list(client.get_guild_channels(guild_id))
@@ -108,7 +108,7 @@ def main():
                 print(f"  {data['name']}: No accessible channels")
 
         # Show inaccessible channels
-        print(f"\n🚫 INACCESSIBLE CHANNELS:")
+        print("\n🚫 INACCESSIBLE CHANNELS:")
         for guild_id, data in all_results.items():
             inaccessible_channels = []
             channels = list(client.get_guild_channels(guild_id))

@@ -1,10 +1,10 @@
-from pydantic import BaseModel
 import uvicorn
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastsyftbox import FastSyftBox
 from fastsyftbox.simple_client import DEV_DEFAULT_OWNER_EMAIL, default_dev_data_dir
 from loguru import logger
+from pydantic import BaseModel
 from syft_core import SyftClientConfig
 
 from slack_mcp import db

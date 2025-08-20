@@ -16,7 +16,7 @@ DISCORD_BASE_URL = "https://discord.com/api/v10"
 
 def request_discord_token():
     print("No DISCORD_TOKEN found in environment, trying other auth methods")
-    print(f"""
+    print("""
 Go to https://discord.com/ and log in into the *browser* and check the instructions here:
 https://github.com/Tyrrrz/DiscordChatExporter/blob/master/.docs/Token-and-IDs.md
 """)

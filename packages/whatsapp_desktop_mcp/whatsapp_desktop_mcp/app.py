@@ -1,12 +1,11 @@
 import contextlib
-from contextlib import asynccontextmanager
 import os
+from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
 
 from whatsapp_desktop_mcp.mcp_server import mcp
-
 
 port = os.getenv("WHATSAPP_DESKTOP_MCP_PORT", "8004")
 

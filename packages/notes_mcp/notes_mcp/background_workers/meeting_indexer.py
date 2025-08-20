@@ -1,12 +1,11 @@
-from concurrent.futures import ThreadPoolExecutor
-import sqlite3
 import threading
 import time
 import traceback
-
-from fastsyftbox.simple_client import SimpleRPCClient
+from concurrent.futures import ThreadPoolExecutor
 
 import httpx
+from fastsyftbox.simple_client import SimpleRPCClient
+
 from notes_mcp import db
 from notes_mcp.background_workers.user_polling_manager import UserPollingManager
 from notes_mcp.models.audio import AudioChunksResult

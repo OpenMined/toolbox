@@ -1,5 +1,3 @@
-from functools import wraps
-
 import typer
 from rich.console import Console
 from rich.panel import Panel
@@ -11,7 +9,7 @@ WELCOME_MESSAGE = """🧰 Welcome to Toolbox!
 A privacy-first tool to install MCP servers and background agents for your personal data.
 
 • Install MCP servers with [cyan]tb install <app_name>[/cyan]
-• List available apps with [cyan]tb list-store[/cyan]  
+• List available apps with [cyan]tb list-store[/cyan]
 • View installed apps with [cyan]tb list[/cyan]"""
 
 

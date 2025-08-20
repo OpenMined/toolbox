@@ -1,10 +1,8 @@
 import sqlite3
-from concurrent.futures import ThreadPoolExecutor
 import traceback
 
-from notes_mcp.models.heartbeat import HeartbeatRequest
 import uvicorn
-from fastapi import Depends, FastAPI, HTTPException, APIRouter
+from fastapi import APIRouter, Depends, FastAPI, HTTPException
 from pydantic import BaseModel
 
 from notes_mcp import PROJECT_ROOT
@@ -14,6 +12,7 @@ from notes_mcp.db import (
     set_heartbeat,
 )
 from notes_mcp.models import UserRegistration, UserResponse
+from notes_mcp.models.heartbeat import HeartbeatRequest
 
 BASE_DATA_DIR = PROJECT_ROOT / "data"
 N_WORKERS = 2
@@ -46,7 +45,7 @@ def register_user(
             return UserResponse(
                 id=user_id, email=request.email, message="User registered successfully"
             )
-    except Exception as e:
+    except Exception:
         print(traceback.format_exc())
         raise HTTPException(
             status_code=500, detail=f"Failed to register user: {traceback.format_exc()}"
