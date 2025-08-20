@@ -54,6 +54,7 @@ tb trigger show github-trending -n 5
 ## Cron Expressions
 
 The `--cron` parameter accepts standard cron expressions to schedule triggers at a specific time or interval. For example:
+
 - `0 12 * * *` - Daily at 12:00
 - `0 */6 * * *` - Every 6 hours
 - `0 9 * * 1` - Every Monday at 9:00

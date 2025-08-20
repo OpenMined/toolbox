@@ -1,5 +1,3 @@
-import os
-
 import uvicorn
 from fastapi import APIRouter, FastAPI, HTTPException
 

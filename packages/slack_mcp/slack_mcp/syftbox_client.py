@@ -1,5 +1,4 @@
-import sqlite3
-from typing import Dict, Optional
+from typing import Optional
 
 from fastsyftbox.simple_client import SimpleRPCClient
 

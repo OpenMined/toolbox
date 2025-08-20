@@ -70,7 +70,7 @@ def create_tables_screenpipe(conn):
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS meeting_audio_chunks (
             meeting_id INTEGER,
-            audio_chunk_id INTEGER,  
+            audio_chunk_id INTEGER,
             FOREIGN KEY (meeting_id) REFERENCES meeting_meta(meeting_id),
             PRIMARY KEY (meeting_id, audio_chunk_id)
         );
@@ -148,7 +148,7 @@ def insert_audio_chunk(
 
 def get_audio_chunks(conn) -> tuple[list[AudioChunk], list[bool]]:
     cursor = conn.cursor()
-    cursor.execute("""SELECT audio_chunks.*, meeting_audio_chunks.audio_chunk_id is NOT NULL as indexed  
+    cursor.execute("""SELECT audio_chunks.*, meeting_audio_chunks.audio_chunk_id is NOT NULL as indexed
                    FROM audio_chunks
                    LEFT JOIN meeting_audio_chunks on audio_chunks.id = meeting_audio_chunks.audio_chunk_id""")
     rows = cursor.fetchall()
@@ -200,7 +200,7 @@ def insert_transcription(
     cursor = conn.cursor()
     cursor.execute(
         """
-        SELECT id FROM audio_transcriptions 
+        SELECT id FROM audio_transcriptions
         WHERE audio_chunk_id = ? AND transcription_engine = ?
     """,
         (audio_chunk_id, transcription_engine),
@@ -211,8 +211,8 @@ def insert_transcription(
         # Update existing entry
         cursor.execute(
             """
-            UPDATE audio_transcriptions 
-            SET offset_index = ?, timestamp = ?, transcription = ?, device = ?, 
+            UPDATE audio_transcriptions
+            SET offset_index = ?, timestamp = ?, transcription = ?, device = ?,
                 is_input_device = ?, speaker_id = ?, start_time = ?, end_time = ?, text_length = ?
             WHERE audio_chunk_id = ? AND transcription_engine = ?
         """,
@@ -321,7 +321,7 @@ WITH meetings AS (
   GROUP BY mm.meeting_id
   ORDER BY at.timestamp
 )
-SELECT *    
+SELECT *
 FROM meetings;
 """
     cursor.execute(get_all_meeting_notes_query)

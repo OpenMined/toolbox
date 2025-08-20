@@ -1,0 +1,65 @@
+# Contributing to Toolbox
+
+## Environment setup
+
+`toolbox` is a monorepo, with all dependencies managed as a uv workspace.
+
+To install, create a virtual environment and sync dependencies:
+
+```bash
+cd toolbox # The root of the repo
+uv venv
+uv sync
+```
+
+### Pre-commit hooks
+
+We use pre-commit hooks to ensure code quality and consistency. Install them with:
+
+```bash
+pre-commit install
+```
+
+To run them manually:
+
+```bash
+uv run pre-commit run --all-files
+```
+
+## Analytics
+
+We use PostHog for anonymous CLI analytics (commands, errors, usage patterns).
+Exclude yourself from analytics during development:
+
+```bash
+export TOOLBOX_TEST_USER="true"
+```
+
+Add this to your .zshrc or .bashrc to exclude yourself permanently.
+
+### Dashboard Access
+
+Contact developers to get invited to the PostHog workspace for viewing metrics and error tracking.
+
+## Release to Pypi
+
+To bump the version, tag the commit, and publish to PyPI:
+
+Make sure you're on main with no uncommitted changes, then:
+
+```bash
+# bump version, see https://docs.astral.sh/uv/guides/package/#updating-your-version
+uv version --package syft_toolbox --bump minor
+NEW_VERSION=$(uv version --package syft_toolbox --short)
+
+# commit to git and tag version
+git commit -am "Release v${NEW_VERSION}"
+git push
+git tag "v${NEW_VERSION}"
+git push origin "v${NEW_VERSION}"
+
+# clean build dir, build and publish to PyPI
+rm -rf dist/
+uv build --package syft_toolbox
+uv publish dist/syft-toolbox-* --token <your_token>
+```

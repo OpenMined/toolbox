@@ -1,9 +1,9 @@
-from mcp.server.fastmcp import FastMCP
-from syftbox_queryengine import db
-
 import os
 from pathlib import Path
 
+from mcp.server.fastmcp import FastMCP
+
+from syftbox_queryengine import db
 
 # ANTHROPIC_KEY = os.environ["ANTHROPIC_API_KEY"]
 REPO_PATH = Path(os.environ.get("REPO_PATH", "/Users/koen/workspace/toolbox"))
@@ -29,7 +29,7 @@ def get_meeting_notes_metadata() -> list[dict[str, str]]:
     try:
         with db.get_screenpipe_connection() as conn:
             return db.get_meeting_meta(conn)
-    except Exception as e:
+    except Exception:
         import traceback
 
         print(traceback.format_exc())
@@ -43,7 +43,7 @@ def get_meeting_content_from_filename(filename: str) -> str:
         with db.get_screenpipe_connection() as conn:
             meeting_notes: str = db.get_meeting_notes_by_filename(conn, filename)
             return meeting_notes
-    except Exception as e:
+    except Exception:
         import traceback
 
         print(traceback.format_exc())

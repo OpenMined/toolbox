@@ -1,14 +1,13 @@
 import os
 from typing import TYPE_CHECKING
 
-from toolbox.settings import settings
 from slack_sdk import WebClient
 from toolbox.mcp_installer.python_package_installer import install_python_mcp
+from toolbox.settings import settings
 from toolbox.store.callbacks.auth.auth_slack import do_browser_auth
 from toolbox.store.callbacks.auth.auth_slack_keyring import (
     get_slack_d_cookie_and_test_with_token,
     get_tokens,
-    get_tokens_and_cookie,
 )
 from toolbox.store.callbacks.callback import Callback
 
@@ -87,7 +86,7 @@ class SlackAuthCallback(Callback):
                 slack_token, slack_d_cookie = gather_tokens_and_cookie(context)
                 context.context_settings["SLACK_TOKEN"] = slack_token
                 context.context_settings["SLACK_D_COOKIE"] = slack_d_cookie
-            except Exception as e:
+            except Exception:
                 if settings.verbose > 0:
                     import traceback
 

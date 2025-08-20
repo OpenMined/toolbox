@@ -1,12 +1,11 @@
 """Discord API client with rate limiting and retry logic."""
 
-import json
 import logging
 import time
-from datetime import datetime, timedelta
+from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, List, Optional, Generator
-from urllib.parse import quote, urlencode
+from typing import Any, Dict, Generator, List, Optional
+from urllib.parse import urlencode
 
 import httpx
 
@@ -15,7 +14,6 @@ from discord_mcp.exceptions import (
     DiscordException,
     ForbiddenException,
     NotFoundException,
-    RateLimitException,
 )
 
 logger = logging.getLogger(__name__)

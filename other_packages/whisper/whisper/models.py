@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 import base64
+
+from pydantic import BaseModel
 
 
 class TranscribeRequest(BaseModel):

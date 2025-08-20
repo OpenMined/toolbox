@@ -1,6 +1,5 @@
 import json
 import sqlite3
-import struct
 import uuid
 from collections import defaultdict
 from contextlib import contextmanager
@@ -96,7 +95,7 @@ def get_messages_without_embeddings(conn, limit=10):
     cursor = conn.cursor()
     cursor.execute(
         """
-    SELECT messages.* 
+    SELECT messages.*
     FROM messages
     LEFT JOIN chunk_messages ON messages.ts = chunk_messages.ts AND messages.channel_id = chunk_messages.channel_id
     WHERE chunk_messages.chunk_id IS NULL

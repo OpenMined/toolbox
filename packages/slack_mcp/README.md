@@ -1,2 +1,1 @@
-
 # SLACK MCP

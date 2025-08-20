@@ -1,6 +1,7 @@
 import sqlite3
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+
 from rapidfuzz import process
 
 from whatsapp_desktop_mcp.models import (
@@ -79,8 +80,6 @@ def db_get_message_by_contact_id(contact_id: str, n_days_ago=7):
     return results
 
 
-from datetime import datetime, timezone, timedelta
-
 # Get the start of the current week (Monday)
 
 
@@ -100,7 +99,7 @@ def get_all_messages(n_days_ago=7):
         ZWAMESSAGE.ZMESSAGEDATE as message_date,
         ZWAPROFILEPUSHNAME.ZPUSHNAME as sender_name,
         ZWACHATSESSION.ZSESSIONTYPE =1 as is_group_chat
-        
+
     FROM
         ZWACHATSESSION
     JOIN

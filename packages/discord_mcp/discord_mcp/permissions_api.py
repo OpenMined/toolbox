@@ -1,8 +1,8 @@
 """Discord permission calculation utilities."""
 
-from typing import Dict, List, Any, Optional
-from discord_mcp.client import DiscordClient
+from typing import Any, Dict, List
 
+from discord_mcp.client import DiscordClient
 
 # Discord Permission Constants
 PERMISSIONS = {
@@ -10,8 +10,6 @@ PERMISSIONS = {
     "READ_MESSAGE_HISTORY": 1 << 16,  # 65536 - Can read message history
     "SEND_MESSAGES": 1 << 11,  # 2048 - Can send messages
 }
-
-
 
 
 def _calculate_base_permissions(
@@ -177,6 +175,6 @@ def compute_channel_permissions(
                         PERMISSIONS["VIEW_CHANNEL"]
                         | PERMISSIONS["READ_MESSAGE_HISTORY"]
                     ):
-                        print(f"      🚫 User-specific deny overwrite")
+                        print("      🚫 User-specific deny overwrite")
 
     return results

@@ -1,20 +1,20 @@
 import os
 import time
 from datetime import datetime, timedelta, timezone
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional
 
 from discord_mcp.client import DiscordClient
 from discord_mcp.db import (
     get_discord_connection,
     get_earliest_timestamp_from_db,
     get_latest_timestamp_from_db,
-    upsert_message,
-    upsert_user,
+    get_message_count,
     upsert_channel,
     upsert_guild,
-    get_message_count,
+    upsert_message,
+    upsert_user,
 )
-from discord_mcp.models import DiscordMessage, DiscordUser, DiscordChannel, DiscordGuild
+from discord_mcp.models import DiscordChannel, DiscordGuild, DiscordMessage, DiscordUser
 
 
 def get_discord_client():

@@ -7,8 +7,8 @@ from toolbox.mcp_installer.python_package_installer import install_python_mcp
 from toolbox.store.callbacks.callback import Callback
 
 if TYPE_CHECKING:
-    from toolbox.store.installation_context import InstallationContext
     from toolbox.installed_mcp import InstalledMCP
+    from toolbox.store.installation_context import InstallationContext
 
 
 def ollama_installed() -> bool:
@@ -121,8 +121,9 @@ Press Enter once you've installed these dependencies to continue.""")
 class InstallPDFMCPCallback(Callback):
     def on_run_mcp(self, context: "InstallationContext", *args, **kwargs):
         """Install PDF MCP with proper configuration"""
-        from toolbox.store.store_code import STORE_ELEMENTS
         from pathlib import Path
+
+        from toolbox.store.store_code import STORE_ELEMENTS
 
         # Set environment variables for directories
         context.context_settings["PDF_MCP_PORT"] = "8006"

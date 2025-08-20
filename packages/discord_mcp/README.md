@@ -65,7 +65,7 @@ async def example():
     async with DiscordClient("your_token") as client:
         user = await client.get_current_user()
         print(f"Authenticated as: {user['username']}")
-    
+
     # Using the API functions
     output_path = await download_messages(
         token="your_token",
@@ -93,6 +93,7 @@ The client implements the same rate limiting strategy as the original DiscordCha
 All data is saved as JSON files with metadata:
 
 ### Messages
+
 ```json
 {
   "metadata": {
@@ -110,6 +111,7 @@ All data is saved as JSON files with metadata:
 ```
 
 ### Users
+
 ```json
 {
   "metadata": {
@@ -123,6 +125,7 @@ All data is saved as JSON files with metadata:
 ```
 
 ### Channels
+
 ```json
 {
   "metadata": {

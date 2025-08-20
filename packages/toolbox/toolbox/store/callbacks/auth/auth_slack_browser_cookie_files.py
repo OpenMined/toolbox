@@ -1,15 +1,16 @@
-import sqlite3
 import os
 import shutil
+import sqlite3
 import tempfile
 from pathlib import Path
-from typing import List, Optional, Tuple
-import keyring
-from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
-from cryptography.hazmat.backends import default_backend
-from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
-from cryptography.hazmat.primitives import hashes
+from typing import List, Optional
 from urllib.parse import quote
+
+import keyring
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
 def get_browser_locations(browser: str) -> List[Path]:
@@ -151,7 +152,7 @@ def try_get_cookie_from_browser(browser: str) -> Optional[str]:
 
             cursor.execute("""
                 SELECT encrypted_value
-                FROM cookies 
+                FROM cookies
                 WHERE host_key LIKE '%slack.com%' AND name = 'd'
                 ORDER BY last_access_utc DESC
                 LIMIT 1
@@ -214,13 +215,14 @@ def get_slack_xoxd_cookie_from_browser_cookie_files() -> str:
 if __name__ == "__main__":
     try:
         xoxd_cookie = get_slack_xoxd_cookie_from_browser_cookie_files()
-        from slack_sdk import WebClient
         import os
+
+        from slack_sdk import WebClient
 
         slack_token = os.getenv("SLACK_TOKEN")  # Your API token (xoxc-...)
         d_cookie = "{xoxd_cookie}"
 
-        headers = {{"Cookie": f"d={{d_cookie}}", "User-Agent": "Mozilla/5.0"}}
+        headers = {{"Cookie": "d={d_cookie}", "User-Agent": "Mozilla/5.0"}}
         client = WebClient(token=slack_token, headers=headers)
 
         response = client.auth_test()

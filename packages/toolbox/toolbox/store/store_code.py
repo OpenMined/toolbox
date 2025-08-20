@@ -6,17 +6,16 @@ from pydantic import BaseModel
 
 from toolbox.store.callbacks.auth.auth_discord_callback import DiscordAuthCallback
 from toolbox.store.callbacks.auth.auth_slack_callback import SlackAuthCallback
-from toolbox.store.callbacks.whatsapp_callback import InstallWhatsappDesktopMCPCallback
 from toolbox.store.callbacks.pdf_callback import (
     InstallPDFMCPCallback,
     PDFMCPDataStatsCallback,
     PDFMCPExternalDependencyCallback,
     PDFMCPInstallationSummaryCallback,
 )
+from toolbox.store.callbacks.whatsapp_callback import InstallWhatsappDesktopMCPCallback
 
 if TYPE_CHECKING:
     from toolbox.installed_mcp import InstalledMCP
-    from toolbox.store.installation_context import InstallationContext
 from toolbox.settings import TOOLBOX_WORKSPACE_DIR
 from toolbox.store.callbacks.callback import (
     Callback,
@@ -36,7 +35,6 @@ from toolbox.store.callbacks.callback import (
     SyftboxExternalDependencyCallback,
     TextInputEnvRequestedSecretCallback,
 )
-
 
 # PDF MCP callbacks are now imported from pdf_callback.py
 

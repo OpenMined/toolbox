@@ -5,10 +5,10 @@ from concurrent.futures import ThreadPoolExecutor
 
 import httpx
 import requests
-from slack_mcp.remote_server.server_models import EmbeddingRequest
 from fastsyftbox.simple_client import SimpleRPCClient
 from slack_mcp.models import Chunk
 from slack_mcp.remote_server import server_db as db
+from slack_mcp.remote_server.server_models import EmbeddingRequest
 from slack_mcp.remote_server.server_settings import settings
 from slack_mcp.remote_server.user_polling_manager import UserPollingManager
 from slack_mcp.syftbox_client import create_authenticated_client
@@ -86,7 +86,7 @@ def _poll_for_new_chunks(user_id: str):
             chunks = [Chunk.model_validate(chunk) for chunk in result.json()["chunks"]]
             print(f"Found {len(chunks)} new chunks to index")
 
-        except httpx.ReadTimeout as e:
+        except httpx.ReadTimeout:
             print(
                 f"Read timeout calling {client.app_name} on {client.app_owner}/get_new_chunks, probably not online",
                 flush=True,
@@ -113,7 +113,7 @@ def _poll_for_new_chunks(user_id: str):
                 chunk.embedding = embedding
             upload_embeddings(client, chunks)
             print(f"Successfully uploaded {len(chunks)} chunks")
-        except httpx.ReadTimeout as e:
+        except httpx.ReadTimeout:
             print(
                 f"Read timeout calling {client.app_name} on {client.app_owner}/upload_embeddings, probably not online",
                 flush=True,

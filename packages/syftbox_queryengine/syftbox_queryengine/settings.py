@@ -12,4 +12,5 @@ class Settings(BaseSettings):
     dev_email: str = "dev@openmined.org"
     dev_access_token: str = "dev_mode"
 
+
 settings = Settings()

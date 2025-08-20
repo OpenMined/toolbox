@@ -1,12 +1,10 @@
 import logging
 import os
 import traceback
-from datetime import datetime, timedelta
 
 from mcp.server.fastmcp import FastMCP
 
 from discord_mcp import db
-from discord_mcp.models import DiscordMessage, DiscordChannel, DiscordUser
 from discord_mcp.embedding_background_worker import get_embedding
 
 DISCORD_MCP_PORT = os.getenv("DISCORD_MCP_PORT", 8008)

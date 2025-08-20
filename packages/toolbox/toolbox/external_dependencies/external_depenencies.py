@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 import requests
 
 HOME_DIR = Path.home()

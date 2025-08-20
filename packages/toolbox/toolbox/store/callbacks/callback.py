@@ -8,7 +8,6 @@ import traceback
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-import numpy as np
 import requests
 import sqlite_vec
 from pydantic import BaseModel
@@ -297,7 +296,7 @@ class ScreenpipeExternalDependencyCallback(Callback):
         if not screenpipe_installed():
             input(
                 """
-Screenpipe is not installed. You can install it in 2 ways: 
+Screenpipe is not installed. You can install it in 2 ways:
 1. By installing the screenpipe desktop app from https://web.crabnebula.cloud/mediar/screenpipe/releases
 2. Run it using `curl -fsSL get.screenpi.pe/cli | sh`. or by using `screenpipe` if already installed
 Press Enter to continue."""

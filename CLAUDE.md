@@ -13,12 +13,14 @@ This is a privacy-first toolbox for installing local and remote MCP (Model Conte
 ## Development Commands
 
 ### Installation and Setup
+
 ```bash
 # Install the project in development mode
 uv pip install -e .
 ```
 
 ### Running the CLI
+
 ```bash
 # Using the main toolbox command
 tb --help
@@ -34,6 +36,7 @@ tb show <app_name>
 ```
 
 ### Package-specific Commands
+
 Each package can be developed independently:
 
 ```bash
@@ -46,6 +49,7 @@ cd packages/syftbox_queryengine
 ## Architecture
 
 ### Workspace Structure
+
 - **Root**: Contains the main project configuration and workspace setup
 - **packages/toolbox**: CLI application built with Typer for MCP server management
 - **packages/notes_mcp**: FastAPI-based MCP server for meeting notes with audio transcription
@@ -54,23 +58,27 @@ cd packages/syftbox_queryengine
 ### Key Components
 
 #### Toolbox CLI (packages/toolbox/)
+
 - Entry point: `toolbox/cli/cli.py:app`
 - Main commands: install, list, show
 - Database: SQLite for tracking installed MCPs
 - Store system: JSON-based MCP definitions with installation callbacks
 
 #### Notes MCP (packages/notes_mcp/)
+
 - MCP server: `notes_mcp/mcp_server.py`
 - FastAPI server: `notes_mcp/fastapi_server.py`
 - Background workers for audio transcription and meeting indexing
 - Uses Anthropic API for content processing
 
 #### SyftBox Query Engine (packages/syftbox_queryengine/)
+
 - FastAPI server for SyftBox RPC communication
 - Authentication and sync functionality
 - Integration with fastsyftbox library
 
 ### Data Flow
+
 1. Meeting notes MCP processes audio files and generates transcriptions
 2. Background workers index meetings and extract todos
 3. CLI toolbox manages installation and configuration of MCP servers
@@ -78,13 +86,16 @@ cd packages/syftbox_queryengine
 ## Configuration
 
 ### Environment Variables
+
 - `ANTHROPIC_API_KEY`: Required for notes MCP functionality
 
 ### Python Version
+
 - Requires Python ≥3.12
 - All packages use modern Python features and type hints
 
 ### Dependencies
+
 - **FastAPI/Uvicorn**: Web frameworks for MCP servers
 - **Typer**: CLI framework for toolbox
 - **MCP**: Model Context Protocol implementation
@@ -94,6 +105,7 @@ cd packages/syftbox_queryengine
 ## Startup Sequence
 
 ### Initialization Process
+
 - You can first start the syftbox_queryengine, and then start the notes_mcp
-- The Syftboxquery engine will register an account with the NoteMCP server 
+- The Syftboxquery engine will register an account with the NoteMCP server
 - The NoteMCP server will then start polling the Syftbox query engine for new data and indexed data

@@ -1,7 +1,8 @@
 import json
 import sqlite3
 from datetime import datetime
-from typing import Optional, Any
+from typing import Any, Optional
+
 from pydantic import BaseModel
 
 
@@ -50,7 +51,7 @@ class DiscordGuild(BaseModel):
             self.default_message_notifications,
             self.explicit_content_filter,
             self.preferred_locale,
-            snowflake_to_datetime(self.id)
+            snowflake_to_datetime(self.id),
         )
 
     @classmethod
@@ -87,7 +88,7 @@ class DiscordChannel(BaseModel):
             json_or_none(self.permission_overwrites),
             self.nsfw,
             self.last_message_id,
-            snowflake_to_datetime(self.id)
+            snowflake_to_datetime(self.id),
         )
 
     @classmethod
@@ -118,7 +119,7 @@ class DiscordUser(BaseModel):
             self.public_flags,
             self.banner,
             self.accent_color,
-            snowflake_to_datetime(self.id)
+            snowflake_to_datetime(self.id),
         )
 
     @classmethod
@@ -166,7 +167,7 @@ class DiscordMessage(BaseModel):
             attachments=data.get("attachments"),
             embeds=data.get("embeds"),
             components=data.get("components"),
-            flags=data.get("flags")
+            flags=data.get("flags"),
         )
 
     def to_sql_tuple(self) -> tuple:
@@ -186,7 +187,7 @@ class DiscordMessage(BaseModel):
             json_or_none(self.attachments),
             json_or_none(self.embeds),
             json_or_none(self.components),
-            self.flags
+            self.flags,
         )
 
     @classmethod

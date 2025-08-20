@@ -1,17 +1,15 @@
-import json
 import sqlite3
-import uuid
-from contextlib import contextmanager
-from pathlib import Path
-from datetime import datetime, timedelta
 from collections import defaultdict
-from typing import Optional
+from contextlib import contextmanager
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import numpy as np
 import sqlite_vec
-from sqlite_vec import serialize_float32
 from rapidfuzz import process
-from discord_mcp.models import DiscordMessage, DiscordUser, DiscordChannel, DiscordGuild
+from sqlite_vec import serialize_float32
+
+from discord_mcp.models import DiscordChannel, DiscordGuild, DiscordMessage, DiscordUser
 
 HOME = Path.home()
 DISCORD_MCP_DB_PATH = HOME / ".discord_mcp" / "db.sqlite"
@@ -343,7 +341,7 @@ def get_messages_without_embeddings(conn, limit=10):
     cursor = conn.cursor()
     cursor.execute(
         """
-    SELECT messages.* 
+    SELECT messages.*
     FROM messages
     LEFT JOIN chunk_messages ON messages.id = chunk_messages.message_id
     WHERE chunk_messages.chunk_id IS NULL

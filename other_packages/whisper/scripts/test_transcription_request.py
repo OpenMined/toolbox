@@ -1,6 +1,7 @@
+import os
+
 import requests
 from whisper.models import TranscribeRequest
-import os
 
 fpath = "/Users/koen/test_audio.mp4"
 deployed_url = "4.151.234.109:8006"

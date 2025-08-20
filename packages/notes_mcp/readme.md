@@ -1,4 +1,3 @@
-
 # Caveman deploy
 
 ```
@@ -10,6 +9,7 @@ ssh toolbox-prod
 ```
 
 on server
+
 ```
 cd /home/azureuser/toolbox
 uv venv

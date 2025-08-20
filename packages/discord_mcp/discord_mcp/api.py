@@ -1,12 +1,9 @@
 """API functions for downloading Discord data to JSON files."""
 
-import json
-import os
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Set, Any
+from datetime import UTC, datetime, timedelta
+from typing import Any, Dict, Optional, Set
 
 from discord_mcp.client import DiscordClient
-from datetime import UTC
 
 
 def download_messages(
@@ -232,7 +229,6 @@ def download_channels(
         }
     finally:
         client.close()
-
 
 
 def download_guilds(

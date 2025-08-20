@@ -9,6 +9,8 @@ from fastsyftbox import FastSyftBox
 from syftbox_queryengine.fastsyftbox_server import app, config, router
 from syftbox_queryengine.heartbeat import (
     heartbeat_loop,
+)
+from syftbox_queryengine.heartbeat import (
     stop_event as heartbeat_stop_event,
 )
 from syftbox_queryengine.mcp_server import mcp
