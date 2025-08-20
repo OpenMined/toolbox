@@ -17,7 +17,7 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 
 
 
-# Install
+## Install
 ```
 uv pip install -e .
 ```
@@ -35,13 +35,13 @@ CXXFLAGS="-isystem $(xcrun --show-sdk-path)/usr/include/c++/v1" uv pip install -
 ```
 
 
-# Alpha example
+## Alpha example
 
 ```
 tb install slack-mcp
 ```
 
-# Toolbox CLI
+## Toolbox CLI
 To show apps in store
 ```
 tb list-store
@@ -64,7 +64,7 @@ tb log <appname>
 ```
 
 
-# Store
+## Store
 
 | Name | Clients | Default Deployment | Read Access | Write Access | Install |
 |------|--------|--------------------|-------------|--------------|---------|
@@ -77,18 +77,29 @@ tb log <appname>
 | meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
 
 
-# Triggers
+## Triggers
 
 Toolbox can run scripts on a schedule to automate tasks in your MCP pipeline. See the [triggers documentation](docs/triggers.md) for setup and usage instructions.
 
 
 
 
-# Troubleshooting screenpipe
+## Troubleshooting screenpipe
 If you dont seen audio recordings under `tb show meeting-notes-mcp`. The following things may help
 
 - make sure you gave screenpipe the right permissions for recording video and audio in under Privacy and security (screenpipe should automatically request this). 
 - Also make sure you select the right audio device by clicking -> person icon in the right top -> settings -> recording -> audio devices -> and then select the right one. 
 - By default screenpipe uses local trancription, which we are not using because it might be heavy on your laptop. However, screenpipe will still try to download the model, which may block transcription. To prevent this, choose a small model like `whisper-tiny-quantized` under -> person icon in the right top -> settings -> recording -> audio-transcription-model
 
+
+## Analytics
+We collect anonymous analytics to understand how the cli is used. The data we track includes:
+
+- **Command usage**: Which CLI commands are run (install, list, list-store, reset)
+- **Command parameters**: Non-sensitive command arguments (app names, flags like --use-local-deployments)
+- **Toolbox version**: The version of toolbox being used
+- **Error information**: If commands fail, we log the error type and message for debugging
+- **Anonymous user ID**: A randomly generated UUID stored locally to understand usage patterns across multiple CLI commands
+
+To opt out, run `tb setup` and disable analytics.
 

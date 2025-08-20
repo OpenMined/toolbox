@@ -105,6 +105,20 @@ def add_to_launchd() -> Path:
     return plist_path
 
 
+def is_daemon_installed() -> bool:
+    """Check if the toolbox daemon is installed in launchd.
+
+    Returns:
+        bool: True if daemon is installed, False otherwise
+    """
+    try:
+        plist_path = get_launchd_path()
+        return plist_path.exists()
+    except RuntimeError:
+        # If launchd is not available (non-macOS), consider it not installed
+        return False
+
+
 def remove_from_launchd() -> Path:
     """Remove toolbox daemon from launchd.
 
