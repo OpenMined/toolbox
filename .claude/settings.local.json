@@ -3,6 +3,9 @@
     "allow": [
       "Bash(ls:*)"
     ],
-    "deny": []
+    "deny": [],
+    "additionalDirectories": [
+      "/Users/koen"
+    ]
   }
 }
