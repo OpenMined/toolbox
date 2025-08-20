@@ -4,7 +4,7 @@ dependencies = [
     "uvicorn>=0.34.3",
     "fastapi>=0.115.13",
     "pydantic-settings>=2.10.0",
-    " mcp>=1.12.3",
+    "mcp>=1.12.3",
     "fastsyftbox",
     "httpx>=0.28.1",
 ]

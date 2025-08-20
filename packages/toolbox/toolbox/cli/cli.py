@@ -48,9 +48,14 @@ def setup():
 
 @track_cli_command()
 def info():
-    print(f"Toolbox version: {__version__}")
-    print(f"Config directory: {settings.settings_path.parent}")
-    print(f"Installation directory: {Path(toolbox.__file__).parent}")
+    console = Console()
+    console.print(f"[cyan]Toolbox version:[/cyan] {__version__}")
+    console.print(
+        f"[cyan]Config directory:[/cyan] [yellow]{settings.settings_path.parent}[/yellow]"
+    )
+    console.print(
+        f"[cyan]Installation directory:[/cyan] [yellow]{Path(toolbox.__file__).parent}[/yellow]"
+    )
 
 
 @track_cli_command()
