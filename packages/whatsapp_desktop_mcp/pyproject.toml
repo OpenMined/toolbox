@@ -7,7 +7,7 @@ dependencies = [
     "uvicorn>=0.34.3",
     "fastapi>=0.115.13",
     "pydantic-settings>=2.10.0",
-    "mcp==1.10.0"
+    "mcp>=1.12.3",
 ]
 
 name = "whatsapp_desktop_mcp"
