@@ -28,7 +28,10 @@ syft-http-bridge = { git = "https://github.com/OpenMined/syft-extras.git", subdi
 fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "fix-startup" }
 
 [dependency-groups]
-dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]
+dev = [
+    "pytest-xdist>=3.6.1",
+    "pytest>=8.3.4",
+]
 
 [tool.mypy]
 python_version = "3.12"

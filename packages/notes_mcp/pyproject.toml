@@ -28,7 +28,10 @@ fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "fix
 
 
 [dependency-groups]
-dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]
+dev = [
+    "pytest-xdist>=3.6.1",
+    "pytest>=8.3.4",
+]
 
 [tool.ruff.lint]
 extend-select = ["I"]
