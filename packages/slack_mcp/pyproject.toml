@@ -35,7 +35,10 @@ fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "fix
 dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4", "typer==0.16.0"]
 
 [dependency-groups]
-dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]
+dev = [
+    "pytest-xdist>=3.6.1",
+    "pytest>=8.3.4",
+]
 embeddings = [
     "torch==2.2.2",
     "transformers==4.54.0",

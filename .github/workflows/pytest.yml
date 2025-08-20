@@ -1,0 +1,27 @@
+name: pytest
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [discord_mcp, toolbox]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Install ${{ matrix.package }}
+        run: uv sync --locked --all-extras --dev
+        working-directory: packages/${{ matrix.package }}
+
+      - name: Run tests for ${{ matrix.package }}
+        run: uv run pytest tests -n auto
+        working-directory: packages/${{ matrix.package }}
