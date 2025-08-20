@@ -68,10 +68,13 @@ tb log <appname>
 
 | Name | Clients | Default Deployment | Read Access | Write Access | Install |
 |------|--------|--------------------|-------------|--------------|---------|
-| github-mcp | claude | stdio | Issues, PRs, Settings | Issues, PRs, Settings | `tb install github-mcp` |
-| meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
-| whatsapp-desktop-mcp | claude | proxy-to-om-enclave | WhatsApp Messages | WhatsApp Messages | `tb install whatsapp-desktop-mcp` |
 | slack-mcp | claude | proxy-to-om-enclave | Slack Messages | Slack Messages | `tb install slack-mcp` |
+| discord-mcp | claude | proxy-to-om-enclave | Discord Messages | Discord Messages | `tb install slack-mcp` |
+| obsidian-mcp | claude | proxy-to-om-enclave | Obsidian notes | Obsidian Notes | `tb install obsidian-mcp` |
+| github-mcp | claude | stdio | Issues, PRs, Settings | Issues, PRs, Settings | `tb install github-mcp` |
+| whatsapp-desktop-mcp | claude | proxy-to-om-enclave | WhatsApp Messages | WhatsApp Messages | `tb install whatsapp-desktop-mcp` |
+| pdf-mcp | claude | proxy-to-om-enclave | Local Documents | Document Embeddings | `tb install pdf-mcp` |
+| meeting-notes-mcp | claude | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes | `tb install meeting-notes-mcp` |
 
 
 ## Triggers

@@ -1,21 +1,18 @@
 [project]
 dependencies = [
-    "cachetools>=6.1.0",
-    "rapidfuzz==3.13.0",
-    "fuzzywuzzy==0.18.0",
-    "requests>=2.32.4",
-    "uvicorn>=0.34.3",
-    "fastapi>=0.115.13",
-    "pydantic-settings>=2.10.0",
-    "mcp>=1.12.3",
+    "mcp>=1.9.2",
+    "fastapi>=0.104.0",
+    "uvicorn>=0.24.0",
+    "numpy>=1.24.0",
+    "scikit-learn>=1.3.0",
+    "requests>=2.31.0",
+    "watchdog>=3.0.0",
 ]
-
-name = "whatsapp_desktop_mcp"
+name = "pdf_mcp"
 version = "0.1.0"
-description = "Add your description here"
+description = "PDF MCP server with RAG capabilities for semantic document search"
 readme = "README.md"
 requires-python = ">=3.12"
-
 
 [build-system]
 requires = ["hatchling"]
