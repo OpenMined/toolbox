@@ -18,6 +18,16 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 
 ## Install
 
+To install toolbox on your machine from PyPI, you can use `uv tool`:
+
+```
+uv tool install --prerelease allow syft-toolbox
+# to verify installation
+tb info
+```
+
+Alternatively, you can install toolbox from source, using `uv`:
+
 ```
 uv pip install -e .
 ```
