@@ -16,6 +16,12 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 - **background agents** are long running processes that create new data based on your existing data (think [RAG](https://en.wikipedia.org/wiki/Retrieval-augmented_generation), [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition),[speech recognition](https://en.wikipedia.org/wiki/Speech_recognition))
 - we provide the option to run some of these agents/mcp server in the cloud for free, with the medium term vision of deploying those components in [trusted execution environments](https://en.wikipedia.org/wiki/Trusted_execution_environment). The first beta versions wont have trusted execution environments, but we wont store any sensitive user data (only meta data). In the long term we plan to make these available at break-even cost (OpenMined is non-profit so we wont make money)
 
+## Requirements
+
+Before installing toolbox, make sure you have the following:
+
+- [uv](https://docs.astral.sh/uv/getting-started/installation/)
+
 ## Install
 
 To install toolbox on your machine from PyPI, you can use `uv tool`:
