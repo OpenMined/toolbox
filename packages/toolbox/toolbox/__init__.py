@@ -1,3 +1,3 @@
 import importlib.metadata
 
-__version__ = importlib.metadata.version("toolbox")
+__version__ = importlib.metadata.version("syft_toolbox")

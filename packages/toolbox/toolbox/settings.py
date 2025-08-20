@@ -31,6 +31,10 @@ class Settings(BaseSettings):
     def first_time_setup(self):
         return not TOOLBOX_CONFIG_FILE.exists()
 
+    @property
+    def settings_path(self):
+        return TOOLBOX_CONFIG_FILE
+
     def save(self):
         TOOLBOX_SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
         TOOLBOX_CONFIG_FILE.write_text(self.model_dump_json(indent=2))
