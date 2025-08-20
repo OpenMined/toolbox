@@ -21,7 +21,7 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 To install toolbox on your machine from PyPI, you can use `uv tool`:
 
 ```
-uv tool install --prerelease allow syft-toolbox
+uv tool install --prerelease allow --python 3.12 -U syft-toolbox
 # to verify installation
 tb info
 ```
@@ -29,6 +29,8 @@ tb info
 Alternatively, you can install toolbox from source, using `uv`:
 
 ```
+git clone https://github.com/OpenMined/toolbox.git
+cd toolbox
 uv pip install -e .
 ```
 
