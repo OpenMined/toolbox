@@ -1,8 +1,12 @@
+from pathlib import Path
+
 import rich
 import typer
 from rich.console import Console
 from rich.rule import Rule
 
+import toolbox
+from toolbox import __version__
 from toolbox.analytics import track_cli_command
 from toolbox.cli import daemon_cli, trigger_cli
 from toolbox.db import conn
@@ -40,6 +44,13 @@ def main(ctx: typer.Context):
 @track_cli_command()
 def setup():
     run_setup()
+
+
+@track_cli_command()
+def info():
+    print(f"Toolbox version: {__version__}")
+    print(f"Config directory: {settings.settings_path.parent}")
+    print(f"Installation directory: {Path(toolbox.__file__).parent}")
 
 
 @track_cli_command()
@@ -135,6 +146,7 @@ def call(app_name: str, endpoint: str):
 
 app.command()(setup)
 app.command(name="settings")(show_settings)
+app.command()(info)
 app.command()(list_store)
 app.command()(install)
 app.command()(list)

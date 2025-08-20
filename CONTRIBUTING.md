@@ -40,3 +40,13 @@ Add this to your .zshrc or .bashrc to exclude yourself permanently.
 ### Dashboard Access
 
 Contact developers to get invited to the PostHog workspace for viewing metrics and error tracking.
+
+## Release to Pypi
+
+To release a new version to PyPI, update the version number in `pyproject.toml` and run:
+
+```bash
+export UV_PUBLISH_TOKEN=<your_token>
+uv build
+uv publish
+```
