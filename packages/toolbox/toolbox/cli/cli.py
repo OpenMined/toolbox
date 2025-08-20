@@ -38,7 +38,8 @@ def ensure_setup():
 @app.callback(invoke_without_command=True)
 def main(ctx: typer.Context):
     """Toolbox - A privacy-first tool for installing MCP servers"""
-    ensure_setup()
+    if ctx.invoked_subcommand != "info":
+        ensure_setup()
 
 
 @track_cli_command()
@@ -46,7 +47,6 @@ def setup():
     run_setup()
 
 
-@track_cli_command()
 def info():
     console = Console()
     console.print(f"[cyan]Toolbox version:[/cyan] {__version__}")
