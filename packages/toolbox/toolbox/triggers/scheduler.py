@@ -1,3 +1,4 @@
+import json
 import os
 import signal
 import subprocess
@@ -8,8 +9,9 @@ from pathlib import Path
 from croniter import croniter
 from loguru import logger
 
+from toolbox.daemon.app import EventModel
 from toolbox.mcp_installer.uv_utils import find_uv_path
-from toolbox.triggers.trigger_store import Trigger, TriggerDB
+from toolbox.triggers.trigger_store import Event, Trigger, TriggerDB
 
 DEFAULT_TRIGGER_TIMEOUT = 300  # Default timeout for trigger execution in seconds
 
@@ -78,12 +80,38 @@ class Scheduler:
         triggers = self.db.triggers.get_all(enabled=True, has_schedule=True)
         return [t for t in triggers if self.should_run_trigger(t, now)]
 
-    def execute_trigger(self, trigger: Trigger) -> None:
+    def _format_events_for_trigger(self, events: list[Event] | None) -> str | None:
+        if not events:
+            return None
+
+        events_json = [
+            EventModel(
+                name=event.name,
+                data=event.data,
+                timestamp=event.timestamp,
+                source=event.source,
+            ).model_dump(mode="json")
+            for event in events
+        ]
+        return json.dumps(events_json)
+
+    def execute_trigger(
+        self,
+        trigger: Trigger,
+        events: list[Event] | None = None,
+    ) -> None:
         """Execute a trigger script using uv run"""
         # Create execution record
+
         execution = self.db.executions.create(trigger.id)
+        self.db.events.mark_events_triggered(
+            trigger_id=trigger.id,
+            event_ids=[e.id for e in events],
+            execution_id=execution.id,
+        )
 
         try:
+            stdin_str = self._format_events_for_trigger(events)
             # Find UV path and run the script
             uv_path = find_uv_path()
             if uv_path is None:
@@ -98,6 +126,7 @@ class Scheduler:
                 capture_output=True,
                 text=True,
                 timeout=DEFAULT_TRIGGER_TIMEOUT,
+                input=stdin_str,
             )
 
             # Store results
@@ -139,7 +168,18 @@ class Scheduler:
 
                         # Submit each trigger to the thread pool
                         for trigger in triggers_to_run:
-                            executor.submit(self.execute_trigger, trigger)
+                            if trigger.is_event_based:
+                                events = self.db.events.get_events_for_trigger(
+                                    trigger, is_consumed=False
+                                )
+                                if len(events) == 0:
+                                    logger.info(
+                                        f"No events found for trigger {trigger.name}"
+                                    )
+                                    continue
+                                executor.submit(self.execute_trigger, trigger, events)
+                            else:
+                                executor.submit(self.execute_trigger, trigger)
 
                         time.sleep(1)
 

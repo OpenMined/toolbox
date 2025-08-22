@@ -11,6 +11,7 @@ members = [
     "slack-mcp",
     "syft-toolbox",
     "syftbox-queryengine",
+    "toolbox-events",
     "toolbox-mono",
     "whatsapp-desktop-mcp",
 ]
@@ -2311,6 +2312,33 @@ wheels = [
 ]
 
 [[package]]
+name = "toolbox-events"
+version = "0.1.0"
+source = { editable = "packages/toolbox_events" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-xdist" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "pydantic-settings", specifier = ">=2.10.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
+]
+
+[[package]]
 name = "toolbox-mono"
 version = "0.1.0"
 source = { editable = "." }
@@ -2321,6 +2349,7 @@ dependencies = [
     { name = "slack-mcp" },
     { name = "syft-toolbox" },
     { name = "syftbox-queryengine" },
+    { name = "toolbox-events" },
     { name = "whatsapp-desktop-mcp" },
 ]
 
@@ -2338,6 +2367,7 @@ requires-dist = [
     { name = "slack-mcp", editable = "packages/slack_mcp" },
     { name = "syft-toolbox", editable = "packages/toolbox" },
     { name = "syftbox-queryengine", editable = "packages/syftbox_queryengine" },
+    { name = "toolbox-events", editable = "packages/toolbox_events" },
     { name = "whatsapp-desktop-mcp", editable = "packages/whatsapp_desktop_mcp" },
 ]
 

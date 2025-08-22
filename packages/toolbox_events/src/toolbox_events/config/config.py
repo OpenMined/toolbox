@@ -1,0 +1,27 @@
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class EventSinkConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="TOOLBOX_EVENTS_SINK_",
+        case_sensitive=False,
+    )
+
+    kind: str = "memory"
+    source_name: str = "unknown"
+
+    # HTTP sink settings
+    daemon_url: str = "http://localhost:8000"
+    batch_size: int = 10
+    batch_timeout: float = 5.0
+    timeout: float = 30.0
+    headers: dict[str, str] = {}
+
+
+class EventSourceConfig(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="TOOLBOX_EVENTS_SOURCE_",
+        case_sensitive=False,
+    )
+
+    kind: str = "memory"

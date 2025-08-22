@@ -12,6 +12,7 @@ dependencies = [
     "whatsapp_desktop_mcp",
     "obsidian_mcp",
     "pdf_mcp",
+    "toolbox_events",
 ]
 
 [build-system]
@@ -26,6 +27,7 @@ whatsapp_desktop_mcp = { workspace = true }
 syftbox_queryengine = { workspace = true }
 pdf_mcp = { workspace = true }
 obsidian_mcp = { workspace = true }
+toolbox_events = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*"]
