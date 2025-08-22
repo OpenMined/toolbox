@@ -24,14 +24,6 @@ def scheduler(db):
 
 
 @pytest.fixture
-def test_script_path():
-    """Path to the test script for integration tests"""
-    script_path = Path(__file__).parent / "assets" / "test_event_script.py"
-    assert script_path.exists(), f"Test script not found: {script_path}"
-    return script_path
-
-
-@pytest.fixture
 def script_summary_file(tmp_path, monkeypatch):
     """Manages test output file cleanup with unique paths per test"""
     summary_file = tmp_path / "test_script_output.json"
@@ -345,7 +337,7 @@ def test_execute_trigger_event_name_filtering(
 
 def test_execute_trigger_event_source_filtering(scheduler):
     """Integration test: Event filtering by source"""
-    test_script_path = Path(__file__).parent / "assets" / "test_event_script.py"
+    test_script_path = Path(__file__).parent.parent / "assets" / "test_event_script.py"
     now = utcnow()
     output_dir = Path("/tmp/toolbox_test_output")
     summary_file = output_dir / "test_script_output.json"
@@ -388,7 +380,7 @@ def test_execute_trigger_event_source_filtering(scheduler):
 
 def test_execute_trigger_combined_filtering(scheduler):
     """Integration test: Event filtering by name AND source"""
-    test_script_path = Path(__file__).parent / "assets" / "test_event_script.py"
+    test_script_path = Path(__file__).parent.parent / "assets" / "test_event_script.py"
     now = utcnow()
     output_dir = Path("/tmp/toolbox_test_output")
     summary_file = output_dir / "test_script_output.json"

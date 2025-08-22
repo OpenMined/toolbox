@@ -83,7 +83,7 @@ class Scheduler:
             }
             for event in events
         ]
-        return json.dumps(events_json)
+        return json.dumps({"events": events_json})
 
     def execute_from_scheduler(
         self,

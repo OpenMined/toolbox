@@ -1,9 +1,3 @@
-# /// script
-# dependencies = [
-#   "requests<3",
-# ]
-# ///
-
 import json
 import sys
 from pathlib import Path
@@ -12,16 +6,13 @@ from pathlib import Path
 def main():
     """Test script that processes events from stdin and writes output for testing"""
 
-    # Read events from stdin (JSON format)
-    try:
-        events_data = sys.stdin.read().strip()
-        if not events_data:
-            events = []
-        else:
-            events = json.loads(events_data)
-    except json.JSONDecodeError as e:
-        print(f"ERROR: Failed to parse events JSON: {e}", file=sys.stderr)
-        sys.exit(1)
+    # Read events from stdin (JSON format with "events" wrapper)
+    events_data = sys.stdin.read().strip()
+    if not events_data:
+        events = []
+    else:
+        data = json.loads(events_data)
+        events = data.get("events", [])
 
     # Process the events
     print(f"RECEIVED_EVENTS_COUNT: {len(events)}")
