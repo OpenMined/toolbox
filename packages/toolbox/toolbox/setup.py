@@ -2,7 +2,6 @@ import typer
 from rich.console import Console
 from rich.panel import Panel
 
-from toolbox.analytics import TOOLBOX_TEST_USER
 from toolbox.settings import settings
 
 WELCOME_MESSAGE = """🧰 Welcome to Toolbox!
@@ -36,7 +35,7 @@ def run_setup():
 
     console.print()
     console.print(ANALYTICS_MESSAGE)
-    if TOOLBOX_TEST_USER:
+    if settings.dev_mode:
         settings.analytics_enabled = False
     elif typer.confirm("Disable analytics?", default=False):
         settings.analytics_enabled = False
