@@ -15,7 +15,6 @@ dependencies = [
     "sqlite-vec>=0.1.7a2",
     "rapidfuzz>=3.13.0",
     "requests>=2.32.4",
-    "pytest>=8.4.1",
     "fastapi>=0.116.1",
 ]
 
@@ -27,3 +26,9 @@ markers = [
     "live: marks tests as requiring live Discord API access (deselect with '-m \"not live\"')"
 ]
 addopts = "-m 'not live' -v"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.1",
+    "pytest-xdist>=3.8.0",
+]
