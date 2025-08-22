@@ -1,13 +1,12 @@
 import threading
 from contextlib import asynccontextmanager
-from datetime import datetime
-from typing import Any
 
 from fastapi import APIRouter, Depends, FastAPI
 from loguru import logger
 from pydantic import BaseModel
 
 from toolbox.daemon.dependencies import get_trigger_db
+from toolbox.triggers.models import Event
 from toolbox.triggers.scheduler import Scheduler
 from toolbox.triggers.trigger_store import TriggerDB, get_db
 
@@ -58,15 +57,8 @@ async def lifespan(app: FastAPI):
         logger.info("Toolbox daemon shutdown complete")
 
 
-class EventModel(BaseModel):
-    name: str
-    data: dict[str, Any]
-    timestamp: datetime
-    source: str | None = None
-
-
 class IngestEventsRequest(BaseModel):
-    events: list[EventModel]
+    events: list[Event]
 
 
 class IngestEventsResponse(BaseModel):

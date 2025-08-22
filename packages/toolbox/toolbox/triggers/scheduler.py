@@ -9,9 +9,9 @@ from pathlib import Path
 from croniter import croniter
 from loguru import logger
 
-from toolbox.daemon.app import EventModel
 from toolbox.mcp_installer.uv_utils import find_uv_path
-from toolbox.triggers.trigger_store import Event, Trigger, TriggerDB
+from toolbox.triggers.models import Event
+from toolbox.triggers.trigger_store import Trigger, TriggerDB
 
 DEFAULT_TRIGGER_TIMEOUT = 300  # Default timeout for trigger execution in seconds
 
@@ -85,7 +85,7 @@ class Scheduler:
             return None
 
         events_json = [
-            EventModel(
+            Event(
                 name=event.name,
                 data=event.data,
                 timestamp=event.timestamp,

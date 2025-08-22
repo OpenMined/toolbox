@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        package: [discord_mcp, toolbox]
+        package: [discord_mcp, toolbox, toolbox_events]
 
     steps:
       - uses: actions/checkout@v4
