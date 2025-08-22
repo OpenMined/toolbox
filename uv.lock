@@ -11,7 +11,7 @@ members = [
     "slack-mcp",
     "syft-toolbox",
     "syftbox-queryengine",
-    "toolbox_events",
+    "toolbox-events",
     "toolbox-mono",
     "whatsapp-desktop-mcp",
 ]
@@ -2312,7 +2312,7 @@ wheels = [
 ]
 
 [[package]]
-name = "toolbox_events"
+name = "toolbox-events"
 version = "0.1.0"
 source = { editable = "packages/toolbox_events" }
 dependencies = [
@@ -2349,13 +2349,15 @@ dependencies = [
     { name = "slack-mcp" },
     { name = "syft-toolbox" },
     { name = "syftbox-queryengine" },
-    { name = "toolbox_events" },
+    { name = "toolbox-events" },
     { name = "whatsapp-desktop-mcp" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-xdist" },
     { name = "ruff" },
 ]
 
@@ -2367,13 +2369,15 @@ requires-dist = [
     { name = "slack-mcp", editable = "packages/slack_mcp" },
     { name = "syft-toolbox", editable = "packages/toolbox" },
     { name = "syftbox-queryengine", editable = "packages/syftbox_queryengine" },
-    { name = "toolbox_events", editable = "packages/toolbox_events" },
+    { name = "toolbox-events", editable = "packages/toolbox_events" },
     { name = "whatsapp-desktop-mcp", editable = "packages/whatsapp_desktop_mcp" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "pre-commit", specifier = ">=4.2.0" },
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "ruff", specifier = ">=0.12.9" },
 ]
 
