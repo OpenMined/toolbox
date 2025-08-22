@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     use_discord_env_var: bool = Field(default=True)
 
     analytics_enabled: bool = Field(default=True)
+    dev_mode: bool = Field(default=False)
 
     model_config = SettingsConfigDict(json_file=TOOLBOX_CONFIG_FILE)
 

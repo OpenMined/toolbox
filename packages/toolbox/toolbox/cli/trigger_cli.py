@@ -5,6 +5,7 @@ from rich.console import Console
 from sqlalchemy.exc import IntegrityError
 
 from toolbox.analytics import track_cli_command
+from toolbox.triggers.scheduler import Scheduler
 from toolbox.triggers.trigger_store import get_db
 
 console = Console()
@@ -67,6 +68,22 @@ def add(
         raise typer.Exit(1)
     except Exception as e:
         typer.echo(f"Error creating trigger: {e}", err=True)
+        raise typer.Exit(1)
+
+
+@app.command()
+@track_cli_command("trigger run")
+def run(
+    name: str = typer.Argument(..., help="Name of the trigger to run"),
+):
+    """Run a trigger manually"""
+    db = get_db()
+    trigger = db.triggers.get_by_name(name)
+    try:
+        scheduler = Scheduler(db)
+        scheduler.execute_trigger(trigger)
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
         raise typer.Exit(1)
 
 

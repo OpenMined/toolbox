@@ -244,7 +244,9 @@ def get_messages_from_dm(conn, author_id: str, n_days_old: int) -> list[DiscordM
     return [DiscordMessage.from_sql_row(row) for row in cursor.fetchall()]
 
 
-def get_messages_from_all_channels(conn, n_days_old: int) -> list[DiscordMessage]:
+def get_messages_from_all_channels(
+    conn, n_days_old: int, limit: int = -1
+) -> list[DiscordMessage]:
     """Get messages from all channels within the last n days"""
     cursor = conn.cursor()
     cutoff_date = (datetime.now() - timedelta(days=n_days_old)).isoformat()
@@ -254,8 +256,9 @@ def get_messages_from_all_channels(conn, n_days_old: int) -> list[DiscordMessage
         SELECT * FROM messages
         WHERE timestamp >= ?
         ORDER BY timestamp DESC
+        LIMIT ?
     """,
-        (cutoff_date,),
+        (cutoff_date, limit),
     )
 
     return [DiscordMessage.from_sql_row(row) for row in cursor.fetchall()]

@@ -15,10 +15,6 @@ POSTHOG_PUBLIC_KEY = os.getenv(
     "POSTHOG_API_KEY", default="phc_TropYqZrmdCFGIawoLCB7auDIfBMwjTNJlJbd4EJuQg"
 )
 POSTHOG_HOST = os.getenv("POSTHOG_HOST", "https://us.i.posthog.com")
-TOOLBOX_TEST_USER = os.getenv("TOOLBOX_TEST_USER", "false").lower() in (
-    "true",
-    "1",
-)
 
 posthog = Posthog(
     project_api_key=POSTHOG_PUBLIC_KEY,
@@ -64,7 +60,7 @@ def posthog_safe_capture(
 ) -> None:
     properties = properties or {}
     properties["toolbox_version"] = __version__
-    properties["toolbox_test_user"] = TOOLBOX_TEST_USER
+    properties["toolbox_test_user"] = settings.dev_mode
 
     try:
         user_id = distinct_id or get_anonymous_user_id()

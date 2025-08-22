@@ -278,7 +278,7 @@ class DiscordMCPDataStatsCallback(Callback):
         res = {}
         try:
             conn = _get_discord_connection()
-            res["# channels"] = get_n_embeddings_discord(conn)
+            res["# embeddings"] = get_n_embeddings_discord(conn)
         except Exception as e:
             res["error"] = str(e)
 

@@ -53,6 +53,7 @@ class StoreElement(BaseModel):
     package_url: str | None = None
     subdirectory: str | None = None
     branch: str | None = None
+    supported_clients: list[str] = ["claude"]
 
     def healthcheck(self) -> bool:
         raise NotImplementedError("Healthcheck not implemented")
@@ -132,6 +133,7 @@ class DiscordMCP(StoreElement):
     package_url: str = "https://github.com/OpenMined/toolbox"
     subdirectory: str = "packages/discord_mcp"
     branch: str = "main"
+    supported_clients: list[str] = ["claude", "claude-code"]
     callbacks: list[Callback] = [
         DiscordAuthCallback(),
         DiscordMCPDataStatsCallback(),

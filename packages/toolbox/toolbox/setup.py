@@ -35,8 +35,9 @@ def run_setup():
 
     console.print()
     console.print(ANALYTICS_MESSAGE)
-
-    if typer.confirm("Disable analytics?", default=False):
+    if settings.dev_mode:
+        settings.analytics_enabled = False
+    elif typer.confirm("Disable analytics?", default=False):
         settings.analytics_enabled = False
     else:
         settings.analytics_enabled = True

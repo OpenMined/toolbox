@@ -1,4 +1,6 @@
 packages/notes_mcp/data/*
+.claude/settings.local.json
+*/.DS_Store
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
