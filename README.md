@@ -8,13 +8,18 @@
 
 # Toolbox
 
-Toolbox is a cli tool for installing and managing [MCP](https://github.com/modelcontextprotocol/python-sdk) servers and background agents, made for developers.
+Toolbox is a cli tool for installing and managing [MCP](https://github.com/modelcontextprotocol/python-sdk) servers and background agents, **made for developers**.
 
-- Toolbox aims to support popular developer tools (think github, slack, discord, gmail etc.), and clients (claude desktop, cursor), making it easier to deploy useful MCP servers
-- With toolbox you can install **mcp servers**, **background agents** and their dependencies using the `toolbox install <appname>` command
-- **mcp servers** are servers that provide context for LLMs in a standardized way, mostly used for tool calling
-- **background agents** are long running processes that create new data based on your existing data (think [RAG](https://en.wikipedia.org/wiki/Retrieval-augmented_generation), [OCR](https://en.wikipedia.org/wiki/Optical_character_recognition),[speech recognition](https://en.wikipedia.org/wiki/Speech_recognition))
-- we provide the option to run some of these agents/mcp server in the cloud for free, with the medium term vision of deploying those components in [trusted execution environments](https://en.wikipedia.org/wiki/Trusted_execution_environment). The first beta versions wont have trusted execution environments, but we wont store any sensitive user data (only meta data). In the long term we plan to make these available at break-even cost (OpenMined is non-profit so we wont make money)
+- Toolbox support popular developer tools (think github, slack, discord, obsidian, gmail etc.), and clients (claude desktop, cursor), making it easier to deploy useful MCP servers
+- With toolbox you can install **mcp servers** with **background agents** and their dependencies using
+ `toolbox install <appname>`
+- background agents download your data or index it (OCR/transcription/embeddings for RAG); you can choose between fully local or free hosted in [openmined enclaves](#hosted-option-with-enclaves) 
+
+## Use cases
+- 🧠🔎 Customizable, Custom Topic Tracking (Discord, Whatsapp, Github, Slack) Follow technical topics across multiple Discord servers (or other sources) with periodic, fully customizable summaries. Tailor what you want to see using simple prompt files — get only the updates that matter, automatically and efficiently.
+- 📋⚡ One-Command Ticket Creation (Obsidian, Github) — Turn your Obsidian TODOs into GitHub issues with a single command: no copy-pasting, no clicking, just seamless ticket creation directly from your notes.
+- 🔔✨ LLM-driven custom notifications (Slack, Discord, Whatsapp) Use simple prompts or code to write instructions to decide when a message deserves a reminder (forgot to respond, missed a todo, etc)
+- 📊🪄 Organize your communication for Projects or Campaigns (Slack, Discord, Google Sheets, Google Calendar) Log every person you’ve reached out to around a certain topic into a Google Sheet, complete with date, calendar events and status
 
 ## Requirements
 
@@ -136,3 +141,8 @@ We collect anonymous analytics to understand how the cli is used. The data we tr
 - **Anonymous user ID**: A randomly generated UUID stored locally to understand usage patterns across multiple CLI commands
 
 To opt out, run `tb setup` and disable analytics.
+
+
+## Hosted option with enclaves
+we provide the option to run some of these agents/mcp server in the cloud for free, with the medium term vision of deploying those components in [trusted execution environments](https://en.wikipedia.org/wiki/Trusted_execution_environment). The first beta versions wont have trusted execution environments, but we wont store any sensitive user data (only meta data). In the long term we plan to make these available at break-even cost (OpenMined is non-profit so we wont make money)
+

@@ -1,6 +1,7 @@
 import json
 import platform
 from pathlib import Path
+import subprocess
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -11,9 +12,11 @@ if TYPE_CHECKING:
 HOME = Path.home()
 
 
-CLAUDE_CONFIG_FILE = (
+CLAUDE_DESKTOP_CONFIG_FILE = (
     f"{HOME}/Library/Application Support/Claude/claude_desktop_config.json"
 )
+
+CLAUDE_CODE_CONFIG_FILE = f"{HOME}/.claude.json"
 
 
 class MCPConfigItem(BaseModel):
@@ -30,6 +33,14 @@ def is_claude_installed_macos():
     return any(path.exists() for path in possible_paths)
 
 
+def is_claude_code_installed_macos():
+    try:
+        subprocess.check_output(["claude", "--version"])
+        return True
+    except subprocess.CalledProcessError:
+        return False
+
+
 def claude_desktop_installed():
     if platform.system() == "Darwin":
         return is_claude_installed_macos()
@@ -37,12 +48,21 @@ def claude_desktop_installed():
         raise RuntimeError("Currently only macOS is supported")
 
 
+def claude_code_installed():
+    if platform.system() == "Darwin":
+        return is_claude_code_installed_macos()
+    else:
+        raise RuntimeError("Currently only macOS is supported")
+
+
 MCP_CLIENT_INSTALLATION_CHECKS = {
     "claude": claude_desktop_installed,
+    "claude-code": claude_code_installed,
 }
 
 MCP_CLIENT_NOT_EXIST_ERROR_MESSAGES = {
     "claude": "Claude Desktop is not installed. Please install it from https://claude.ai/download",
+    "claude-code": "Claude Code is not installed. Please install it from https://docs.anthropic.com/en/docs/claude-code/setup",
 }
 
 
@@ -56,8 +76,8 @@ def check_mcp_client_installation(mcp_client: str):
 def current_claude_desktop_config(load_if_not_exists: bool = True):
     if platform.system() != "Darwin":
         raise RuntimeError("Currently only macOS is supported")
-    if Path(CLAUDE_CONFIG_FILE).exists():
-        with open(CLAUDE_CONFIG_FILE, "r") as f:
+    if Path(CLAUDE_DESKTOP_CONFIG_FILE).exists():
+        with open(CLAUDE_DESKTOP_CONFIG_FILE, "r") as f:
             return json.load(f)
     else:
         if load_if_not_exists:
@@ -66,26 +86,32 @@ def current_claude_desktop_config(load_if_not_exists: bool = True):
             }
         else:
             raise FileNotFoundError(
-                f"Claude config file {CLAUDE_CONFIG_FILE} not found"
+                f"Claude config file {CLAUDE_DESKTOP_CONFIG_FILE} not found"
+            )
+
+
+def current_claude_code_config(load_if_not_exists: bool = True):
+    if platform.system() != "Darwin":
+        raise RuntimeError("Currently only macOS is supported")
+    if Path(CLAUDE_CODE_CONFIG_FILE).exists():
+        with open(CLAUDE_CODE_CONFIG_FILE, "r") as f:
+            return json.load(f)
+    else:
+        if load_if_not_exists:
+            return {
+                "mcpServers": {},
+            }
+        else:
+            raise FileNotFoundError(
+                f"Claude config file {CLAUDE_DESKTOP_CONFIG_FILE} not found"
             )
 
 
 def write_claude_desktop_config(claude_desktop_config: dict):
-    with open(CLAUDE_CONFIG_FILE, "w") as f:
+    with open(CLAUDE_DESKTOP_CONFIG_FILE, "w") as f:
         json.dump(claude_desktop_config, f, indent=4)
 
 
-def get_claude_config_items() -> list["MCPConfigItem"]:
-    from toolbox.installer import MCPConfigItem
-
-    full_json = current_claude_desktop_config()
-    res = []
-    for name, json_body in full_json["mcpServers"].items():
-        res.append(
-            MCPConfigItem(
-                name=name,
-                json_body=json_body,
-                client="claude",
-            )
-        )
-    return res
+def write_claude_code_config(claude_code_config: dict):
+    with open(CLAUDE_CODE_CONFIG_FILE, "w") as f:
+        json.dump(claude_code_config, f, indent=4)
