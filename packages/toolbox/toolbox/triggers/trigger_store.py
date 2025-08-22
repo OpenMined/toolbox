@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Self
 
-from croniter import croniter
 from sqlalchemy import JSON, DateTime, Integer, String, create_engine
 from sqlalchemy.engine import Dialect, Engine
 from sqlalchemy.orm import (
@@ -18,6 +17,7 @@ from sqlalchemy.sql import func
 from sqlalchemy.types import Boolean, TypeDecorator
 
 from toolbox.db import TOOLBOX_DB_DIR
+from toolbox.triggers.cron_utils import calculate_next_run_time, is_valid_cron
 
 TRIGGER_DB_PATH = TOOLBOX_DB_DIR / "triggers.db"
 
@@ -88,6 +88,9 @@ class Trigger(Base):
     event_sources: Mapped[list[str] | None] = mapped_column(
         JSON, nullable=True, default=None
     )
+    next_run_at: Mapped[datetime | None] = mapped_column(
+        DateTimeUTC(), index=True, nullable=True
+    )
 
     @property
     def is_event_based(self) -> bool:
@@ -146,9 +149,21 @@ class TriggerStore:
         cron_schedule: str | None,
         script_path: str | Path,
         enabled: bool = True,
+        event_names: list[str] | None = None,
+        event_sources: list[str] | None = None,
     ) -> Trigger:
-        if not croniter.is_valid(cron_schedule):
+        # Validate cron schedule if provided
+        if cron_schedule and not is_valid_cron(cron_schedule):
             raise ValueError(f"Invalid cron schedule: {cron_schedule}")
+
+        # Calculate next_run_at if we have a cron schedule and trigger is enabled
+        next_run_at = None
+        if cron_schedule and enabled:
+            try:
+                next_run_at = calculate_next_run_time(cron_schedule, utcnow())
+            except ValueError:
+                # Invalid cron - will be set to None
+                pass
 
         with self.session_factory() as session:
             with session.begin():
@@ -162,6 +177,9 @@ class TriggerStore:
                         cron_schedule=cron_schedule,
                         script_path=str(script_path),
                         enabled=enabled,
+                        next_run_at=next_run_at,
+                        event_names=event_names,
+                        event_sources=event_sources,
                     )
                     session.add(trigger)
                     session.flush()  # Get the actual ID
@@ -177,6 +195,9 @@ class TriggerStore:
                         cron_schedule=cron_schedule,
                         script_path=str(script_path),
                         enabled=enabled,
+                        next_run_at=next_run_at,
+                        event_names=event_names,
+                        event_sources=event_sources,
                     )
                     session.add(trigger)
                     session.flush()
@@ -193,28 +214,52 @@ class TriggerStore:
         cron_schedule=_UNSET,
         script_path=_UNSET,
     ) -> bool:
-        """Update trigger fields. Use None to explicitly set nullable fields to None.
+        """Update trigger fields and recalculate next_run_at if needed.
         Returns True if a row was updated, False if trigger not found."""
-        updates = {}
 
-        if enabled is not _UNSET:
-            updates["enabled"] = enabled
-
-        if cron_schedule is not _UNSET:
-            updates["cron_schedule"] = cron_schedule
-
-        if script_path is not _UNSET:
-            updates["script_path"] = str(script_path)
-
-        if not updates:
-            return False  # No updates to perform
+        # Validate cron schedule if being updated
+        if (
+            cron_schedule is not _UNSET
+            and cron_schedule is not None
+            and not is_valid_cron(cron_schedule)
+        ):
+            raise ValueError(f"Invalid cron schedule: {cron_schedule}")
 
         with self.session_factory() as session:
             with session.begin():
-                rows_updated = (
-                    session.query(Trigger).filter(Trigger.id == id_).update(updates)
-                )
-                return rows_updated > 0
+                trigger = session.query(Trigger).filter(Trigger.id == id_).first()
+                if not trigger:
+                    return False
+
+                # Track if we need to recalculate next_run_at
+                recalc_next_run = False
+
+                if enabled is not _UNSET:
+                    trigger.enabled = enabled
+                    recalc_next_run = True
+
+                if cron_schedule is not _UNSET:
+                    trigger.cron_schedule = cron_schedule
+                    recalc_next_run = True
+
+                if script_path is not _UNSET:
+                    trigger.script_path = str(script_path)
+
+                # Recalculate next_run_at if enabled/cron_schedule changed
+                if recalc_next_run:
+                    if trigger.enabled and trigger.cron_schedule:
+                        try:
+                            trigger.next_run_at = calculate_next_run_time(
+                                trigger.cron_schedule, utcnow()
+                            )
+                        except ValueError:
+                            # Invalid cron schedule - set to None
+                            trigger.next_run_at = None
+                    else:
+                        # Disabled or no cron schedule - set to None
+                        trigger.next_run_at = None
+
+                return True
 
     def get(self, id_: int) -> Trigger | None:
         with self.session_factory() as session:
@@ -252,6 +297,30 @@ class TriggerStore:
 
             return query.all()
 
+    def get_due_triggers(self, now: datetime) -> list[Trigger]:
+        """Get all enabled triggers that are due to run now.
+
+        This method efficiently queries triggers using the next_run_at index,
+        avoiding expensive cron calculations in the scheduler loop.
+
+        Args:
+            now: Current UTC datetime to check against
+
+        Returns:
+            List of triggers that should run now
+        """
+        with self.session_factory() as session:
+            return (
+                session.query(Trigger)
+                .filter(
+                    Trigger.enabled,
+                    Trigger.next_run_at.is_not(None),
+                    Trigger.next_run_at <= now,
+                )
+                .order_by(Trigger.next_run_at.asc())
+                .all()
+            )
+
     def delete(self, id_: int) -> bool:
         with self.session_factory() as session:
             with session.begin():
@@ -271,6 +340,45 @@ class TriggerStore:
             with session.begin():
                 rows_deleted = session.query(Trigger).delete()
                 return rows_deleted > 0
+
+    def update_next_run_time(
+        self, trigger_id: int, from_time: datetime | None = None
+    ) -> bool:
+        """Update the next_run_at time for a trigger based on its cron schedule.
+
+        Args:
+            trigger_id: ID of the trigger to update
+            from_time: Time to calculate from (defaults to now)
+
+        Returns:
+            True if trigger was found and updated, False otherwise
+        """
+        if from_time is None:
+            from_time = utcnow()
+
+        with self.session_factory() as session:
+            with session.begin():
+                trigger = (
+                    session.query(Trigger).filter(Trigger.id == trigger_id).first()
+                )
+
+                if not trigger:
+                    return False
+
+                # Only update if trigger has a cron schedule and is enabled
+                if not trigger.cron_schedule or not trigger.enabled:
+                    # Set to None for event-based or disabled triggers
+                    trigger.next_run_at = None
+                else:
+                    try:
+                        trigger.next_run_at = calculate_next_run_time(
+                            trigger.cron_schedule, from_time
+                        )
+                    except ValueError:
+                        # Invalid cron schedule - set to None
+                        trigger.next_run_at = None
+
+                return True
 
 
 class EventStore:
@@ -382,10 +490,8 @@ class EventStore:
 
             # Filter by consumption status
             if is_consumed is not None:
-                consumed_event_ids = (
-                    session.query(TriggeredEvent.event_id)
-                    .filter(TriggeredEvent.trigger_id == trigger.id)
-                    .subquery()
+                consumed_event_ids = session.query(TriggeredEvent.event_id).filter(
+                    TriggeredEvent.trigger_id == trigger.id
                 )
                 if is_consumed:
                     # Only get events consumed by this trigger

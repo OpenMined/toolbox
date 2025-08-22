@@ -6,7 +6,6 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from croniter import croniter
 from loguru import logger
 
 from toolbox.mcp_installer.uv_utils import find_uv_path
@@ -54,59 +53,64 @@ class Scheduler:
         except FileNotFoundError:
             pass
 
-    def should_run_trigger(self, trigger: Trigger, now: datetime) -> bool:
-        """Check if trigger should run based on cron schedule and last execution"""
-        # Get last completed execution
-        last_executions = self.db.executions.get_all(
-            trigger_id=trigger.id, completed=True, limit=1
-        )
-
-        if not last_executions:
-            # Never run before - check if current minute matches
-            now_minute = now.replace(second=0, microsecond=0)
-            return croniter.match(trigger.cron_schedule, now_minute)
-
-        # Check  if we're overdue based on last execution
-        last_run = last_executions[0].completed_at
-        iter = croniter(trigger.cron_schedule, last_run)
-        next_due = iter.get_next(datetime)
-
-        logger.debug(f"Next due: {next_due}, now: {now}")
-
-        return next_due <= now
-
-    def get_triggers_to_run(self, now: datetime) -> list[Trigger]:
-        """Get all enabled triggers that should run now"""
-        triggers = self.db.triggers.get_all(enabled=True, has_schedule=True)
-        return [t for t in triggers if self.should_run_trigger(t, now)]
+    def _process_triggers(self, executor, now: datetime) -> None:
+        """Process all due triggers by submitting them to the thread pool"""
+        for trigger in self.db.triggers.get_due_triggers(now):
+            if trigger.is_event_based:
+                events = self.db.events.get_events_for_trigger(
+                    trigger, is_consumed=False
+                )
+                if len(events) == 0:
+                    logger.debug(
+                        f"No events found for trigger {trigger.name} - skipping"
+                    )
+                    continue
+                executor.submit(self.execute_from_scheduler, trigger, events)
+            else:
+                executor.submit(self.execute_from_scheduler, trigger)
 
     def _format_events_for_trigger(self, events: list[Event] | None) -> str | None:
         if not events:
             return None
 
         events_json = [
-            Event(
-                name=event.name,
-                data=event.data,
-                timestamp=event.timestamp,
-                source=event.source,
-            ).model_dump(mode="json")
+            {
+                "id": event.id,
+                "name": event.name,
+                "data": event.data,
+                "timestamp": event.timestamp.isoformat(),
+                "source": event.source,
+            }
             for event in events
         ]
         return json.dumps(events_json)
+
+    def execute_from_scheduler(
+        self,
+        trigger: Trigger,
+        events: list[Event] | None = None,
+        show_output: bool = False,
+    ) -> None:
+        """Execute a trigger from the scheduler - handles scheduling and execution"""
+        # Update next_run_at FIRST, before execution starts
+        if trigger.cron_schedule and trigger.enabled:
+            self.db.triggers.update_next_run_time(trigger.id)
+
+        # Then execute the trigger
+        self.execute_trigger(trigger, events, show_output)
 
     def execute_trigger(
         self,
         trigger: Trigger,
         events: list[Event] | None = None,
+        show_output: bool = False,
     ) -> None:
         """Execute a trigger script using uv run"""
         # Create execution record
-
         execution = self.db.executions.create(trigger.id)
         self.db.events.mark_events_triggered(
             trigger_id=trigger.id,
-            event_ids=[e.id for e in events],
+            event_ids=[e.id for e in events] if events else [],
             execution_id=execution.id,
         )
 
@@ -132,6 +136,12 @@ class Scheduler:
             # Store results
             logs = f"STDOUT:\n{result.stdout}\nSTDERR:\n{result.stderr}"
             self.db.executions.set_completed(execution.id, result.returncode, logs)
+
+            if show_output:
+                if result.stdout:
+                    print(result.stdout)
+                if result.stderr:
+                    print(result.stderr, file=sys.stderr)
 
         except subprocess.TimeoutExpired:
             self.db.executions.set_completed(execution.id, -1, "Execution timed out")
@@ -164,23 +174,7 @@ class Scheduler:
                 while self.running:
                     try:
                         now = datetime.now(timezone.utc)
-                        triggers_to_run = self.get_triggers_to_run(now)
-
-                        # Submit each trigger to the thread pool
-                        for trigger in triggers_to_run:
-                            if trigger.is_event_based:
-                                events = self.db.events.get_events_for_trigger(
-                                    trigger, is_consumed=False
-                                )
-                                if len(events) == 0:
-                                    logger.info(
-                                        f"No events found for trigger {trigger.name}"
-                                    )
-                                    continue
-                                executor.submit(self.execute_trigger, trigger, events)
-                            else:
-                                executor.submit(self.execute_trigger, trigger)
-
+                        self._process_triggers(executor, now)
                         time.sleep(1)
 
                     except Exception as e:

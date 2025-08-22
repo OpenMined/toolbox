@@ -217,6 +217,29 @@ def remove(
 
 
 @app.command()
+@track_cli_command("trigger run")
+def run(
+    name: str = typer.Argument(..., help="Name of the trigger to run"),
+):
+    """Run a trigger immediately"""
+    from toolbox.triggers.scheduler import Scheduler
+
+    db = get_db()
+    trigger = db.triggers.get_by_name(name)
+
+    if not trigger:
+        typer.echo(f"Error: Trigger '{name}' not found", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"Running trigger '{name}'...")
+
+    scheduler = Scheduler(db)
+    scheduler.execute_trigger(trigger, show_output=True)
+
+    typer.echo("✓ Trigger execution completed")
+
+
+@app.command()
 @track_cli_command("trigger reset")
 def reset():
     """Reset the trigger database"""
