@@ -10,7 +10,7 @@
 
 Toolbox is a cli tool for installing and managing [MCP](https://github.com/modelcontextprotocol/python-sdk) servers and background agents, **made for developers**.
 
-- Toolbox support popular developer tools (think github, slack, discord, obsidian, gmail etc.), and clients (claude desktop, cursor), making it easier to deploy useful MCP servers
+- Toolbox supports popular developer tools (think github, slack, discord, obsidian, gmail etc.), and clients (claude desktop, cursor), making it easier to deploy useful MCP servers
 - With toolbox you can install **mcp servers** with **background agents** and their dependencies using
  `toolbox install <appname>`
 - background agents download your data or index it (OCR/transcription/embeddings for RAG); you can choose between fully local or free hosted in [openmined enclaves](#hosted-option-with-enclaves) 
