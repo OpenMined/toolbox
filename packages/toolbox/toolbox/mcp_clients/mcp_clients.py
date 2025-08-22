@@ -1,7 +1,7 @@
 import json
 import platform
-from pathlib import Path
 import subprocess
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel

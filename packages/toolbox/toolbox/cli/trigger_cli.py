@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from toolbox.triggers.scheduler import Scheduler
 import typer
 from rich.console import Console
 from sqlalchemy.exc import IntegrityError
 
 from toolbox.analytics import track_cli_command
+from toolbox.triggers.scheduler import Scheduler
 from toolbox.triggers.trigger_store import get_db
 
 console = Console()

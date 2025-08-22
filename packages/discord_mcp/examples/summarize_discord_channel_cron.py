@@ -6,8 +6,8 @@ out_path.mkdir(parents=True, exist_ok=True)
 
 prompt = f"""
 Can you call the discord mcp server to get messages from discord using the search_messages endpoint.
-I am looking for messages that write about 'effective claude code usage' and write them to a file 
-{out_path}/discord_relevant_messages_<date>.json. 
+I am looking for messages that write about 'effective claude code usage' and write them to a file
+{out_path}/discord_relevant_messages_<date>.json.
 
 Make sure to read the results and check it they are actually providing insights about
 effective claude code usage, I am mostly interested in workflows people use to code faster,
@@ -30,10 +30,10 @@ Use the following format: for the output,
 ]
 Please dont write additional scripts, just write any interesting results.
 
-Then, after this, read all the messages from the file and summarize them into a single document 
+Then, after this, read all the messages from the file and summarize them into a single document
 {out_path}/summary_<date>.md, try to summarize the most important insights and workflows people
 use to code faster, more efficient around certain topics.
-Start by summarizing the top 3 findings in 1 or 2 sentences each. 
+Start by summarizing the top 3 findings in 1 or 2 sentences each.
 Include a link to the message(s) that are relevant for the finding, keep this document short, add nothing else.
 """
 

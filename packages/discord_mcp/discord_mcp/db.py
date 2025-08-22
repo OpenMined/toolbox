@@ -216,7 +216,7 @@ def get_messages_from_channel(
 
     cursor.execute(
         """
-        SELECT * FROM messages 
+        SELECT * FROM messages
         WHERE channel_id = ? AND timestamp >= ?
         ORDER BY timestamp DESC
     """,
@@ -253,7 +253,7 @@ def get_messages_from_all_channels(
 
     cursor.execute(
         """
-        SELECT * FROM messages 
+        SELECT * FROM messages
         WHERE timestamp >= ?
         ORDER BY timestamp DESC
         LIMIT ?
