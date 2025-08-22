@@ -14,11 +14,13 @@ logger = logging.getLogger(__name__)
 
 
 @mcp.tool()
-def get_last_messages_in_my_channels(last_n_days: int = 7) -> dict:
-    """Get Discord messages for all channels you are in until last_n_days ago"""
+def get_last_messages_in_my_channels(last_n_days: int = 7, limit: int = -1) -> dict:
+    """Get Discord messages for all channels you are in until last_n_days ago.
+    If limit is -1, get all messages.
+    """
     try:
         with db.get_discord_connection() as conn:
-            messages = db.get_messages_from_all_channels(conn, last_n_days)
+            messages = db.get_messages_from_all_channels(conn, last_n_days, limit)
             return {"messages": [msg.model_dump() for msg in messages]}
     except Exception:
         logger.error(traceback.format_exc())

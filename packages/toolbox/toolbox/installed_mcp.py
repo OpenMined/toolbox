@@ -13,7 +13,9 @@ from pydantic import BaseModel
 
 from toolbox import db
 from toolbox.mcp_clients.mcp_clients import (
+    current_claude_code_config,
     current_claude_desktop_config,
+    write_claude_code_config,
     write_claude_desktop_config,
 )
 from toolbox.mcp_installer.mcp_installer import pkill_f, process_exists
@@ -71,6 +73,8 @@ class InstalledMCP(BaseModel):
     def client_config_file(self) -> str:
         if self.client == "claude":
             return "[1]"
+        elif self.client == "claude-code":
+            return "[2]"
         else:
             raise ValueError(f"Client {self.client} not supported")
 
@@ -233,6 +237,11 @@ class InstalledMCP(BaseModel):
             if self.name in client_config["mcpServers"]:
                 del client_config["mcpServers"][self.name]
                 write_claude_desktop_config(client_config)
+        elif self.client == "claude-code":
+            client_config = current_claude_code_config()
+            if self.name in client_config["mcpServers"]:
+                del client_config["mcpServers"][self.name]
+                write_claude_code_config(client_config)
         else:
             raise ValueError(f"Client {self.client} not supported")
 

@@ -17,8 +17,10 @@ from toolbox.installed_mcp import (
     create_clickable_file_link,
 )
 from toolbox.mcp_clients.mcp_clients import (
-    CLAUDE_CONFIG_FILE,
+    CLAUDE_CODE_CONFIG_FILE,
+    CLAUDE_DESKTOP_CONFIG_FILE,
     check_mcp_client_installation,
+    current_claude_code_config,
     current_claude_desktop_config,
 )
 from toolbox.settings import settings
@@ -154,19 +156,27 @@ def install_mcp(
         if client == "claude":
             if mcp.has_client_json:
                 add_mcp_to_claude_desktop_config(mcp)
-
-            context.on_run_mcp()
-            db_upsert_mcp(conn, mcp)
+        elif client == "claude-code":
+            if mcp.has_client_json:
+                add_mcp_to_claude_code_config(mcp)
         else:
             print(f"skipping mcp for {client}, not supported yet")
 
-    print(f"Successfully installed '{name}' for {', '.join(clients)}")
-    print(f"Config files: {CLAUDE_CONFIG_FILE}\n")
+        # currently, we create one item per client, we probably need to design this better eventually
+        db_upsert_mcp(conn, mcp)
 
-    # launch mcp server. 3 options:
-    # 1. local mcp server over stdio
-    # 2. local mcp server over http (not for now?) -> requires daemon
-    # 3. remote openmined mcp server over http
+    context.on_run_mcp()
+
+    print(f"Successfully installed '{name}' for {', '.join(clients)}")
+
+    config_dict = {
+        "claude": CLAUDE_DESKTOP_CONFIG_FILE,
+        "claude-code": CLAUDE_CODE_CONFIG_FILE,
+    }
+    config_files = []
+    for client in clients:
+        config_files.append(config_dict[client])
+    print(f"Config files: {', '.join(config_files)}\n")
 
 
 def stop_mcp(name: str, conn: sqlite3.Connection):
@@ -221,7 +231,8 @@ def list_installed(conn: sqlite3.Connection):
     if len(mcps) > 0:
         print(f"""
 Clients:
-[1]: {create_clickable_file_link(CLAUDE_CONFIG_FILE)}
+[1]: {create_clickable_file_link(CLAUDE_DESKTOP_CONFIG_FILE)}
+[2]: {create_clickable_file_link(CLAUDE_CODE_CONFIG_FILE)}
 """)
 
 
@@ -316,8 +327,18 @@ def add_mcp_to_claude_desktop_config(mcp: InstalledMCP):
         if "mcpServers" not in claude_desktop_config:
             claude_desktop_config["mcpServers"] = {}
         claude_desktop_config["mcpServers"][mcp.name] = mcp.json_body
-        with open(CLAUDE_CONFIG_FILE, "w") as f:
+        with open(CLAUDE_DESKTOP_CONFIG_FILE, "w") as f:
             json.dump(claude_desktop_config, f, indent=4)
+
+
+def add_mcp_to_claude_code_config(mcp: InstalledMCP):
+    claude_code_config = current_claude_code_config()
+    if mcp.json_body is not None:
+        if "mcpServers" not in claude_code_config:
+            claude_code_config["mcpServers"] = {}
+        claude_code_config["mcpServers"][mcp.name] = mcp.json_body
+        with open(CLAUDE_CODE_CONFIG_FILE, "w") as f:
+            json.dump(claude_code_config, f, indent=4)
 
 
 # def handle_secret_request(secret_request: dict):
