@@ -1,4 +1,4 @@
-# toolbox-events: Library Design Plan
+# toolbox_events: Library Design Plan
 
 **Note**: The specific implementations mentioned throughout this document (e.g., stdio, file, API, ntfy) are illustrative examples to demonstrate the architecture pattern. The actual implementations will be determined based on needs as the library evolves.
 
@@ -11,7 +11,7 @@
 
 ## 1. Project Goal
 
-`toolbox-events` provides event-driven automation for the syft-toolbox ecosystem. It enables:
+`toolbox_events` provides event-driven automation for the syft-toolbox ecosystem. It enables:
 
 - MCP servers to emit events to a central daemon
 - Trigger scripts to consume batched events from the daemon
@@ -117,7 +117,7 @@ Each component:
 **Note**: The specific sink/source/notifier implementations shown here are examples. Actual implementations will be added as needed.
 
 ```
-packages/toolbox-events/
+packages/toolbox_events/
 ├── src/toolbox_events/
 │   ├── __init__.py          # Public API: emit(), get_events(), notify()
 │   ├── config/
