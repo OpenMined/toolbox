@@ -15,13 +15,13 @@ repos:
         always_run: true
       - id: check-merge-conflict
         always_run: true
-        args: ['--assume-in-merge']
+        args: ["--assume-in-merge"]
       - id: check-executables-have-shebangs
         always_run: true
       - id: debug-statements
         always_run: true
       - id: mixed-line-ending
-        args: ['--fix=lf']
+        args: ["--fix=lf"]
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
     # Ruff version.
@@ -39,7 +39,7 @@ repos:
       - id: nbstripout
 
   - repo: https://github.com/pre-commit/mirrors-prettier # This repository has been archived by the owner on Apr 11, 2024. It is now read-only.
-    rev: 'v3.0.0-alpha.9-for-vscode'
+    rev: "v3.0.0-alpha.9-for-vscode"
     hooks:
       - id: prettier
         exclude: \.min\.(js|css)$
