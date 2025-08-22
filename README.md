@@ -96,12 +96,6 @@ tb log <appname>
 
 ## Store
 
-| Name                 | Clients | Default Deployment  | Read Access            | Write Access          | Install                           |
-| -------------------- | ------- | ------------------- | ---------------------- | --------------------- | --------------------------------- |
-| github-mcp           | claude  | stdio               | Issues, PRs, Settings  | Issues, PRs, Settings | `tb install github-mcp`           |
-| meeting-notes-mcp    | claude  | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes         | `tb install meeting-notes-mcp`    |
-| whatsapp-desktop-mcp | claude  | proxy-to-om-enclave | WhatsApp Messages      | WhatsApp Messages     | `tb install whatsapp-desktop-mcp` |
-| slack-mcp            | claude  | proxy-to-om-enclave | Slack Messages         | Slack Messages        | `tb install slack-mcp`            |
 
 | Name                 | Clients | Default Deployment  | Read Access            | Write Access          | Install                           |
 | -------------------- | ------- | ------------------- | ---------------------- | --------------------- | --------------------------------- |
