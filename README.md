@@ -15,6 +15,14 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
   `toolbox install <appname>`
 - background agents download your data or index it (OCR/transcription/embeddings for RAG); you can choose between fully local or free hosted in [openmined enclaves](#hosted-option-with-enclaves)
 
+## TOC
+
+- [Use cases](#use-cases)
+- [Installation](#install)
+- [CLI](#toolbox-cli)
+- [Store](#store)
+- [Enclaves](#hosted-option-with-enclaves)
+
 ## Use cases
 
 - 🧠🔎 Customizable, Custom Topic Tracking (Discord, Whatsapp, Github, Slack) Follow technical topics across multiple Discord servers (or other sources) with periodic, fully customizable summaries. Tailor what you want to see using simple prompt files — get only the updates that matter, automatically and efficiently.
