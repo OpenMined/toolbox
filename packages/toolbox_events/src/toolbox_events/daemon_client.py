@@ -1,6 +1,7 @@
 from typing import Any, Self
 
 import httpx
+
 from toolbox_events.events.models import Event
 
 

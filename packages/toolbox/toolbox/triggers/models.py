@@ -9,3 +9,7 @@ class Event(BaseModel):
     data: dict[str, Any]
     timestamp: datetime
     source: str | None = None
+
+
+class EventBatch(BaseModel):
+    events: list[Event]

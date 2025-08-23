@@ -1,41 +1,54 @@
-import subprocess
 from pathlib import Path
 
 import typer
 from rich.console import Console
 
 from toolbox.analytics import track_cli_command
+from toolbox.daemon.daemon import (
+    get_daemon_pid_file,
+    is_daemon_running,
+    run_daemon,
+    stop_daemon,
+)
 from toolbox.launchd import add_to_launchd, is_daemon_installed, remove_from_launchd
-from toolbox.triggers.scheduler import Scheduler
-from toolbox.triggers.trigger_store import get_db
 
 app = typer.Typer(no_args_is_help=True)
 
 
 @app.command()
-def run_foreground(log_file: Path = typer.Option(None, "--log-file")):
+def run_foreground(
+    log_file: Path | None = typer.Option(None, "--log-file"),
+    host: str = typer.Option("127.0.0.1", "--host", help="Host to bind to"),
+    port: int = typer.Option(8000, "--port", help="Port to bind to"),
+):
     """Run the toolbox daemon in foreground"""
-    trigger_db = get_db()
-    scheduler = Scheduler(trigger_db)
-    if log_file is None:
-        log_file = scheduler.pid_file.parent / "scheduler.log"
-    scheduler.run(log_file=log_file)
+
+    pid_file = get_daemon_pid_file()
+    run_daemon(
+        host=host,
+        port=port,
+        log_file=log_file,
+        pid_file=pid_file,
+    )
 
 
 @app.command()
 @track_cli_command("daemon start")
-def start():
+def start(
+    host: str = typer.Option("127.0.0.1", "--host", help="Host to bind to"),
+    port: int = typer.Option(8000, "--port", help="Port to bind to"),
+):
     """Start the toolbox daemon in background"""
-    trigger_db = get_db()
-    scheduler = Scheduler(trigger_db)
+    import subprocess
 
-    if scheduler.is_running():
-        print("Scheduler is already running")
+    pid_file = get_daemon_pid_file()
+    if is_daemon_running(pid_file=pid_file):
+        print("Daemon is already running")
         return
 
-    logfile = scheduler.pid_file.parent / "scheduler.log"
+    logfile = Path.home() / ".toolbox" / "daemon.log"
 
-    print("Starting trigger daemon in background...")
+    print("Starting toolbox daemon in background...")
     subprocess.Popen(
         [
             "uv",
@@ -46,43 +59,45 @@ def start():
             "run-foreground",
             "--log-file",
             str(logfile),
+            "--host",
+            host,
+            "--port",
+            str(port),
         ],
         start_new_session=True,
     )
-    print(f"Scheduler started in background (logs: {logfile})")
+    print(f"Daemon started in background (logs: {logfile})")
 
 
 @app.command()
 @track_cli_command("daemon stop")
 def stop():
     """Stop the toolbox daemon"""
-    trigger_db = get_db()
-    scheduler = Scheduler(trigger_db)
+    pid_file = get_daemon_pid_file()
 
-    if not scheduler.is_running():
-        print("Scheduler is not running")
+    if not is_daemon_running(pid_file=pid_file):
+        print("Daemon is not running")
         return
 
-    print("Stopping trigger daemon...")
-    if scheduler.stop():
-        print("Scheduler stopped successfully")
+    print("Stopping toolbox daemon...")
+    if stop_daemon(pid_file=pid_file):
+        print("Daemon stopped successfully")
     else:
-        print("Failed to stop scheduler")
+        print("Failed to stop daemon")
 
 
 @app.command()
 @track_cli_command("daemon status")
 def status():
     """Check daemon status"""
-    trigger_db = get_db()
-    scheduler = Scheduler(trigger_db)
 
-    if scheduler.is_running():
-        with open(scheduler.pid_file, "r") as f:
+    pid_file = get_daemon_pid_file()
+    if is_daemon_running(pid_file=pid_file):
+        with open(pid_file, "r") as f:
             pid = f.read().strip()
-        print(f"Scheduler is running (PID: {pid})")
+        print(f"Daemon is running (PID: {pid})")
     else:
-        print("Scheduler is not running")
+        print("Daemon is not running")
 
 
 @app.command()

@@ -18,7 +18,6 @@ def main():
     print(f"RECEIVED_EVENTS_COUNT: {len(events)}")
 
     for i, event in enumerate(events):
-        print(f"EVENT_{i}_ID: {event.get('id', 'unknown')}")
         print(f"EVENT_{i}_NAME: {event.get('name', 'unknown')}")
         print(f"EVENT_{i}_SOURCE: {event.get('source', 'unknown')}")
         print(f"EVENT_{i}_DATA: {json.dumps(event.get('data', {}))}")
@@ -38,7 +37,6 @@ def main():
         summary_file = output_dir / "test_script_output.json"
     summary = {
         "events_received": len(events),
-        "event_ids": [e.get("id") for e in events],
         "event_names": [e.get("name") for e in events],
         "event_sources": [e.get("source") for e in events],
     }

@@ -25,7 +25,7 @@ def calculate_next_run_time(cron_schedule: str, from_time: datetime) -> datetime
     elif from_time.tzinfo != timezone.utc:
         from_time = from_time.astimezone(timezone.utc)
 
-    iter = croniter(cron_schedule, from_time)
+    iter = croniter(cron_schedule, from_time, second_at_beginning=True)
     next_run = iter.get_next(datetime)
 
     # Ensure result is UTC

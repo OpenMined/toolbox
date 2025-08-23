@@ -2,7 +2,7 @@ import os
 from unittest.mock import Mock, patch
 
 from toolbox_events.config import EventSinkConfig
-from toolbox_events.events.sinks.http_sink import HttpSink
+from toolbox_events.events.sinks import HttpSink
 
 
 def test_http_sink_batching():

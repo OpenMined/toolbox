@@ -1,5 +1,4 @@
 import json
-import tempfile
 from datetime import timedelta
 from pathlib import Path
 from unittest.mock import Mock, patch
@@ -18,9 +17,7 @@ def db():
 @pytest.fixture
 def scheduler(db):
     """Create a scheduler with test database"""
-    with tempfile.TemporaryDirectory() as temp_dir:
-        pid_file = Path(temp_dir) / "test_scheduler.pid"
-        yield Scheduler(db, pid_file)
+    yield Scheduler(db)
 
 
 @pytest.fixture
@@ -85,37 +82,44 @@ def test_scheduler_finds_due_triggers(scheduler):
         name="future-trigger", cron_schedule="*/5 * * * *", script_path="/tmp/test.py"
     )
 
-    # Test _process_triggers submits only due triggers
+    # Test that _process_triggers submits due triggers to executor
     mock_executor = Mock()
-    scheduler._process_triggers(mock_executor, now)
+    scheduler._process_triggers(mock_executor)
 
     # Should submit only the due trigger to executor
     mock_executor.submit.assert_called_once()
     call_args = mock_executor.submit.call_args[0]
-    assert call_args[0] == scheduler.execute_from_scheduler
-    assert call_args[1].id == due_trigger.id
+    assert call_args[0] == scheduler.execute_trigger  # method
+    assert call_args[1].id == due_trigger.id  # trigger
 
 
 def test_scheduler_updates_next_run_before_execution(scheduler):
-    """Test execute_from_scheduler updates next_run_at first"""
+    """Test _process_triggers updates next_run_at before execution"""
     import time
 
     trigger = scheduler.db.triggers.create(
         name="test-trigger", cron_schedule="*/5 * * * *", script_path="/tmp/test.py"
     )
+    # Make trigger due
+    past_time = utcnow() - timedelta(minutes=1)
+    scheduler.db.triggers.update_next_run_time(
+        trigger.id, from_time=past_time - timedelta(minutes=5)
+    )
 
     # Small delay to ensure different next_run_at calculation
     time.sleep(0.1)
 
-    with patch.object(scheduler, "execute_trigger") as mock_execute:
-        scheduler.execute_from_scheduler(trigger)
+    original_next_run = scheduler.db.triggers.get(trigger.id).next_run_at
 
-        # Verify next_run_at was updated
-        updated_trigger = scheduler.db.triggers.get(trigger.id)
-        assert updated_trigger.next_run_at is not None
+    mock_executor = Mock()
+    scheduler._process_triggers(mock_executor)
 
-        # Verify execute_trigger was called
-        mock_execute.assert_called_once_with(trigger, None, False)
+    # Verify next_run_at was updated before execution
+    updated_trigger = scheduler.db.triggers.get(trigger.id)
+    assert updated_trigger.next_run_at != original_next_run
+
+    # Verify executor.submit was called
+    mock_executor.submit.assert_called_once()
 
 
 def test_scheduler_handles_event_based_triggers(scheduler):
@@ -136,21 +140,19 @@ def test_scheduler_handles_event_based_triggers(scheduler):
     )
 
     # Create matching event
-    event = scheduler.db.events.create(
+    _ = scheduler.db.events.create(
         name="test_event", source="test_source", data={"key": "value"}, timestamp=now
     )
 
-    # Test _process_triggers submits event-based trigger with events
+    # Test _process_triggers submits event-based trigger to executor
     mock_executor = Mock()
-    scheduler._process_triggers(mock_executor, now)
+    scheduler._process_triggers(mock_executor)
 
-    # Should submit the event trigger to executor with events
+    # Should submit trigger to executor (events are fetched inside execute_trigger)
     mock_executor.submit.assert_called_once()
     call_args = mock_executor.submit.call_args[0]
-    assert call_args[0] == scheduler.execute_from_scheduler
-    assert call_args[1].id == event_trigger.id
-    assert len(call_args[2]) == 1  # Should have 1 event
-    assert call_args[2][0].id == event.id
+    assert call_args[0] == scheduler.execute_trigger  # method
+    assert call_args[1].id == event_trigger.id  # trigger
 
 
 def test_scheduler_skips_triggers_with_no_events(scheduler):
@@ -170,12 +172,15 @@ def test_scheduler_skips_triggers_with_no_events(scheduler):
         event_trigger.id, from_time=past_time - timedelta(minutes=5)
     )
 
-    # Test _process_triggers skips triggers with no events
+    # Test _process_triggers still submits the trigger (events check happens in execute_trigger)
     mock_executor = Mock()
-    scheduler._process_triggers(mock_executor, now)
+    scheduler._process_triggers(mock_executor)
 
-    # Should not submit anything to executor
-    mock_executor.submit.assert_not_called()
+    # Should submit trigger to executor (it will check for events internally)
+    mock_executor.submit.assert_called_once()
+    call_args = mock_executor.submit.call_args[0]
+    assert call_args[0] == scheduler.execute_trigger
+    assert call_args[1].id == event_trigger.id
 
 
 def test_execute_trigger_creates_execution_record(scheduler):
@@ -196,12 +201,19 @@ def test_execute_trigger_creates_execution_record(scheduler):
 
 
 def test_execute_from_scheduler_updates_next_run_time(scheduler):
-    """Test execute_from_scheduler method updates next_run_at"""
+    """Test scheduler._process_triggers method updates next_run_at before executing"""
     import time
 
     trigger = scheduler.db.triggers.create(
         name="test-trigger", cron_schedule="*/5 * * * *", script_path="/tmp/test.py"
     )
+    # Make trigger due
+    past_time = utcnow() - timedelta(minutes=1)
+    scheduler.db.triggers.update_next_run_time(
+        trigger.id, from_time=past_time - timedelta(minutes=5)
+    )
+
+    original_next_run = scheduler.db.triggers.get(trigger.id).next_run_at
 
     # Small delay to ensure different next_run_at calculation
     time.sleep(0.1)
@@ -209,11 +221,12 @@ def test_execute_from_scheduler_updates_next_run_time(scheduler):
     with patch("subprocess.run") as mock_run:
         mock_run.return_value = Mock(returncode=0, stdout="success", stderr="")
 
-        scheduler.execute_from_scheduler(trigger)
+        mock_executor = Mock()
+        scheduler._process_triggers(mock_executor)
 
         # Verify next_run_at was updated
         updated_trigger = scheduler.db.triggers.get(trigger.id)
-        assert updated_trigger.next_run_at is not None
+        assert updated_trigger.next_run_at != original_next_run
 
 
 def test_execute_trigger_does_not_update_next_run_time(scheduler):
@@ -233,48 +246,18 @@ def test_execute_trigger_does_not_update_next_run_time(scheduler):
         assert updated_trigger.next_run_at == original_next_run
 
 
-def test_scheduler_writes_pid_file(scheduler):
-    """Test scheduler writes PID file"""
-    assert not scheduler.pid_file.exists()
-
-    scheduler._write_pid_file()
-
-    assert scheduler.pid_file.exists()
-    with open(scheduler.pid_file, "r") as f:
-        pid = int(f.read().strip())
-    assert pid > 0
-
-
-def test_scheduler_detects_already_running(scheduler):
-    """Test scheduler detects if already running"""
-    # Initially not running
-    assert not scheduler.is_running()
-
-    # Write PID file
-    scheduler._write_pid_file()
-
-    # Should detect as running
-    assert scheduler.is_running()
-
-    # Clean up
-    scheduler._remove_pid_file()
-    assert not scheduler.is_running()
-
-
-def test_execute_trigger_with_actual_script(
-    scheduler, test_script_path, script_summary_file
-):
+def test_execute_trigger_with_script(scheduler, test_script_path, script_summary_file):
     """Integration test: Basic script execution and event passing"""
     now = utcnow()
 
     # Create test events
-    slack_event = scheduler.db.events.create(
+    slack_event = scheduler.db.events.create(  # noqa: F841
         name="test_event",
         source="slack",
         data={"message": "hello world"},
         timestamp=now,
     )
-    discord_event = scheduler.db.events.create(
+    discord_event = scheduler.db.events.create(  # noqa: F841
         name="test_event",
         source="discord",
         data={"message": "hello discord"},
@@ -304,8 +287,9 @@ def test_execute_trigger_with_actual_script(
     # Verify script received events
     summary = read_script_output(script_summary_file)
     assert summary["events_received"] == 2
-    assert slack_event.id in summary["event_ids"]
-    assert discord_event.id in summary["event_ids"]
+    assert "test_event" in summary["event_names"]
+    assert "slack" in summary["event_sources"]
+    assert "discord" in summary["event_sources"]
 
 
 def test_execute_trigger_event_name_filtering(
@@ -313,7 +297,7 @@ def test_execute_trigger_event_name_filtering(
 ):
     """Integration test: Event filtering by name"""
     now = utcnow()
-    events = create_test_events(scheduler.db, now)
+    events = create_test_events(scheduler.db, now)  # noqa: F841
 
     # Create trigger that only matches message_created
     trigger = scheduler.db.triggers.create(
@@ -330,9 +314,10 @@ def test_execute_trigger_event_name_filtering(
 
     summary = read_script_output(script_summary_file)
     assert summary["events_received"] == 2  # slack_message + discord_message
-    assert events["slack_message"].id in summary["event_ids"]
-    assert events["discord_message"].id in summary["event_ids"]
-    assert events["slack_dm"].id not in summary["event_ids"]
+    assert "message_created" in summary["event_names"]
+    assert "dm_sent" not in summary["event_names"]
+    assert "slack" in summary["event_sources"]
+    assert "discord" in summary["event_sources"]
 
 
 def test_execute_trigger_event_source_filtering(scheduler):
@@ -343,10 +328,10 @@ def test_execute_trigger_event_source_filtering(scheduler):
     summary_file = output_dir / "test_script_output.json"
 
     # Create events from different sources
-    slack_event = scheduler.db.events.create(
+    slack_event = scheduler.db.events.create(  # noqa: F841
         name="message_created", source="slack", data={"text": "slack"}, timestamp=now
     )
-    discord_event = scheduler.db.events.create(
+    discord_event = scheduler.db.events.create(  # noqa: F841
         name="message_created",
         source="discord",
         data={"text": "discord"},
@@ -374,8 +359,9 @@ def test_execute_trigger_event_source_filtering(scheduler):
         summary = json.load(f)
 
     assert summary["events_received"] == 1
-    assert slack_event.id in summary["event_ids"]
-    assert discord_event.id not in summary["event_ids"]
+    assert "message_created" in summary["event_names"]
+    assert "slack" in summary["event_sources"]
+    assert "discord" not in summary["event_sources"]
 
 
 def test_execute_trigger_combined_filtering(scheduler):
@@ -386,13 +372,13 @@ def test_execute_trigger_combined_filtering(scheduler):
     summary_file = output_dir / "test_script_output.json"
 
     # Create various events
-    slack_message = scheduler.db.events.create(
+    slack_message = scheduler.db.events.create(  # noqa: F841
         name="message_created", source="slack", data={"text": "hello"}, timestamp=now
     )
-    discord_message = scheduler.db.events.create(
+    discord_message = scheduler.db.events.create(  # noqa: F841
         name="message_created", source="discord", data={"text": "hello"}, timestamp=now
     )
-    slack_dm = scheduler.db.events.create(
+    slack_dm = scheduler.db.events.create(  # noqa: F841
         name="dm_sent", source="slack", data={"text": "private"}, timestamp=now
     )
 
@@ -418,6 +404,5 @@ def test_execute_trigger_combined_filtering(scheduler):
         summary = json.load(f)
 
     assert summary["events_received"] == 1  # Only slack message_created
-    assert slack_message.id in summary["event_ids"]
-    assert discord_message.id not in summary["event_ids"]
-    assert slack_dm.id not in summary["event_ids"]
+    assert summary["event_names"] == ["message_created"]
+    assert summary["event_sources"] == ["slack"]

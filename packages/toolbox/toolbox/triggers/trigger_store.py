@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Self
@@ -12,8 +13,6 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 from sqlalchemy.orm.properties import ForeignKey
-from sqlalchemy.orm.session import sessionmaker as SessionMaker
-from sqlalchemy.sql import func
 from sqlalchemy.types import Boolean, TypeDecorator
 
 from toolbox.db import TOOLBOX_DB_DIR
@@ -133,9 +132,9 @@ class TriggeredEvent(Base):
 
 
 class TriggerStore:
-    def __init__(self, engine: Engine, session_factory: SessionMaker[Session]) -> None:
+    def __init__(self, engine: Engine, session_factory: sessionmaker[Session]) -> None:
         self.engine: Engine = engine
-        self.session_factory: SessionMaker[Session] = session_factory
+        self.session_factory: sessionmaker[Session] = session_factory
 
     @classmethod
     def from_url(cls, db_url: str) -> Self:
@@ -169,8 +168,6 @@ class TriggerStore:
             with session.begin():
                 if name is None:
                     # Use the flush approach to get the actual ID and set the name.
-                    import uuid
-
                     temp_name = f"temp_{uuid.uuid4().hex[:8]}"
                     trigger = Trigger(
                         name=temp_name,
@@ -183,8 +180,6 @@ class TriggerStore:
                     )
                     session.add(trigger)
                     session.flush()  # Get the actual ID
-
-                    # Now set the real name using the actual ID
                     new_name = f"trigger-{trigger.id}"
                     trigger.name = new_name
                     # Force another flush to ensure the name update is persisted
@@ -382,9 +377,9 @@ class TriggerStore:
 
 
 class EventStore:
-    def __init__(self, engine: Engine, session_factory: SessionMaker[Session]) -> None:
+    def __init__(self, engine: Engine, session_factory: sessionmaker[Session]) -> None:
         self.engine: Engine = engine
-        self.session_factory: SessionMaker[Session] = session_factory
+        self.session_factory: sessionmaker[Session] = session_factory
 
     def create(
         self, name: str, source: str | None, data: dict, timestamp: datetime
@@ -425,7 +420,6 @@ class EventStore:
 
     def get_all(
         self,
-        is_consumed: bool | None = None,
         name: str | list[str] | None = None,
         source: str | list[str] | None = None,
         limit: int | None = None,
@@ -433,12 +427,6 @@ class EventStore:
     ) -> list[Event]:
         with self.session_factory() as session:
             query = session.query(Event)
-
-            if is_consumed is not None:
-                if is_consumed:
-                    query = query.filter(Event.consumed_at.is_not(None))
-                else:
-                    query = query.filter(Event.consumed_at.is_(None))
 
             if name:
                 if isinstance(name, list):
@@ -525,9 +513,9 @@ class EventStore:
 
 
 class TriggerExecutionStore:
-    def __init__(self, engine: Engine, session_factory: SessionMaker[Session]) -> None:
+    def __init__(self, engine: Engine, session_factory: sessionmaker[Session]) -> None:
         self.engine: Engine = engine
-        self.session_factory: SessionMaker[Session] = session_factory
+        self.session_factory: sessionmaker[Session] = session_factory
 
     @classmethod
     def from_url(cls, db_url: str) -> Self:
@@ -554,7 +542,7 @@ class TriggerExecutionStore:
                     .filter(TriggerExecution.id == id_)
                     .update(
                         {
-                            "completed_at": func.now(),
+                            "completed_at": utcnow(),
                             "exit_code": exit_code,
                             "logs": logs,
                         }
@@ -604,9 +592,9 @@ class TriggerExecutionStore:
 
 
 class TriggerDB:
-    def __init__(self, engine: Engine, session_factory: SessionMaker[Session]) -> None:
+    def __init__(self, engine: Engine, session_factory: sessionmaker[Session]) -> None:
         self.engine: Engine = engine
-        self.session_factory: SessionMaker[Session] = session_factory
+        self.session_factory: sessionmaker[Session] = session_factory
 
         # Stores
         self.triggers: TriggerStore = TriggerStore(engine, session_factory)
@@ -632,20 +620,3 @@ class TriggerDB:
 
 def get_db() -> TriggerDB:
     return TriggerDB.from_url(f"sqlite:///{TRIGGER_DB_PATH}")
-
-
-if __name__ == "__main__":
-    # in memory sqlite db
-    db = TriggerDB.from_url("sqlite://")
-    db.triggers.create("test", "0 * * * *", "echo 'test'")
-    db.executions.create(1)
-    for execution in db.executions.get_all():
-        # print all fields in the execution
-        for field in execution.__dict__:
-            if not field.startswith("_"):
-                v = getattr(execution, field)
-                # print(f"{field}: {v}, {type(v)}")
-                # check if datetimes have a timezone
-                if isinstance(v, datetime):
-                    print(f"{field}: {v.tzinfo}")
-                print(type(v), v)

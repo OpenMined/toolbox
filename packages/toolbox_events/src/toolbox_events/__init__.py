@@ -2,8 +2,8 @@ from typing import Any
 
 from toolbox_events.config import EventSinkConfig, EventSourceConfig
 from toolbox_events.events.models import Event
-from toolbox_events.events.sinks.base import EventSink
-from toolbox_events.events.sources.base import EventSource
+from toolbox_events.events.sinks import EventSink
+from toolbox_events.events.sources import EventSource
 
 # Global lazy-initialized instances
 _default_event_sink: EventSink | None = None

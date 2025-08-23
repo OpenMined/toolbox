@@ -1,5 +1,5 @@
-from toolbox_events.events.sinks.memory_sink import MemorySink
-from toolbox_events.events.sources.memory_source import MemorySource
+from toolbox_events.events.sinks import MemorySink
+from toolbox_events.events.sources import MemorySource
 
 
 def test_memory_sink_and_source():

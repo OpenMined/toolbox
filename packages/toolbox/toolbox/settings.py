@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     do_whatsapp_desktop_check: bool = Field(default=True)
     use_discord_env_var: bool = Field(default=True)
 
+    max_concurrent_triggers: int = Field(default=4)
     analytics_enabled: bool = Field(default=True)
     dev_mode: bool = Field(default=False)
 

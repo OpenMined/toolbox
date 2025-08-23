@@ -3,8 +3,8 @@ import json
 from unittest.mock import patch
 
 import pytest
-from toolbox_events.events.sinks.memory_sink import MemorySink
-from toolbox_events.events.sources.stdin_source import StdinSource
+from toolbox_events.events.sinks import MemorySink
+from toolbox_events.events.sources import StdinSource
 
 
 def test_stdin_source_events():
@@ -93,7 +93,7 @@ def test_stdin_source_edge_cases():
 def test_stdin_source_from_config():
     """Test StdinSource can be created from config."""
     from toolbox_events.config import EventSourceConfig
-    from toolbox_events.events.sources.base import EventSource
+    from toolbox_events.events.sources import EventSource
 
     config = EventSourceConfig(kind="stdin")
     source = EventSource.from_config(config)
