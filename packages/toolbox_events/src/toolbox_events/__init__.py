@@ -41,13 +41,10 @@ def send_event(
     name: str,
     data: dict[str, Any],
     source: str | None = None,
-    flush: bool = True,
 ) -> None:
     """Send an event using the default event sink."""
     sink = get_default_event_sink()
     sink.send(name, data, source)
-    if flush:
-        sink.flush()
 
 
 def get_events() -> list[Event]:

@@ -12,8 +12,6 @@ class EventSinkConfig(BaseSettings):
 
     # HTTP sink settings
     daemon_url: str = "http://localhost:8000"
-    batch_size: int = 10
-    batch_timeout: float = 5.0
     timeout: float = 30.0
     headers: dict[str, str] = {}
 

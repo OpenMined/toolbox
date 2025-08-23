@@ -47,7 +47,7 @@ class EventSink(ABC):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        """Exit context manager and flush/close."""
+        """Exit context manager and close."""
         self.close()
 
     def close(self) -> None:
