@@ -2165,6 +2165,7 @@ source = { editable = "packages/toolbox" }
 dependencies = [
     { name = "anthropic" },
     { name = "croniter" },
+    { name = "fastapi", extra = ["standard"] },
     { name = "leveldb-312" },
     { name = "loguru" },
     { name = "mcp" },
@@ -2193,6 +2194,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", specifier = ">=0.52.2" },
     { name = "croniter", specifier = ">=6.0.0" },
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.116.1" },
     { name = "leveldb-312", specifier = "==1.0.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "mcp", specifier = ">=1.9.2" },
