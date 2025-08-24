@@ -20,8 +20,6 @@ from toolbox.triggers.cron_utils import calculate_next_run_time, is_valid_cron
 
 TRIGGER_DB_PATH = TOOLBOX_DB_DIR / "triggers.db"
 
-__all__ = ("DateTimeUTC",)
-
 
 class DateTimeUTC(TypeDecorator[datetime]):
     """Timezone Aware DateTime.
@@ -77,9 +75,7 @@ class Trigger(Base):
     )
     name: Mapped[str] = mapped_column(String, unique=True)
     enabled: Mapped[bool] = mapped_column(Boolean, default=True)
-    cron_schedule: Mapped[str | None] = mapped_column(
-        String, nullable=True
-    )  # Nullable to allow for future event-based triggers
+    cron_schedule: Mapped[str | None] = mapped_column(String, nullable=True)
     script_path: Mapped[str] = mapped_column(String)
     event_names: Mapped[list[str] | None] = mapped_column(
         JSON, nullable=True, default=None
@@ -122,7 +118,6 @@ class Event(Base):
 
 
 class TriggeredEvent(Base):
-    # Link table to track which triggers consumed which events.
     __tablename__ = "triggered_events"
 
     id = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -151,23 +146,19 @@ class TriggerStore:
         event_names: list[str] | None = None,
         event_sources: list[str] | None = None,
     ) -> Trigger:
-        # Validate cron schedule if provided
         if cron_schedule and not is_valid_cron(cron_schedule):
             raise ValueError(f"Invalid cron schedule: {cron_schedule}")
 
-        # Calculate next_run_at if we have a cron schedule and trigger is enabled
         next_run_at = None
         if cron_schedule and enabled:
             try:
                 next_run_at = calculate_next_run_time(cron_schedule, utcnow())
             except ValueError:
-                # Invalid cron - will be set to None
                 pass
 
         with self.session_factory() as session:
             with session.begin():
                 if name is None:
-                    # Use the flush approach to get the actual ID and set the name.
                     temp_name = f"temp_{uuid.uuid4().hex[:8]}"
                     trigger = Trigger(
                         name=temp_name,
@@ -179,10 +170,9 @@ class TriggerStore:
                         event_sources=event_sources,
                     )
                     session.add(trigger)
-                    session.flush()  # Get the actual ID
+                    session.flush()
                     new_name = f"trigger-{trigger.id}"
                     trigger.name = new_name
-                    # Force another flush to ensure the name update is persisted
                     session.flush()
                 else:
                     trigger = Trigger(
@@ -210,9 +200,10 @@ class TriggerStore:
         script_path=_UNSET,
     ) -> bool:
         """Update trigger fields and recalculate next_run_at if needed.
-        Returns True if a row was updated, False if trigger not found."""
 
-        # Validate cron schedule if being updated
+        Returns:
+            True if a row was updated, False if trigger not found.
+        """
         if (
             cron_schedule is not _UNSET
             and cron_schedule is not None
@@ -226,7 +217,6 @@ class TriggerStore:
                 if not trigger:
                     return False
 
-                # Track if we need to recalculate next_run_at
                 recalc_next_run = False
 
                 if enabled is not _UNSET:
@@ -240,7 +230,6 @@ class TriggerStore:
                 if script_path is not _UNSET:
                     trigger.script_path = str(script_path)
 
-                # Recalculate next_run_at if enabled/cron_schedule changed
                 if recalc_next_run:
                     if trigger.enabled and trigger.cron_schedule:
                         try:
@@ -248,10 +237,8 @@ class TriggerStore:
                                 trigger.cron_schedule, utcnow()
                             )
                         except ValueError:
-                            # Invalid cron schedule - set to None
                             trigger.next_run_at = None
                     else:
-                        # Disabled or no cron schedule - set to None
                         trigger.next_run_at = None
 
                 return True
@@ -456,11 +443,20 @@ class EventStore:
         limit: int | None = None,
         offset: int | None = None,
     ) -> list[Event]:
-        """Get events matching a trigger's criteria that haven't been consumed by this trigger yet"""
+        """Get events matching a trigger's criteria.
+
+        Args:
+            trigger: The trigger to get events for
+            is_consumed: Filter by consumption status (None for all)
+            limit: Maximum number of events to return
+            offset: Number of events to skip
+
+        Returns:
+            List of matching Event objects
+        """
         with self.session_factory() as session:
             query = session.query(Event)
 
-            # Filter by trigger's event criteria
             name_filter = None
             source_filter = None
 
@@ -470,22 +466,20 @@ class EventStore:
             if trigger.event_sources:
                 source_filter = Event.source.in_(trigger.event_sources)
 
-            # Apply name and source filters with AND logic if both exist
             if name_filter is not None:
                 query = query.filter(name_filter)
             if source_filter is not None:
                 query = query.filter(source_filter)
 
-            # Filter by consumption status
+            query = query.filter(Event.timestamp >= trigger.created_at)
+
             if is_consumed is not None:
                 consumed_event_ids = session.query(TriggeredEvent.event_id).filter(
                     TriggeredEvent.trigger_id == trigger.id
                 )
                 if is_consumed:
-                    # Only get events consumed by this trigger
                     query = query.filter(Event.id.in_(consumed_event_ids))
                 else:
-                    # Filter out events already consumed by this trigger
                     query = query.filter(Event.id.notin_(consumed_event_ids))
 
             query = query.order_by(Event.timestamp.asc())

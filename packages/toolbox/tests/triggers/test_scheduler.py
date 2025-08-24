@@ -126,22 +126,23 @@ def test_scheduler_handles_event_based_triggers(scheduler):
     """Test scheduler processes event-based triggers correctly"""
     now = utcnow()
 
-    # Create event-based trigger
     event_trigger = scheduler.db.triggers.create(
         name="event-trigger",
         cron_schedule="*/5 * * * *",
         script_path="/tmp/test.py",
         event_names=["test_event"],
     )
-    # Set as due
+
     past_time = now - timedelta(minutes=1)
     scheduler.db.triggers.update_next_run_time(
         event_trigger.id, from_time=past_time - timedelta(minutes=5)
     )
 
-    # Create matching event
     _ = scheduler.db.events.create(
-        name="test_event", source="test_source", data={"key": "value"}, timestamp=now
+        name="test_event",
+        source="test_source",
+        data={"key": "value"},
+        timestamp=utcnow(),
     )
 
     # Test _process_triggers submits event-based trigger to executor
@@ -248,9 +249,15 @@ def test_execute_trigger_does_not_update_next_run_time(scheduler):
 
 def test_execute_trigger_with_script(scheduler, test_script_path, script_summary_file):
     """Integration test: Basic script execution and event passing"""
-    now = utcnow()
 
-    # Create test events
+    trigger = scheduler.db.triggers.create(
+        name="test-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path=str(test_script_path),
+        event_names=["test_event"],
+    )
+
+    now = utcnow()
     slack_event = scheduler.db.events.create(  # noqa: F841
         name="test_event",
         source="slack",
@@ -262,14 +269,6 @@ def test_execute_trigger_with_script(scheduler, test_script_path, script_summary
         source="discord",
         data={"message": "hello discord"},
         timestamp=now,
-    )
-
-    # Create trigger
-    trigger = scheduler.db.triggers.create(
-        name="test-trigger",
-        cron_schedule="*/5 * * * *",
-        script_path=str(test_script_path),
-        event_names=["test_event"],
     )
 
     # Execute trigger
@@ -296,16 +295,16 @@ def test_execute_trigger_event_name_filtering(
     scheduler, test_script_path, script_summary_file
 ):
     """Integration test: Event filtering by name"""
-    now = utcnow()
-    events = create_test_events(scheduler.db, now)  # noqa: F841
 
-    # Create trigger that only matches message_created
     trigger = scheduler.db.triggers.create(
         name="message-trigger",
         cron_schedule="*/5 * * * *",
         script_path=str(test_script_path),
         event_names=["message_created"],
     )
+
+    now = utcnow()
+    events = create_test_events(scheduler.db, now)  # noqa: F841
 
     matching_events = scheduler.db.events.get_events_for_trigger(
         trigger, is_consumed=False
@@ -323,11 +322,17 @@ def test_execute_trigger_event_name_filtering(
 def test_execute_trigger_event_source_filtering(scheduler):
     """Integration test: Event filtering by source"""
     test_script_path = Path(__file__).parent.parent / "assets" / "test_event_script.py"
-    now = utcnow()
     output_dir = Path("/tmp/toolbox_test_output")
     summary_file = output_dir / "test_script_output.json"
 
-    # Create events from different sources
+    trigger = scheduler.db.triggers.create(
+        name="slack-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path=str(test_script_path),
+        event_sources=["slack"],
+    )
+
+    now = utcnow()
     slack_event = scheduler.db.events.create(  # noqa: F841
         name="message_created", source="slack", data={"text": "slack"}, timestamp=now
     )
@@ -336,14 +341,6 @@ def test_execute_trigger_event_source_filtering(scheduler):
         source="discord",
         data={"text": "discord"},
         timestamp=now,
-    )
-
-    # Create trigger that only matches slack events
-    trigger = scheduler.db.triggers.create(
-        name="slack-trigger",
-        cron_schedule="*/5 * * * *",
-        script_path=str(test_script_path),
-        event_sources=["slack"],
     )
 
     if summary_file.exists():
@@ -367,11 +364,18 @@ def test_execute_trigger_event_source_filtering(scheduler):
 def test_execute_trigger_combined_filtering(scheduler):
     """Integration test: Event filtering by name AND source"""
     test_script_path = Path(__file__).parent.parent / "assets" / "test_event_script.py"
-    now = utcnow()
     output_dir = Path("/tmp/toolbox_test_output")
     summary_file = output_dir / "test_script_output.json"
 
-    # Create various events
+    trigger = scheduler.db.triggers.create(
+        name="specific-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path=str(test_script_path),
+        event_names=["message_created"],
+        event_sources=["slack"],
+    )
+
+    now = utcnow()
     slack_message = scheduler.db.events.create(  # noqa: F841
         name="message_created", source="slack", data={"text": "hello"}, timestamp=now
     )
@@ -380,15 +384,6 @@ def test_execute_trigger_combined_filtering(scheduler):
     )
     slack_dm = scheduler.db.events.create(  # noqa: F841
         name="dm_sent", source="slack", data={"text": "private"}, timestamp=now
-    )
-
-    # Create trigger with both name and source filters (AND logic)
-    trigger = scheduler.db.triggers.create(
-        name="specific-trigger",
-        cron_schedule="*/5 * * * *",
-        script_path=str(test_script_path),
-        event_names=["message_created"],
-        event_sources=["slack"],
     )
 
     if summary_file.exists():

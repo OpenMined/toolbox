@@ -135,21 +135,43 @@ def test_create_events(db):
 
 def test_get_events_for_trigger_matching(db):
     """Test event matching logic for triggers"""
-    now = utcnow()
 
-    # Create various events
-    slack_msg = db.events.create("message_created", "slack", {"text": "hello"}, now)
-    discord_msg = db.events.create("message_created", "discord", {"text": "hi"}, now)
-    slack_dm = db.events.create("dm_sent", "slack", {"text": "private"}, now)
-    obsidian_note = db.events.create("note_created", "obsidian", {"title": "test"}, now)
-
-    # Test trigger with specific event name only
     name_trigger = db.triggers.create(
         name="name-trigger",
         cron_schedule="*/5 * * * *",
         script_path="/tmp/test.py",
         event_names=["message_created"],
     )
+
+    source_trigger = db.triggers.create(
+        name="source-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path="/tmp/test.py",
+        event_sources=["slack"],
+    )
+
+    both_trigger = db.triggers.create(
+        name="both-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path="/tmp/test.py",
+        event_names=["message_created"],
+        event_sources=["slack"],
+    )
+
+    all_trigger = db.triggers.create(
+        name="all-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path="/tmp/test.py",
+    )
+
+    now = utcnow()
+
+    slack_msg = db.events.create("message_created", "slack", {"text": "hello"}, now)
+    discord_msg = db.events.create("message_created", "discord", {"text": "hi"}, now)
+    slack_dm = db.events.create("dm_sent", "slack", {"text": "private"}, now)
+    obsidian_note = db.events.create("note_created", "obsidian", {"title": "test"}, now)
+
+    # Test trigger with specific event name only
     name_events = db.events.get_events_for_trigger(name_trigger, is_consumed=False)
     name_event_ids = [e.id for e in name_events]
     assert slack_msg.id in name_event_ids
@@ -158,12 +180,6 @@ def test_get_events_for_trigger_matching(db):
     assert obsidian_note.id not in name_event_ids
 
     # Test trigger with specific source only
-    source_trigger = db.triggers.create(
-        name="source-trigger",
-        cron_schedule="*/5 * * * *",
-        script_path="/tmp/test.py",
-        event_sources=["slack"],
-    )
     source_events = db.events.get_events_for_trigger(source_trigger, is_consumed=False)
     source_event_ids = [e.id for e in source_events]
     assert slack_msg.id in source_event_ids
@@ -172,13 +188,6 @@ def test_get_events_for_trigger_matching(db):
     assert obsidian_note.id not in source_event_ids
 
     # Test trigger with both name and source filters (AND logic)
-    both_trigger = db.triggers.create(
-        name="both-trigger",
-        cron_schedule="*/5 * * * *",
-        script_path="/tmp/test.py",
-        event_names=["message_created"],
-        event_sources=["slack"],
-    )
     both_events = db.events.get_events_for_trigger(both_trigger, is_consumed=False)
     both_event_ids = [e.id for e in both_events]
     assert slack_msg.id in both_event_ids
@@ -186,11 +195,6 @@ def test_get_events_for_trigger_matching(db):
     assert slack_dm.id not in both_event_ids
 
     # Test trigger with no filters (should match all events)
-    all_trigger = db.triggers.create(
-        name="all-trigger",
-        cron_schedule="*/5 * * * *",
-        script_path="/tmp/test.py",
-    )
     all_events = db.events.get_events_for_trigger(all_trigger, is_consumed=False)
     all_event_ids = [e.id for e in all_events]
     assert len(all_events) == 4  # Should get all events
@@ -202,11 +206,6 @@ def test_get_events_for_trigger_matching(db):
 
 def test_get_events_for_trigger_consumption(db):
     """Test event consumption tracking"""
-    now = utcnow()
-
-    # Create events and trigger
-    event1 = db.events.create("test_event", "test_source", {}, now)
-    event2 = db.events.create("test_event", "test_source", {}, now)
 
     trigger = db.triggers.create(
         name="test-trigger",
@@ -214,6 +213,10 @@ def test_get_events_for_trigger_consumption(db):
         script_path="/tmp/test.py",
         event_names=["test_event"],
     )
+
+    now = utcnow()
+    event1 = db.events.create("test_event", "test_source", {}, now)
+    event2 = db.events.create("test_event", "test_source", {}, now)
 
     # Initially, both events should be unconsumed
     unconsumed = db.events.get_events_for_trigger(trigger, is_consumed=False)
@@ -273,3 +276,65 @@ def test_event_based_trigger_properties(db):
         event_sources=["test_source"],
     )
     assert both_trigger.is_event_based is True
+
+
+def test_get_events_for_trigger_filters_by_timestamp(db):
+    """Test that get_events_for_trigger only returns events created after the trigger"""
+    import time
+
+    now = utcnow()
+
+    # Create events before trigger
+    old_events = [
+        db.events.create(
+            name="test.event",
+            source="test_source",
+            data={"index": 1},
+            timestamp=now,
+        ),
+        db.events.create(
+            name="test.event",
+            source="test_source",
+            data={"index": 2},
+            timestamp=now,
+        ),
+    ]
+
+    time.sleep(0.1)  # Ensure trigger gets a later timestamp
+
+    trigger = db.triggers.create(
+        name="test-timestamp-filter",
+        cron_schedule="*/5 * * * *",
+        script_path="/tmp/test.py",
+        event_names=["test.event"],
+        event_sources=["test_source"],
+    )
+
+    later = utcnow()
+
+    # Create events after trigger
+    new_events = [
+        db.events.create(
+            name="test.event",
+            source="test_source",
+            data={"index": 3},
+            timestamp=later,
+        ),
+        db.events.create(
+            name="test.event",
+            source="test_source",
+            data={"index": 4},
+            timestamp=later,
+        ),
+    ]
+
+    trigger_events = db.events.get_events_for_trigger(trigger)
+
+    assert len(trigger_events) == 2
+
+    returned_ids = {e.id for e in trigger_events}
+    old_ids = {e.id for e in old_events}
+    new_ids = {e.id for e in new_events}
+
+    assert returned_ids == new_ids
+    assert len(returned_ids & old_ids) == 0  # No overlap with old events
