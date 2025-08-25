@@ -127,8 +127,6 @@ def install_python_mcp(store_element: "StoreElement", context: "InstallationCont
 
     env = context.context_settings
     add_event_sink_to_env(env, mcp.name, settings.daemon.url)
-    print("ENV", env)
-    print("/n/n/n")
 
     if start_process:
         run_python_mcp(

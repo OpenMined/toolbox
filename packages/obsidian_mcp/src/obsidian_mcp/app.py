@@ -1,11 +1,9 @@
 import asyncio
 import contextlib
-import sys
 from contextlib import asynccontextmanager
 
 import uvicorn
 from fastapi import FastAPI
-from toolbox_events.settings import EventSinkSettings
 
 from obsidian_mcp.file_watcher import watch_vault
 from obsidian_mcp.mcp_server import mcp
@@ -14,7 +12,9 @@ from obsidian_mcp.settings import settings
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    print(EventSinkSettings().model_dump_json(indent=2), file=sys.stderr)
+    # from toolbox_events.settings import EventSinkSettings
+    # import sys
+    # print(EventSinkSettings().model_dump_json(indent=2), file=sys.stderr)
     async with contextlib.AsyncExitStack() as stack:
         await stack.enter_async_context(mcp.session_manager.run())
 
