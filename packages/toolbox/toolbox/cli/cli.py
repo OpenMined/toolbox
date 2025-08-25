@@ -8,7 +8,7 @@ from rich.rule import Rule
 import toolbox
 from toolbox import __version__
 from toolbox.analytics import track_cli_command
-from toolbox.cli import daemon_cli, trigger_cli
+from toolbox.cli import daemon_cli, event_cli, trigger_cli
 from toolbox.db import conn
 from toolbox.installer import (
     call_mcp,
@@ -165,6 +165,7 @@ app.command()(stop)
 # Add subgroups
 app.add_typer(daemon_cli.app, name="daemon", help="Daemon management commands")
 app.add_typer(trigger_cli.app, name="trigger", help="Trigger management commands")
+app.add_typer(event_cli.app, name="event", help="Event management commands")
 
 
 if __name__ == "__main__":

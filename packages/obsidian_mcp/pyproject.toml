@@ -10,7 +10,9 @@ requires-python = ">=3.12"
 dependencies = [
     "fastapi[standard]>=0.116.1",
     "mcp[cli]>=1.10.0",
+    "toolbox-events",
     "uvicorn>=0.35.0",
+    "watchfiles>=1.1.0",
 ]
 
 [build-system]
@@ -22,3 +24,6 @@ dev = [
     "pytest>=8.4.1",
     "pytest-xdist>=3.8.0",
 ]
+
+[tool.uv.sources]
+toolbox-events = { workspace = true }

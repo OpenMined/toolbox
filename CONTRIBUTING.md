@@ -26,6 +26,14 @@ To run them manually:
 uv run pre-commit run --all-files
 ```
 
+## Adding a new package
+
+To add a new package to the workspace, run from the root of the repo:
+
+```
+uv init --lib packages/<package_name>
+```
+
 ## Analytics
 
 We use PostHog for anonymous CLI analytics (commands, errors, usage patterns).
