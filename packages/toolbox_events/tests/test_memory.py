@@ -1,3 +1,6 @@
+import os
+from unittest.mock import patch
+
 from toolbox_events.events.sinks import MemorySink
 from toolbox_events.events.sources import MemorySource
 
@@ -36,15 +39,21 @@ def test_top_level_api():
     """Test the top-level send/get_events functions."""
     from toolbox_events import get_events, send_event
 
-    # Send an event (will use default source_name="unknown")
-    send_event("api.test", {"worked": True})
+    env_vars = {
+        "TOOLBOX_EVENTS_SINK_KIND": "memory",
+        "TOOLBOX_EVENTS_SOURCE_KIND": "memory",
+        "TOOLBOX_EVENTS_SINK_SOURCE_NAME": "test_sink",
+    }
+    with patch.dict(os.environ, env_vars):
+        # Send event to sink
+        send_event("api.test", {"worked": True})
 
-    # Get events
-    events = get_events()
+        # Get events from source
+        events = get_events()
 
-    # Verify
-    assert len(events) == 1
-    assert events[0].name == "api.test"
-    assert events[0].data == {"worked": True}
-    assert events[0].source == "unknown"  # Default source name
-    assert events[0].full_name == "unknown.api.test"
+        # Verify
+        assert len(events) == 1
+        assert events[0].name == "api.test"
+        assert events[0].data == {"worked": True}
+        assert events[0].source == "test_sink"
+        assert events[0].full_name == "test_sink.api.test"

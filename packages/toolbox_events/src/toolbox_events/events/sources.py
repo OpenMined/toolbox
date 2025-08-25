@@ -5,8 +5,8 @@ from typing import TYPE_CHECKING, Any, ClassVar
 
 from loguru import logger
 
-from toolbox_events.config import EventSourceConfig
 from toolbox_events.events.models import Event
+from toolbox_events.settings import EventSourceSettings
 
 if TYPE_CHECKING:
     from toolbox_events.events.sinks import MemorySink
@@ -25,7 +25,7 @@ class EventSource(ABC):
             )
 
     @classmethod
-    def from_config(cls, config: EventSourceConfig, **kwargs: Any) -> "EventSource":
+    def from_config(cls, config: EventSourceSettings, **kwargs: Any) -> "EventSource":
         """Create an EventSource instance from configuration."""
         source_map = {
             "memory": MemorySource,

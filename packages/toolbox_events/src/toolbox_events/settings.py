@@ -1,7 +1,7 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-class EventSinkConfig(BaseSettings):
+class EventSinkSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="TOOLBOX_EVENTS_SINK_",
         case_sensitive=False,
@@ -16,10 +16,10 @@ class EventSinkConfig(BaseSettings):
     headers: dict[str, str] = {}
 
 
-class EventSourceConfig(BaseSettings):
+class EventSourceSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_prefix="TOOLBOX_EVENTS_SOURCE_",
         case_sensitive=False,
     )
 
-    kind: str = "memory"
+    kind: str = "stdin"

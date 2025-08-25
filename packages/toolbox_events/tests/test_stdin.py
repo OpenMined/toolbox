@@ -92,10 +92,10 @@ def test_stdin_source_edge_cases():
 
 def test_stdin_source_from_config():
     """Test StdinSource can be created from config."""
-    from toolbox_events.config import EventSourceConfig
     from toolbox_events.events.sources import EventSource
+    from toolbox_events.settings import EventSourceSettings
 
-    config = EventSourceConfig(kind="stdin")
+    config = EventSourceSettings(kind="stdin")
     source = EventSource.from_config(config)
 
     assert isinstance(source, StdinSource)

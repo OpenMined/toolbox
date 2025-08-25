@@ -1,9 +1,9 @@
 from typing import Any
 
-from toolbox_events.config import EventSinkConfig, EventSourceConfig
 from toolbox_events.events.models import Event
 from toolbox_events.events.sinks import EventSink
 from toolbox_events.events.sources import EventSource
+from toolbox_events.settings import EventSinkSettings, EventSourceSettings
 
 # Global lazy-initialized instances
 _default_event_sink: EventSink | None = None
@@ -14,7 +14,7 @@ def get_default_event_sink() -> EventSink:
     """Get or create the default event sink."""
     global _default_event_sink
     if _default_event_sink is None:
-        config = EventSinkConfig()
+        config = EventSinkSettings()
         _default_event_sink = EventSink.from_config(config)
     return _default_event_sink
 
@@ -23,7 +23,7 @@ def get_default_event_source() -> EventSource:
     """Get or create the default event source."""
     global _default_event_source
     if _default_event_source is None:
-        config = EventSourceConfig()
+        config = EventSourceSettings()
 
         # For development: link sink and source if they are both in-memory
         if config.kind == "memory":

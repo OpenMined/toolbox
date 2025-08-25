@@ -1,8 +1,8 @@
 import os
 from unittest.mock import Mock, patch
 
-from toolbox_events.config import EventSinkConfig
 from toolbox_events.events.sinks import HttpSink
+from toolbox_events.settings import EventSinkSettings
 
 
 def test_http_sink_immediate_send():
@@ -71,7 +71,7 @@ def test_http_sink_from_config():
     }
 
     with patch.dict(os.environ, env_vars):
-        config = EventSinkConfig()
+        config = EventSinkSettings()
         sink = HttpSink(**config.model_dump())
 
         assert sink.source_name == "test_source"

@@ -5,9 +5,8 @@ from fastapi import APIRouter, Depends, FastAPI
 from loguru import logger
 from pydantic import BaseModel
 
-from toolbox.daemon.daemon_logging import setup_logging
-from toolbox.daemon.daemon_settings import DaemonSettings
 from toolbox.daemon.dependencies import get_trigger_db
+from toolbox.settings import DaemonSettings
 from toolbox.triggers.models import EventBatch
 from toolbox.triggers.scheduler import Scheduler
 from toolbox.triggers.trigger_store import TriggerDB
@@ -22,9 +21,6 @@ async def lifespan(app: FastAPI):
     else:
         settings = DaemonSettings()
         app.state.settings = settings
-
-    if settings.log_file:
-        setup_logging(settings.log_file)
 
     try:
         logger.info("Starting FastAPI application...")

@@ -3,9 +3,9 @@ from typing import Any, ClassVar
 
 from loguru import logger
 
-from toolbox_events.config import EventSinkConfig
 from toolbox_events.daemon_client import DaemonClient
 from toolbox_events.events.models import Event
+from toolbox_events.settings import EventSinkSettings
 
 
 class EventSink(ABC):
@@ -24,7 +24,7 @@ class EventSink(ABC):
             )
 
     @classmethod
-    def from_config(cls, config: EventSinkConfig, **kwargs: Any) -> "EventSink":
+    def from_config(cls, config: EventSinkSettings, **kwargs: Any) -> "EventSink":
         """Create an EventSink instance from configuration."""
         sink_map = {
             "memory": MemorySink,
@@ -40,7 +40,10 @@ class EventSink(ABC):
         return res
 
     def send(self, name: str, data: dict[str, Any], source: str | None = None) -> None:
-        self._send(Event(name=name, data=data, source=source or self.source_name))
+        try:
+            self._send(Event(name=name, data=data, source=source or self.source_name))
+        except Exception as e:
+            logger.error(f"Error sending event {name}: {e}")
 
     def __enter__(self):
         """Enter context manager."""
@@ -103,10 +106,8 @@ class HttpSink(EventSink):
         return self._client
 
     def close(self) -> None:
-        """Close the client connection."""
         if self._client and hasattr(self._client.conn, "close"):
             self._client.conn.close()
 
     def _send(self, event: Event) -> None:
-        """Send event immediately to daemon."""
         self.client.send_events([event])

@@ -15,10 +15,8 @@ from sqlalchemy.orm import (
 from sqlalchemy.orm.properties import ForeignKey
 from sqlalchemy.types import Boolean, TypeDecorator
 
-from toolbox.db import TOOLBOX_DB_DIR
+from toolbox.settings import settings
 from toolbox.triggers.cron_utils import calculate_next_run_time, is_valid_cron
-
-TRIGGER_DB_PATH = TOOLBOX_DB_DIR / "triggers.db"
 
 
 class DateTimeUTC(TypeDecorator[datetime]):
@@ -613,4 +611,5 @@ class TriggerDB:
 
 
 def get_db() -> TriggerDB:
-    return TriggerDB.from_url(f"sqlite:///{TRIGGER_DB_PATH}")
+    db_url = settings.daemon.db_url
+    return TriggerDB.from_url(db_url)

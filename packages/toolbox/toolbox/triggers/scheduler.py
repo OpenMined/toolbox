@@ -183,7 +183,7 @@ class Scheduler:
 
         try:
             with ThreadPoolExecutor(
-                max_workers=settings.max_concurrent_triggers
+                max_workers=settings.daemon.max_concurrent_triggers
             ) as executor:
                 while self.running:
                     try:

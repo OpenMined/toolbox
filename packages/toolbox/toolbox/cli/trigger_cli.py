@@ -3,6 +3,7 @@ from pathlib import Path
 import typer
 from rich.console import Console
 from sqlalchemy.exc import IntegrityError
+from tabulate import tabulate
 
 from toolbox.analytics import track_cli_command
 from toolbox.triggers.scheduler import Scheduler
@@ -101,7 +102,6 @@ def add(
 @track_cli_command("trigger list")
 def list():
     """List all triggers"""
-    from tabulate import tabulate
 
     db = get_db()
     triggers = db.triggers.get_all()
@@ -294,39 +294,3 @@ def reset():
     db = get_db()
     db.triggers.delete_all()
     typer.echo("✓ Reset trigger database")
-
-
-@app.command()
-@track_cli_command("trigger add_event")
-def add_event(
-    name: str = typer.Option(..., "--name", "-n", help="Name of the event"),
-    source: str = typer.Option(..., "--source", "-s", help="Source of the event"),
-    data: str = typer.Option("{}", "--data", "-d", help="Event data as JSON string"),
-):
-    """Add a single event to the trigger database"""
-    import json
-    from datetime import datetime, timezone
-
-    db = get_db()
-
-    # Parse the data JSON
-    try:
-        event_data = json.loads(data)
-    except json.JSONDecodeError as e:
-        typer.echo(f"Error: Invalid JSON data: {e}", err=True)
-        raise typer.Exit(1)
-
-    # Create the event
-    event_dict = {
-        "name": name,
-        "source": source,
-        "data": event_data,
-        "timestamp": datetime.now(timezone.utc),
-    }
-
-    try:
-        db.events.create_many([event_dict])
-        typer.echo(f"✓ Added event '{name}' from source '{source}'")
-    except Exception as e:
-        typer.echo(f"Error adding event: {e}", err=True)
-        raise typer.Exit(1)

@@ -10,7 +10,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from toolbox.daemon.app import create_app
-from toolbox.daemon.daemon_settings import DaemonSettings
+from toolbox.settings import DaemonSettings
 from toolbox_events.daemon_client import DaemonClient
 from toolbox_events.events.sinks import HttpSink
 
@@ -19,9 +19,7 @@ from toolbox_events.events.sinks import HttpSink
 def daemon_app(tmp_path: Path) -> Generator[FastAPI, None, None]:
     """Create test app with scheduler disabled"""
     # Create settings with test database
-    settings = DaemonSettings(
-        db_url=f"sqlite:///{tmp_path / 'test.db'}", enable_scheduler=False
-    )
+    settings = DaemonSettings(db_path=tmp_path / "test.db", enable_scheduler=False)
     app = create_app(settings=settings)
     yield app
 

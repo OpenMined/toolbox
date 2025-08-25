@@ -6,7 +6,10 @@ from loguru import logger
 
 
 class InterceptHandler(logging.Handler):
-    """Handler to intercept standard logging and redirect to loguru"""
+    """
+    Handler to intercept standard logging and redirect to loguru
+    Source: https://medium.com/@muh.bazm/how-i-unified-logging-in-fastapi-with-uvicorn-and-loguru-6813058c48fc
+    """
 
     def emit(self, record: logging.LogRecord) -> None:
         """Emit a logging record to loguru"""
@@ -43,6 +46,7 @@ def setup_logging(log_file: Path | None = None, log_level: str = "DEBUG") -> Non
 
     # Add file handler if log_file is provided, otherwise console
     if log_file:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
         logger.add(
             log_file,
             format="{time:YYYY-MM-DD HH:mm:ss} | {level: <8} | {name}:{function}:{line} - {message}",
@@ -63,7 +67,6 @@ def setup_logging(log_file: Path | None = None, log_level: str = "DEBUG") -> Non
     intercept_handler = InterceptHandler()
 
     # Configure logging for uvicorn and FastAPI
-    # These loggers need to be explicitly configured as they don't appear in root logger
     loggers_to_intercept = [
         "uvicorn",
         "uvicorn.access",

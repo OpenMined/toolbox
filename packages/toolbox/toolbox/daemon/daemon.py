@@ -8,35 +8,27 @@ import uvicorn
 from loguru import logger
 
 from toolbox.daemon.app import create_app
+from toolbox.daemon.daemon_logging import setup_logging
+from toolbox.settings import settings
 
 SHUTDOWN_WAIT_TIME = 10  # Maximum time to wait for graceful shutdown in seconds
 
 
-def get_daemon_pid_file() -> Path:
-    """Get the path to the daemon PID file"""
-    pid_file = Path.home() / ".toolbox" / "daemon.pid"
-    pid_file.parent.mkdir(parents=True, exist_ok=True)
-    return pid_file
-
-
 def write_pid_file(pid_file: Path) -> None:
     """Write current process PID to file"""
+    pid_file.parent.mkdir(parents=True, exist_ok=True)
     with open(pid_file, "w") as f:
         f.write(str(os.getpid()))
 
 
 def remove_pid_file(pid_file: Path) -> None:
-    """Remove PID file"""
-    try:
-        pid_file.unlink()
-    except FileNotFoundError:
-        pass
+    pid_file.unlink(missing_ok=True)
 
 
 def is_daemon_running(pid_file: Path | None = None) -> bool:
     """Check if daemon is currently running by checking PID file"""
     if pid_file is None:
-        pid_file = get_daemon_pid_file()
+        pid_file = settings.daemon.pid_file
 
     if not pid_file.exists():
         return False
@@ -54,48 +46,62 @@ def is_daemon_running(pid_file: Path | None = None) -> bool:
 
 
 def run_daemon(
-    host: str = "127.0.0.1",
-    port: int = 8000,
+    host: str | None = None,
+    port: int | None = None,
     log_file: Path | None = None,
     pid_file: Path | None = None,
+    log_to_file: bool = True,
 ) -> None:
     """Run the daemon"""
-    if pid_file is None:
-        pid_file = get_daemon_pid_file()
 
-    # Check if daemon is already running
-    if is_daemon_running(pid_file=pid_file):
-        logger.error(f"Daemon already running (PID file: {pid_file})")
+    # Apply overrides
+    if host is not None:
+        settings.daemon.host = host
+    if port is not None:
+        settings.daemon.port = port
+    if log_file is not None:
+        settings.daemon.log_file = log_file
+    if not log_to_file:
+        settings.daemon.log_file = None
+    if pid_file is not None:
+        settings.daemon.pid_file = pid_file
+
+    if is_daemon_running(pid_file=settings.daemon.pid_file):
+        logger.error(f"Daemon already running (PID file: {settings.daemon.pid_file})")
         sys.exit(78)  # EX_CONFIG - configuration error
 
-    # Write PID file
-    write_pid_file(pid_file)
+    write_pid_file(settings.daemon.pid_file)
     logger.info(f"Starting daemon with PID {os.getpid()}")
 
     try:
-        # Create FastAPI app
-        app = create_app(log_file)
+        # Create FastAPI app with settings
+        if settings.daemon.log_file:
+            logger.info(f"Logging to file: {settings.daemon.log_file}")
+        setup_logging(settings.daemon.log_file)
 
-        logger.info(f"Starting uvicorn server on {host}:{port}")
+        app = create_app(settings=settings.daemon)
+
+        logger.info(
+            f"Starting uvicorn server on {settings.daemon.host}:{settings.daemon.port}"
+        )
         uvicorn.run(
             app=app,
-            host=host,
-            port=port,
-            log_config=None,  # Prevent uvicorn from overriding our logging config
+            host=settings.daemon.host,
+            port=settings.daemon.port,
+            log_config=None,  # Prevent uvicorn from overriding logging config
         )
 
     except Exception as e:
         logger.error(f"Daemon failed to start: {e}")
         raise
     finally:
-        logger.info("Cleaning up daemon resources...")
-        remove_pid_file(pid_file)
+        remove_pid_file(settings.daemon.pid_file)
 
 
 def stop_daemon(pid_file: Path | None = None) -> bool:
     """Stop the daemon process"""
     if pid_file is None:
-        pid_file = get_daemon_pid_file()
+        pid_file = settings.daemon.pid_file
 
     if not is_daemon_running(pid_file=pid_file):
         return False
@@ -124,9 +130,3 @@ def stop_daemon(pid_file: Path | None = None) -> bool:
     except Exception:
         remove_pid_file(pid_file=pid_file)
         return False
-
-
-def is_daemon_process_running() -> bool:
-    """Check if the daemon process is running"""
-    pid_file = get_daemon_pid_file()
-    return is_daemon_running(pid_file)

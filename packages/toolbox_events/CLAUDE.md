@@ -1,6 +1,4 @@
-# toolbox_events: Library Design Plan
-
-**Note**: The specific implementations mentioned throughout this document (e.g., stdio, file, API, ntfy) are illustrative examples to demonstrate the architecture pattern. The actual implementations will be determined based on needs as the library evolves.
+# toolbox_events: Library Design Document
 
 ## General instructions
 
@@ -15,58 +13,60 @@
 
 - MCP servers to emit events to a central daemon
 - Trigger scripts to consume batched events from the daemon
-- Scripts to send notifications to users
+- Scripts to send notifications to users (planned)
 - Extensible backends for transport and notification delivery
 
 ## 2. Core Architecture
 
-### Independent Components
+### Current Implementation
 
-Three separate, independently configurable components:
+Two main components are currently implemented:
 
 1. **EventSink**: For sending events (used by MCP servers)
+
+   - Memory sink for testing/development
+   - HTTP sink for daemon communication
+
 2. **EventSource**: For receiving events (used by trigger scripts)
-3. **Notifier**: For sending notifications to users (used by trigger scripts)
+   - Memory source for testing/development
+   - Stdin source for JSON event consumption
 
-Each component:
+### Planned Components
 
-- Has its own `from_config()` factory method
-- Can be used independently without the others
-- Has a corresponding top-level convenience function
+3. **Notifier**: For sending notifications to users (used by trigger scripts) - **TO BE IMPLEMENTED**
+
+Each component has its own `from_config()` factory method, can be used independently, and has a corresponding top-level convenience function.
 
 ### a. Events Module (`events/`)
 
-**Purpose**: Machine-to-machine communication of structured event data.
+#### EventSink (`sinks.py`)
 
-- **EventSink**: Interface for sending events from MCP servers
+- Abstract base class with `from_config()` factory method
+- `send(name, data, source)` method for emitting events
+- Implementations:
+  - **MemorySink**: In-memory storage for testing
+  - **HttpSink**: Posts events to daemon via HTTP
 
-  - `from_config(config)` factory method
-  - `emit(event_type, data)` method
-  - Example implementations might include:
-    - POSTing to daemon endpoint
-    - Appending to local queue file
-    - Writing to stdout for chaining
+#### EventSource (`sources.py`)
 
-- **EventSource**: Interface for receiving events in trigger scripts
+- Abstract base class with `from_config()` factory method
+- `get_events()` method returning list of events
+- Implementations:
+  - **MemorySource**: Reads from in-memory sink (can be linked for testing)
+  - **StdinSource**: Reads JSON events from stdin
 
-  - `from_config(config)` factory method
-  - `get_events()` method
-  - Example implementations might include:
-    - Reading JSON from stdin
-    - Fetching from daemon via HTTP
-    - Reading from environment variables
-    - Reading from file paths
+#### Event Model (`models.py`)
 
-- **models.py**: Event dataclasses with type, source, data, timestamp
+- **Event**: Pydantic model with name, data, timestamp, and source fields
+- Automatic UTC timestamp generation
+- `full_name` property combining source and name
 
-### b. Notifications Module (`notifications/`)
-
-**Purpose**: Machine-to-human communication.
+### b. Notifications Module (`notifications/`) - **PLANNED**
 
 - **Notifier**: Interface for sending human-readable messages
 
   - `from_config(config)` factory method
-  - `notify(message, level)` method
+  - `notify(topic, message, level)` method
   - Example implementations might include:
     - Console output
     - Push notification services (e.g., ntfy.sh)
@@ -74,214 +74,213 @@ Each component:
 
 - **models.py**: Notification level, message, metadata
 
-### c. Configuration Module (`config/`)
+### c. Settings (`settings.py`)
 
-**Purpose**: Configure which adapters to use for sinks/sources/notifiers.
+- **EventSinkSettings**: Pydantic settings for sink configuration
 
-- **Config**: Configuration for the library
-  - Factory methods to create configured sources, sinks, and notifiers
-  - Could load from environment variables, config files, etc.
-  - `from_env()`, `from_file()` class methods for different config sources
+  - Environment prefix: `TOOLBOX_EVENTS_SINK_`
+  - Settings: kind, source_name, daemon_url, timeout, headers
 
-### d. Daemon Module (`daemon/`)
+- **EventSourceSettings**: Pydantic settings for source configuration
+  - Environment prefix: `TOOLBOX_EVENTS_SOURCE_`
+  - Settings: kind
 
-**Purpose**: HTTP client for daemon API.
+### d. Daemon Client (`daemon_client.py`)
 
-- **DaemonClient**: Encapsulates daemon HTTP endpoints
-  - Used internally by API-based sinks and sources
-  - Handles event emission, retrieval, future trigger management
+- **DaemonClient**: Used internally by HttpSink
+  - Methods: `health()`, `send_events()`
+  - Uses httpx
 
 ## 3. Key Design Decisions
 
 ### Component Independence
 
-- **EventSink**, **EventSource**, and **Notifier** are completely independent
+- EventSink and EventSource are completely independent
 - MCP servers only need EventSink
-- Trigger scripts typically need EventSource and optionally Notifier
-- Each component can be tested in isolation
+- Trigger scripts need EventSource and optionally Notifier (when implemented)
 
 ### Dependency Injection
 
-- Each component uses constructor injection for its dependencies
-- Factory methods (`from_config()`) handle construction
-- Top-level functions (`emit()`, `get_events()`, `notify()`) delegate to default instances
-- Full testability through explicit dependencies
+- Factory methods (`from_config()`) handle construction based on configuration
+- Top-level functions (`send_event()`, `get_events()`) delegate to lazily-initialized default instances
+
+### Configuration System
+
+- Uses pydantic-settings with environment prefixes
+- Defaults to "memory" implementation for development/testing
 
 ### Data Flow
 
 - Flow: `MCP → EventSink → Daemon → EventSource → Script → Notifier → Human`
 - Each arrow represents a boundary where components can be swapped
 
-## 4. Directory Structure (Illustrative)
-
-**Note**: The specific sink/source/notifier implementations shown here are examples. Actual implementations will be added as needed.
+## 4. Current Directory Structure
 
 ```
 packages/toolbox_events/
 ├── src/toolbox_events/
-│   ├── __init__.py          # Public API: emit(), get_events(), notify()
-│   ├── config/
-│   │   ├── __init__.py
-│   │   ├── base.py          # Config ABC
-│   │   └── ... (configuration implementations)
-│   ├── daemon/
-│   │   ├── __init__.py
-│   │   └── client.py        # DaemonClient
+│   ├── __init__.py          # Public API: send_event(), get_events()
+│   ├── settings.py          # EventSinkSettings, EventSourceSettings
+│   ├── daemon_client.py     # DaemonClient for HTTP communication
 │   ├── events/
 │   │   ├── __init__.py
-│   │   ├── sinks/
-│   │   │   ├── __init__.py
-│   │   │   ├── base.py      # EventSink ABC with from_config()
-│   │   │   └── ... (various sink implementations)
-│   │   ├── sources/
-│   │   │   ├── __init__.py
-│   │   │   ├── base.py      # EventSource ABC with from_config()
-│   │   │   └── ... (various source implementations)
-│   │   └── models.py        # Event dataclasses
-│   └── notifications/
+│   │   ├── sinks.py         # EventSink ABC, MemorySink, HttpSink
+│   │   ├── sources.py       # EventSource ABC, MemorySource, StdinSource
+│   │   └── models.py        # Event model
+│   └── notifications/       # TO BE IMPLEMENTED
 │       ├── __init__.py
 │       ├── notifiers/
 │       │   ├── __init__.py
-│       │   ├── base.py      # Notifier ABC with from_config()
-│       │   └── ... (various notifier implementations)
+│       │   └── base.py      # Notifier ABC with from_config()
 │       └── models.py        # Notification dataclasses
 ├── tests/
-│   └── ...
+│   ├── test_settings.py
+│   ├── test_http_sink.py
+│   ├── test_memory.py
+│   └── test_stdin.py
 └── pyproject.toml
 ```
 
 ## 5. Usage Examples
 
-**Note**: These examples show the intended API patterns and usage. The specific implementations (MemorySink, KafkaSink, etc.) are illustrative - actual implementations will be created as needed.
-
-### MCP Server (Only EventSink)
+### MCP Server (Using EventSink)
 
 ```python
 # Simple: Use top-level function
-from toolbox_events import emit
+from toolbox_events import send_event
 
-emit("file.created", {"path": "/vault/note.md", "size": 1024})
+send_event("file.created", {"path": "/vault/note.md", "size": 1024})
 
 # Explicit: Configure sink directly
 from toolbox_events.events.sinks import EventSink
-from toolbox_events.config import Config
+from toolbox_events.settings import EventSinkSettings
 
-config = Config.from_env()
+config = EventSinkSettings(kind="http", source_name="my-mcp-server")
 sink = EventSink.from_config(config)
-sink.emit("file.created", {"path": "/vault/note.md", "size": 1024})
+sink.send("file.created", {"path": "/vault/note.md", "size": 1024})
 ```
 
-### Trigger Script (EventSource + Notifier)
+### Trigger Script (Using EventSource)
 
 ```python
 # Simple: Use top-level functions
-from toolbox_events import get_events, notify
+from toolbox_events import get_events
 
 events = get_events()  # Always returns list for batch compatibility
 
 for event in events:
-    if event["type"] == "file.created":
-        process_file(event["data"]["path"])
-        notify(f"Processed {event['data']['path']}", level="info")
+    if event.name == "file.created":
+        process_file(event.data["path"])
+        print(f"Processed {event.data['path']}")
 
-# Explicit: Configure components directly
+# Explicit: Configure source directly
 from toolbox_events.events.sources import EventSource
-from toolbox_events.notifications import Notifier
-from toolbox_events.config import Config
+from toolbox_events.settings import EventSourceSettings
 
-config = Config.from_env()
+config = EventSourceSettings(kind="stdin")
 source = EventSource.from_config(config)
-notifier = Notifier.from_config(config)
 
 events = source.get_events()
 for event in events:
-    process_file(event["data"]["path"])
-    notifier.notify(f"Processed {event['data']['path']}")
+    process_file(event.data["path"])
 ```
 
-### Testing MCP Server (Only Mock Sink)
+### Testing with Memory Implementation
 
 ```python
 from toolbox_events.events.sinks import MemorySink
+from toolbox_events.events.sources import MemorySource
 
-# Only need to mock the sink
-sink = MemorySink()
+# Create linked sink and source for testing
+sink = MemorySink(source_name="test-mcp")
+source = MemorySource(sink=sink)
 
-# Run MCP server code with injected sink
-run_mcp_server(sink=sink)
+# Send events through sink
+sink.send("test.event", {"value": 42})
 
-# Assert events were sent to sink
-assert len(sink.emitted_events) == 1
-assert sink.emitted_events[0]["type"] == "file.created"
+# Retrieve events from source
+events = source.get_events()
+assert len(events) == 1
+assert events[0].name == "test.event"
+assert events[0].data["value"] == 42
 ```
 
-### Testing Trigger Script (Mock Source + Notifier)
+### Testing with HTTP Sink
 
 ```python
-from toolbox_events.events.sources import MemorySource
-from toolbox_events.notifications import MemoryNotifier
+from toolbox_events.events.sinks import HttpSink
 
-# Only need what the trigger uses
-source = MemorySource()
-source.add_event({"type": "test.event", "data": {"value": 42}})
+# Configure HTTP sink to send to daemon
+sink = HttpSink(
+    daemon_url="http://localhost:8000",
+    source_name="my-mcp-server"
+)
 
-notifier = MemoryNotifier()
-
-# Run trigger with injected dependencies
-run_trigger(source=source, notifier=notifier)
-
-# Assert on what was used
-assert source.events_consumed == 1
-assert len(notifier.messages) == 1
+# Send event to daemon
+with sink:
+    sink.send("file.created", {"path": "/vault/note.md"})
 ```
 
-### Custom Implementation
+### Reading Events from Stdin
+
+```python
+# Script that receives events via stdin
+from toolbox_events.events.sources import StdinSource
+
+source = StdinSource()
+events = source.get_events()
+
+# Process all events
+for event in events:
+    print(f"Received {event.name} from {event.source}")
+    print(f"Data: {event.data}")
+```
+
+### Environment Configuration
+
+```bash
+# Configure sink to use HTTP
+export TOOLBOX_EVENTS_SINK_KIND=http
+export TOOLBOX_EVENTS_SINK_DAEMON_URL=http://localhost:8000
+export TOOLBOX_EVENTS_SINK_SOURCE_NAME=my-mcp-server
+
+# Configure source to use stdin
+export TOOLBOX_EVENTS_SOURCE_KIND=stdin
+```
+
+### Custom Implementation Example
 
 ```python
 from toolbox_events.events.sinks import EventSink
-from toolbox_events.events import Event
+from toolbox_events.events.models import Event
+from typing import ClassVar
 
-class CustomKafkaSink(EventSink):
-    @classmethod
-    def from_config(cls, config: Config) -> "CustomKafkaSink":
-        return cls(brokers=config.get("kafka_brokers"))
+class FileSink(EventSink):
+    kind: ClassVar[str] = "file"
 
-    def emit(self, event_type: str, data: dict) -> None:
-        # Kafka implementation
-        pass
+    def __init__(self, file_path: str, **kwargs):
+        super().__init__(**kwargs)
+        self.file_path = file_path
 
-# Use in MCP server
-sink = CustomKafkaSink.from_config(config)
-sink.emit("custom.event", {"data": "value"})
+    def _send(self, event: Event) -> None:
+        # Append event to file
+        with open(self.file_path, "a") as f:
+            f.write(event.model_dump_json() + "\n")
 ```
 
-### Top-level Implementation
+### Planned Notifier Usage (Future)
 
 ```python
-# In toolbox_events/__init__.py
+# Future: Use top-level function for notifications
+from toolbox_events import notify
 
-_default_sink: EventSink | None = None
-_default_source: EventSource | None = None
-_default_notifier: Notifier | None = None
+notify("my-notifications", "Processing completed successfully", level="info")
 
-def emit(event_type: str, data: dict[str, Any]) -> None:
-    global _default_sink
-    if _default_sink is None:
-        config = Config.from_env()
-        _default_sink = EventSink.from_config(config)
-    _default_sink.emit(event_type, data)
+# Future: Explicit notifier configuration
+from toolbox_events.notifications import Notifier
+from toolbox_events.settings import NotifierSettings
 
-def get_events() -> list[Event]:
-    global _default_source
-    if _default_source is None:
-        config = Config.from_env()
-        _default_source = EventSource.from_config(config)
-    return _default_source.get_events()
-
-def notify(message: str, level: str = "info") -> None:
-    global _default_notifier
-    if _default_notifier is None:
-        config = Config.from_env()
-        _default_notifier = Notifier.from_config(config)
-    _default_notifier.notify(message, level)
+config = NotifierSettings(kind="ntfy", topic="my-notifications")
+notifier = Notifier.from_config(config)
+notifier.notify("my-notifications", "Task completed", level="success")
 ```
