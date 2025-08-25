@@ -12,7 +12,7 @@ dependencies = [
 name = "syftbox_queryengine"
 version = "0.1.0"
 description = "Add your description here"
-# readme = "README.md"
+readme = "README.md"
 requires-python = ">=3.12"
 
 
