@@ -1,27 +1,37 @@
 import json
-from datetime import timedelta
+from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any, Dict
 from unittest.mock import Mock, patch
 
 import pytest
+from pytest import MonkeyPatch
 from toolbox.triggers.scheduler import Scheduler
 from toolbox.triggers.trigger_store import TriggerDB, utcnow
 
 
 @pytest.fixture
-def db():
+def event_script_path(test_assets_dir: Path) -> Path:
+    """Path to the test script for integration tests"""
+    script_path = test_assets_dir / "event_script.py"
+    assert script_path.exists(), f"Test script not found: {script_path}"
+    return script_path
+
+
+@pytest.fixture
+def db() -> TriggerDB:
     """Create an in-memory test database"""
     return TriggerDB.from_url("sqlite:///:memory:")
 
 
 @pytest.fixture
-def scheduler(db):
+def scheduler(db: TriggerDB) -> Scheduler:
     """Create a scheduler with test database"""
     yield Scheduler(db)
 
 
 @pytest.fixture
-def script_summary_file(tmp_path, monkeypatch):
+def script_summary_file(tmp_path: Path, monkeypatch: MonkeyPatch) -> Path:
     """Manages test output file cleanup with unique paths per test"""
     summary_file = tmp_path / "test_script_output.json"
     # Set environment variable so the test script knows where to write
@@ -30,14 +40,14 @@ def script_summary_file(tmp_path, monkeypatch):
     # tmp_path and monkeypatch automatically clean up after test
 
 
-def read_script_output(summary_file: Path) -> dict:
+def read_script_output(summary_file: Path) -> Dict[str, Any]:
     """Helper to read and parse script output"""
     assert summary_file.exists(), "Script should have created summary file"
     with open(summary_file, "r") as f:
         return json.load(f)
 
 
-def create_test_events(db, now):
+def create_test_events(db: TriggerDB, now: datetime) -> Dict[str, Any]:
     """Helper to create common test events"""
     return {
         "slack_message": db.events.create(
@@ -64,13 +74,15 @@ def create_test_events(db, now):
     }
 
 
-def test_scheduler_finds_due_triggers(scheduler):
+def test_scheduler_finds_due_triggers(scheduler: Scheduler, tmp_path: Path) -> None:
     """Test scheduler gets due triggers from database efficiently"""
     now = utcnow()
 
     # Create a due trigger (past next_run_at)
     due_trigger = scheduler.db.triggers.create(
-        name="due-trigger", cron_schedule="*/5 * * * *", script_path="/tmp/test.py"
+        name="due-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path=str(tmp_path / "test.py"),
     )
     past_time = now - timedelta(minutes=1)
     scheduler.db.triggers.update_next_run_time(
@@ -79,7 +91,9 @@ def test_scheduler_finds_due_triggers(scheduler):
 
     # Create a future trigger (not due)
     scheduler.db.triggers.create(
-        name="future-trigger", cron_schedule="*/5 * * * *", script_path="/tmp/test.py"
+        name="future-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path=str(tmp_path / "test.py"),
     )
 
     # Test that _process_triggers submits due triggers to executor
@@ -93,12 +107,16 @@ def test_scheduler_finds_due_triggers(scheduler):
     assert call_args[1].id == due_trigger.id  # trigger
 
 
-def test_scheduler_updates_next_run_before_execution(scheduler):
+def test_scheduler_updates_next_run_before_execution(
+    scheduler: Scheduler, tmp_path: Path
+) -> None:
     """Test _process_triggers updates next_run_at before execution"""
     import time
 
     trigger = scheduler.db.triggers.create(
-        name="test-trigger", cron_schedule="*/5 * * * *", script_path="/tmp/test.py"
+        name="test-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path=str(tmp_path / "test.py"),
     )
     # Make trigger due
     past_time = utcnow() - timedelta(minutes=1)
@@ -122,14 +140,16 @@ def test_scheduler_updates_next_run_before_execution(scheduler):
     mock_executor.submit.assert_called_once()
 
 
-def test_scheduler_handles_event_based_triggers(scheduler):
+def test_scheduler_handles_event_based_triggers(
+    scheduler: Scheduler, tmp_path: Path
+) -> None:
     """Test scheduler processes event-based triggers correctly"""
     now = utcnow()
 
     event_trigger = scheduler.db.triggers.create(
         name="event-trigger",
         cron_schedule="*/5 * * * *",
-        script_path="/tmp/test.py",
+        script_path=str(tmp_path / "test.py"),
         event_names=["test_event"],
     )
 
@@ -156,7 +176,9 @@ def test_scheduler_handles_event_based_triggers(scheduler):
     assert call_args[1].id == event_trigger.id  # trigger
 
 
-def test_scheduler_skips_triggers_with_no_events(scheduler):
+def test_scheduler_skips_triggers_with_no_events(
+    scheduler: Scheduler, tmp_path: Path
+) -> None:
     """Test scheduler skips event triggers when no events available"""
     now = utcnow()
 
@@ -164,7 +186,7 @@ def test_scheduler_skips_triggers_with_no_events(scheduler):
     event_trigger = scheduler.db.triggers.create(
         name="event-trigger",
         cron_schedule="*/5 * * * *",
-        script_path="/tmp/test.py",
+        script_path=str(tmp_path / "test.py"),
         event_names=["nonexistent_event"],
     )
     # Set as due
@@ -184,10 +206,14 @@ def test_scheduler_skips_triggers_with_no_events(scheduler):
     assert call_args[1].id == event_trigger.id
 
 
-def test_execute_trigger_creates_execution_record(scheduler):
+def test_execute_trigger_creates_execution_record(
+    scheduler: Scheduler, tmp_path: Path
+) -> None:
     """Test execute_trigger creates database execution record"""
     trigger = scheduler.db.triggers.create(
-        name="test-trigger", cron_schedule="*/5 * * * *", script_path="/tmp/test.py"
+        name="test-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path=str(tmp_path / "test.py"),
     )
 
     with patch("subprocess.run") as mock_run:
@@ -201,12 +227,16 @@ def test_execute_trigger_creates_execution_record(scheduler):
         assert executions[0].trigger_id == trigger.id
 
 
-def test_execute_from_scheduler_updates_next_run_time(scheduler):
+def test_execute_from_scheduler_updates_next_run_time(
+    scheduler: Scheduler, tmp_path: Path
+) -> None:
     """Test scheduler._process_triggers method updates next_run_at before executing"""
     import time
 
     trigger = scheduler.db.triggers.create(
-        name="test-trigger", cron_schedule="*/5 * * * *", script_path="/tmp/test.py"
+        name="test-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path=str(tmp_path / "test.py"),
     )
     # Make trigger due
     past_time = utcnow() - timedelta(minutes=1)
@@ -230,10 +260,14 @@ def test_execute_from_scheduler_updates_next_run_time(scheduler):
         assert updated_trigger.next_run_at != original_next_run
 
 
-def test_execute_trigger_does_not_update_next_run_time(scheduler):
+def test_execute_trigger_does_not_update_next_run_time(
+    scheduler: Scheduler, tmp_path: Path
+) -> None:
     """Test execute_trigger (CLI method) doesn't affect scheduling"""
     trigger = scheduler.db.triggers.create(
-        name="test-trigger", cron_schedule="*/5 * * * *", script_path="/tmp/test.py"
+        name="test-trigger",
+        cron_schedule="*/5 * * * *",
+        script_path=str(tmp_path / "test.py"),
     )
     original_next_run = trigger.next_run_at
 
@@ -247,13 +281,15 @@ def test_execute_trigger_does_not_update_next_run_time(scheduler):
         assert updated_trigger.next_run_at == original_next_run
 
 
-def test_execute_trigger_with_script(scheduler, test_script_path, script_summary_file):
+def test_execute_trigger_with_script(
+    scheduler: Scheduler, event_script_path: Path, script_summary_file: Path
+) -> None:
     """Integration test: Basic script execution and event passing"""
 
     trigger = scheduler.db.triggers.create(
         name="test-trigger",
         cron_schedule="*/5 * * * *",
-        script_path=str(test_script_path),
+        script_path=str(event_script_path),
         event_names=["test_event"],
     )
 
@@ -292,14 +328,14 @@ def test_execute_trigger_with_script(scheduler, test_script_path, script_summary
 
 
 def test_execute_trigger_event_name_filtering(
-    scheduler, test_script_path, script_summary_file
-):
+    scheduler: Scheduler, event_script_path: Path, script_summary_file: Path
+) -> None:
     """Integration test: Event filtering by name"""
 
     trigger = scheduler.db.triggers.create(
         name="message-trigger",
         cron_schedule="*/5 * * * *",
-        script_path=str(test_script_path),
+        script_path=str(event_script_path),
         event_names=["message_created"],
     )
 
@@ -319,16 +355,21 @@ def test_execute_trigger_event_name_filtering(
     assert "discord" in summary["event_sources"]
 
 
-def test_execute_trigger_event_source_filtering(scheduler):
+def test_execute_trigger_event_source_filtering(
+    scheduler: Scheduler,
+    event_script_path: Path,
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
     """Integration test: Event filtering by source"""
-    test_script_path = Path(__file__).parent.parent / "assets" / "test_event_script.py"
-    output_dir = Path("/tmp/toolbox_test_output")
+    output_dir = tmp_path / "toolbox_test_output"
     summary_file = output_dir / "test_script_output.json"
+    monkeypatch.setenv("TEST_SCRIPT_OUTPUT_FILE", str(summary_file))
 
     trigger = scheduler.db.triggers.create(
         name="slack-trigger",
         cron_schedule="*/5 * * * *",
-        script_path=str(test_script_path),
+        script_path=str(event_script_path),
         event_sources=["slack"],
     )
 
@@ -361,16 +402,21 @@ def test_execute_trigger_event_source_filtering(scheduler):
     assert "discord" not in summary["event_sources"]
 
 
-def test_execute_trigger_combined_filtering(scheduler):
+def test_execute_trigger_combined_filtering(
+    scheduler: Scheduler,
+    event_script_path: Path,
+    tmp_path: Path,
+    monkeypatch: MonkeyPatch,
+) -> None:
     """Integration test: Event filtering by name AND source"""
-    test_script_path = Path(__file__).parent.parent / "assets" / "test_event_script.py"
-    output_dir = Path("/tmp/toolbox_test_output")
+    output_dir = tmp_path / "toolbox_test_output"
     summary_file = output_dir / "test_script_output.json"
+    monkeypatch.setenv("TEST_SCRIPT_OUTPUT_FILE", str(summary_file))
 
     trigger = scheduler.db.triggers.create(
         name="specific-trigger",
         cron_schedule="*/5 * * * *",
-        script_path=str(test_script_path),
+        script_path=str(event_script_path),
         event_names=["message_created"],
         event_sources=["slack"],
     )

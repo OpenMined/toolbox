@@ -26,15 +26,12 @@ def main():
     # Use environment variable for output path, fallback to default
     import os
 
-    output_path = os.environ.get("TEST_SCRIPT_OUTPUT_FILE")
-    if output_path:
-        summary_file = Path(output_path)
-        summary_file.parent.mkdir(parents=True, exist_ok=True)
-    else:
-        # Fallback for manual testing
-        output_dir = Path("/tmp/toolbox_test_output")
-        output_dir.mkdir(exist_ok=True)
-        summary_file = output_dir / "test_script_output.json"
+    output_path = os.environ.get(
+        "TEST_SCRIPT_OUTPUT_FILE", "/tmp/toolbox_test_output/test_script_output.json"
+    )
+    summary_file = Path(output_path)
+    summary_file.parent.mkdir(parents=True, exist_ok=True)
+
     summary = {
         "events_received": len(events),
         "event_names": [e.get("name") for e in events],
