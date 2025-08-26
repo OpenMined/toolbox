@@ -22,7 +22,7 @@ posthog = Posthog(
 )
 
 
-def _get_analytics_id_file():
+def _get_anonymous_id_file():
     """Get the analytics ID file path"""
     config_dir = TOOLBOX_SETTINGS_DIR
     config_dir.mkdir(exist_ok=True)
@@ -31,7 +31,7 @@ def _get_analytics_id_file():
 
 def get_anonymous_user_id() -> str:
     """Generate stable anonymous ID using config directory"""
-    id_file = _get_analytics_id_file()
+    id_file = _get_anonymous_id_file()
 
     if id_file.exists():
         return id_file.read_text().strip()
@@ -44,7 +44,7 @@ def get_anonymous_user_id() -> str:
 
 def set_anonymous_user_id(user_id: str) -> None:
     """Set the anonymous user ID"""
-    id_file = _get_analytics_id_file()
+    id_file = _get_anonymous_id_file()
     id_file.write_text(user_id)
 
 

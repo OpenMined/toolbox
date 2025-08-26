@@ -294,3 +294,21 @@ def reset():
     db = get_db()
     db.triggers.delete_all()
     typer.echo("✓ Reset trigger database")
+
+
+@app.command()
+@track_cli_command("trigger set-default-topic")
+def set_default_topic(
+    topic: str = typer.Argument(
+        ..., help="The notification topic to use (e.g., tb-username-a3f2)"
+    ),
+):
+    """Set the default notification topic for triggers"""
+    from toolbox.settings import settings
+
+    # Update and save settings
+    settings.default_notification_topic = topic
+    settings.save()
+
+    typer.echo(f"✓ Set default notification topic to: {topic}")
+    typer.echo("This will be used as the default topic for all notifications.")

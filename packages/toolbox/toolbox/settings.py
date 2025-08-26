@@ -8,6 +8,8 @@ from pydantic_settings import (
     SettingsConfigDict,
 )
 
+from toolbox.triggers.trigger_utils import get_default_notification_topic
+
 TOOLBOX_DIR = Path(__file__).parent.parent
 TOOLBOX_WORKSPACE_DIR = TOOLBOX_DIR.parent.parent
 TOOLBOX_SETTINGS_DIR = Path.home() / ".toolbox"
@@ -45,6 +47,11 @@ class Settings(BaseSettings):
     skip_slack_auth: bool = Field(default=False)
     do_whatsapp_desktop_check: bool = Field(default=True)
     use_discord_env_var: bool = Field(default=True)
+
+    # Notification settings
+    default_notification_topic: str = Field(
+        default_factory=get_default_notification_topic
+    )
 
     model_config = SettingsConfigDict(
         json_file=TOOLBOX_CONFIG_FILE,

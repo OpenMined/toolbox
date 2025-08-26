@@ -19,6 +19,13 @@ We collect anonymous analytics to understand:
 • How the CLI is used
 • No personal data is collected[/dim]"""
 
+NOTIFICATION_MESSAGE = f"""[yellow]📱 Notifications[/yellow]
+Toolbox can send you notifications when MCP servers are installed or when triggers are executed.
+
+Your default notification topic is [yellow]{settings.default_notification_topic}[/yellow].
+To change this, run [cyan]tb trigger set-default-topic <topic>[/cyan].
+"""
+
 
 def run_setup():
     console = Console()
@@ -41,6 +48,8 @@ def run_setup():
         settings.analytics_enabled = False
     else:
         settings.analytics_enabled = True
+
+    console.print()
 
     settings.save()
     console.print(
