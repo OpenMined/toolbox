@@ -125,34 +125,3 @@ class NtfyNotifier(Notifier):
             )
             response.raise_for_status()
             logger.debug(f"Notification sent to ntfy: {notification.topic}")
-
-
-if __name__ == "__main__":
-    # Test notifications to ntfy
-    notifier = NtfyNotifier(default_topic="tb-test-1")
-
-    # Test 1: Simple notification with success
-    notifier.notify(
-        message="Test notification from toolbox_events working correctly",
-        title="Test 1: Basic",
-        priority=3,
-        tags=["heavy_check_mark", "computer"],
-    )
-
-    # Test 2: Urgent notification with warning
-    notifier.notify(
-        message="This is an urgent test alert! Everything is actually fine.",
-        title="Test 2: Urgent Alert",
-        priority=5,
-        tags=["warning", "rotating_light"],
-    )
-
-    # Test 3: Success notification
-    notifier.notify(
-        message="Background process completed successfully. No action needed.",
-        title="Test 3: Success",
-        priority=2,
-        tags=["tada", "partying_face"],
-    )
-
-    print("Sent 3 test notifications to tb-test-1")

@@ -148,6 +148,21 @@ def call(app_name: str, endpoint: str):
     call_mcp(conn, app_name, endpoint)
 
 
+@track_cli_command()
+def set_notification_topic(
+    topic: str = typer.Argument(
+        ..., help="The notification topic to use (e.g., tb-username-a3f2)"
+    ),
+):
+    """Set the default notification topic"""
+    settings.default_notification_topic = topic
+    settings.save()
+
+    console = Console()
+    console.print(f"✓ Set default notification topic to: [yellow]{topic}[/yellow]")
+    console.print("This will be used as the default topic for all notifications.")
+
+
 app.command()(setup)
 app.command(name="settings")(show_settings)
 app.command()(info)
@@ -160,6 +175,7 @@ app.command()(reset)
 app.command()(call)
 app.command()(start)
 app.command()(stop)
+app.command()(set_notification_topic)
 
 # Add subgroups
 app.add_typer(daemon_cli.app, name="daemon", help="Daemon management commands")

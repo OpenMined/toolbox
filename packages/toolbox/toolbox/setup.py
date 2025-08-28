@@ -20,10 +20,12 @@ We collect anonymous analytics to understand:
 • No personal data is collected[/dim]"""
 
 NOTIFICATION_MESSAGE = f"""[yellow]📱 Notifications[/yellow]
-Toolbox can send you notifications when MCP servers are installed or when triggers are executed.
+Toolbox triggers can send you notifications with ntfy.sh
 
-Your default notification topic is [yellow]{settings.default_notification_topic}[/yellow].
-To change this, run [cyan]tb trigger set-default-topic <topic>[/cyan].
+Your default notification topic is [yellow]{settings.default_notification_topic}[/yellow]
+To change this, run [cyan]tb set-notification-topic <topic>[/cyan].
+
+To receive notifications on your phone, install [link=https://ntfy.sh]ntfy.sh[/link] and subscribe to your topic.
 """
 
 
@@ -49,6 +51,8 @@ def run_setup():
     else:
         settings.analytics_enabled = True
 
+    console.print()
+    console.print(NOTIFICATION_MESSAGE)
     console.print()
 
     settings.save()
