@@ -21,7 +21,7 @@ from toolbox.installer import (
     start_mcp_and_requirements,
     stop_mcp,
 )
-from toolbox.settings import settings
+from toolbox.settings import get_anonymous_user_id, settings
 from toolbox.setup import run_setup
 from toolbox.store.store_json import STORE
 
@@ -62,9 +62,8 @@ def info():
 def show_settings():
     # CLI to show settings
     console = Console()
-    settings_dump = settings.model_dump()
-    for k, v in settings_dump.items():
-        console.print(f"{k}: {v}")
+    settings_dump = settings.model_dump_json(indent=2)
+    console.print(settings_dump)
 
 
 @track_cli_command()
@@ -126,7 +125,7 @@ def list_store():
 
 @track_cli_command()
 def reset():
-    from toolbox.analytics import get_anonymous_user_id, set_anonymous_user_id
+    from toolbox.settings import set_anonymous_user_id
 
     analytics_id = get_anonymous_user_id()
 
