@@ -1,3 +1,6 @@
+!!! warning "Beta Documentation"
+These docs are in beta and subject to change. Please refer to the [README.md](https://github.com/OpenMined/toolbox/blob/main/README.md) for the latest information.
+
 # Toolbox
 
 [![PyPI version](https://badge.fury.io/py/syft-toolbox.svg)](https://badge.fury.io/py/syft-toolbox)
