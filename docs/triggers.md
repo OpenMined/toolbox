@@ -109,7 +109,7 @@ tb trigger add \
     --name "obsidian-event-processor" \
     --script "/path/to/your/script.py" \
     --event "file.created" \
-    --event "file.updated" \
+    --event "file.modified" \
     --event "file.deleted" \
     --event-source "obsidian-mcp"
 ```
