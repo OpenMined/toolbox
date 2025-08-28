@@ -12,7 +12,7 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 
 - Toolbox supports popular developer tools (think github, slack, discord, obsidian, gmail etc.), and clients (claude desktop, cursor), making it easier to deploy useful MCP servers without having them managed by a specific client
 - With toolbox you can install **mcp servers** with **background agents** and their dependencies using
-  `toolbox install <appname>`
+  `tb install <appname>`
 - background agents download your data or index it (OCR/transcription/embeddings for RAG); you can choose between fully local or free hosted in [openmined enclaves](#hosted-option-with-enclaves)
 
 ## TOC
@@ -113,7 +113,7 @@ tb log <appname>
 | Name                 | Clients | Default Deployment  | Read Access            | Write Access          | Install                           |
 | -------------------- | ------- | ------------------- | ---------------------- | --------------------- | --------------------------------- |
 | slack-mcp            | claude  | proxy-to-om-enclave | Slack Messages         | Slack Messages        | `tb install slack-mcp`            |
-| discord-mcp          | claude  | proxy-to-om-enclave | Discord Messages       | Discord Messages      | `tb install slack-mcp`            |
+| discord-mcp          | claude  | proxy-to-om-enclave | Discord Messages       | Discord Messages      | `tb install discord-mcp`          |
 | obsidian-mcp         | claude  | proxy-to-om-enclave | Obsidian notes         | Obsidian Notes        | `tb install obsidian-mcp`         |
 | github-mcp           | claude  | stdio               | Issues, PRs, Settings  | Issues, PRs, Settings | `tb install github-mcp`           |
 | whatsapp-desktop-mcp | claude  | proxy-to-om-enclave | WhatsApp Messages      | WhatsApp Messages     | `tb install whatsapp-desktop-mcp` |
@@ -122,7 +122,11 @@ tb log <appname>
 
 # Triggers
 
-Toolbox can run scripts on a schedule to automate tasks in your MCP pipeline. See the [triggers documentation](docs/triggers.md) for setup and usage instructions.
+Toolbox can run scripts on a schedule to automate tasks in your MCP pipeline. See the [triggers documentation](docs/features/triggers.md) for setup and usage instructions.
+
+# Notifications
+
+Send notifications from your triggers and MCP servers using ntfy.sh. See the [notifications documentation](docs/features/notifications.md) for configuration and usage.
 
 ## Troubleshooting screenpipe
 

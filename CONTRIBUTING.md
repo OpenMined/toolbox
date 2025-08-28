@@ -71,3 +71,11 @@ rm -rf dist/
 uv build --package syft_toolbox
 uv publish dist/syft-toolbox-* --token <your_token>
 ```
+
+## Documentation
+
+To serve the docs locally, run this in the repo root:
+
+```
+mkdocs serve
+```

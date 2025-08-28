@@ -1,0 +1,154 @@
+/* Clean white header theme */
+[data-md-color-primary="white"] {
+  --md-primary-fg-color: #ffffff;
+  --md-primary-fg-color--light: #f3f4f6;
+  --md-primary-fg-color--dark: #ffffff;
+  --md-primary-bg-color: rgb(46, 43, 59);
+  --md-primary-bg-color--light: rgb(46, 43, 59);
+}
+
+/* Fix header text colors for white background */
+.md-header {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1) !important;
+}
+
+.md-header [data-md-component="header-title"] {
+  color: rgb(46, 43, 59) !important;
+}
+
+/* Fix all header navigation colors */
+.md-header .md-header__button,
+.md-header .md-header__topic,
+.md-header .md-header__title,
+.md-header .md-nav__title,
+.md-header .md-nav__button,
+.md-header .md-source__icon {
+  color: rgb(46, 43, 59) !important;
+}
+
+/* Fix search styling */
+.md-search__form {
+  background-color: #f3f4f6 !important;
+  border-radius: 4px;
+}
+
+.md-search__input {
+  background-color: transparent !important;
+  color: rgb(46, 43, 59) !important;
+}
+
+.md-search__input::placeholder {
+  color: #6b7280 !important;
+}
+
+.md-search__icon[for="__search"] {
+  color: #6b7280 !important;
+}
+
+/* Theme toggle icons */
+.md-header .md-header__button svg {
+  fill: rgb(46, 43, 59) !important;
+}
+
+/* Hover states */
+.md-header .md-header__button:hover,
+.md-header .md-nav__button:hover {
+  opacity: 0.7;
+}
+
+/* Clean link colors */
+.md-nav__link--active,
+.md-nav__link:active {
+  color: #764ba2;
+}
+
+.md-nav__link:hover {
+  color: #667eea;
+}
+
+/* Footer styling - matching SyftBox docs */
+.md-footer {
+  background-color: #3b3f4f !important;
+  color: #ffffff !important;
+}
+
+.md-footer-meta {
+  background-color: #3b3f4f !important;
+}
+
+.md-footer__link {
+  color: #ffffff !important;
+}
+
+.md-footer__link:hover {
+  opacity: 0.8;
+}
+
+.md-footer-copyright {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Dark theme styling */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #3b3f4f;
+  --md-primary-fg-color--light: #424755;
+  --md-primary-fg-color--dark: #3b3f4f;
+}
+
+/* Dark theme header - matches footer color */
+[data-md-color-scheme="slate"] .md-header {
+  background-color: #3b3f4f !important;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Dark theme header text colors */
+[data-md-color-scheme="slate"] .md-header [data-md-component="header-title"],
+[data-md-color-scheme="slate"] .md-header .md-header__button,
+[data-md-color-scheme="slate"] .md-header .md-header__topic,
+[data-md-color-scheme="slate"] .md-header .md-header__title,
+[data-md-color-scheme="slate"] .md-header .md-nav__title,
+[data-md-color-scheme="slate"] .md-header .md-nav__button,
+[data-md-color-scheme="slate"] .md-header .md-source__icon {
+  color: #ffffff !important;
+}
+
+/* Dark theme search styling */
+[data-md-color-scheme="slate"] .md-search__form {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+[data-md-color-scheme="slate"] .md-search__input {
+  color: #ffffff !important;
+}
+
+[data-md-color-scheme="slate"] .md-search__input::placeholder {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+[data-md-color-scheme="slate"] .md-search__icon[for="__search"] {
+  color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Dark theme icons */
+[data-md-color-scheme="slate"] .md-header .md-header__button svg {
+  fill: #ffffff !important;
+}
+
+/* Dark theme hover states */
+[data-md-color-scheme="slate"] .md-header .md-header__button:hover,
+[data-md-color-scheme="slate"] .md-header .md-nav__button:hover {
+  opacity: 0.7;
+}
+
+/* Fix logo spacing based on GitHub discussion */
+.md-header__button.md-logo {
+  margin: 0 !important;
+  padding-left: 0 !important;
+}
+
+/* .md-header__button.md-logo img,
+.md-header__button.md-logo svg {
+  height: 24px !important;
+  width: auto !important;
+} */
