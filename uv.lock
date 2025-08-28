@@ -2608,7 +2608,6 @@ name = "toolbox-mono"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [
-    { name = "mkdocs-material", extra = ["imaging"] },
     { name = "notes-mcp" },
     { name = "obsidian-mcp" },
     { name = "pdf-mcp" },
@@ -2621,7 +2620,7 @@ dependencies = [
 
 [package.dev-dependencies]
 dev = [
-    { name = "mkdocs-material" },
+    { name = "mkdocs-material", extra = ["imaging"] },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-xdist" },
@@ -2630,7 +2629,6 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mkdocs-material", extras = ["imaging"], specifier = ">=9.6.18" },
     { name = "notes-mcp", editable = "packages/notes_mcp" },
     { name = "obsidian-mcp", editable = "packages/obsidian_mcp" },
     { name = "pdf-mcp", editable = "packages/pdf_mcp" },
@@ -2643,7 +2641,7 @@ requires-dist = [
 
 [package.metadata.requires-dev]
 dev = [
-    { name = "mkdocs-material", specifier = ">=9.6.18" },
+    { name = "mkdocs-material", extras = ["imaging"], specifier = ">=9.6.18" },
     { name = "pre-commit", specifier = ">=4.2.0" },
     { name = "pytest", specifier = ">=8.4.1" },
     { name = "pytest-xdist", specifier = ">=3.8.0" },

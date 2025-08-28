@@ -13,7 +13,6 @@ dependencies = [
     "obsidian_mcp",
     "pdf_mcp",
     "toolbox_events",
-    "mkdocs-material[imaging]>=9.6.18",
 ]
 
 [build-system]
@@ -41,7 +40,7 @@ extend-select = ["I"]
 
 [dependency-groups]
 dev = [
-    "mkdocs-material>=9.6.18",
+    "mkdocs-material[imaging]>=9.6.18",
     "pre-commit>=4.2.0",
     "pytest>=8.4.1",
     "pytest-xdist>=3.8.0",
