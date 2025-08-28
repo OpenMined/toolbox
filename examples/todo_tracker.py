@@ -97,3 +97,7 @@ if result.returncode == 0:
     print(result.stdout)
 else:
     print(f"Error running Claude: {result.stderr}")
+
+# Save output to a file
+output_path.write_text(result.stdout)
+print(f"✅ TODOs extracted and saved to {output_path}")
