@@ -72,7 +72,7 @@ def list(
 
     table_data = []
     for event in events:
-        data_truncated = textwrap.shorten(json.dumps(event.data), width=64)
+        data_truncated = textwrap.shorten(json.dumps(event.data), width=128)
         table_data.append(
             [
                 event.name,

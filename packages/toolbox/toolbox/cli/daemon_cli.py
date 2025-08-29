@@ -1,3 +1,4 @@
+import subprocess
 from pathlib import Path
 
 import typer
@@ -47,7 +48,6 @@ def start(
     port: int | None = typer.Option(None, "--port", help="Port to bind to"),
 ):
     """Start the toolbox daemon in background. Should only be used if daemon is not managed by launchd."""
-    import subprocess
 
     if is_daemon_running():
         console.print("[yellow]Daemon is already running[/yellow]")
