@@ -17,6 +17,7 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 
 ## TOC
 
+- [Documentation](https://openmined.github.io/toolbox/)
 - [Use cases](#use-cases)
 - [Installation](#install)
 - [CLI](#toolbox-cli)
@@ -122,11 +123,11 @@ tb log <appname>
 
 # Triggers
 
-Toolbox can run scripts on a schedule to automate tasks in your MCP pipeline. See the [triggers documentation](docs/features/triggers.md) for setup and usage instructions.
+Toolbox can run scripts on a schedule to automate tasks in your MCP pipeline. See the [triggers documentation](https://openmined.github.io/toolbox/latest/features/triggers/) for setup and usage instructions.
 
 # Notifications
 
-Send notifications from your triggers and MCP servers using ntfy.sh. See the [notifications documentation](docs/features/notifications.md) for configuration and usage.
+Send notifications from your triggers and MCP servers using ntfy.sh. See the [notifications documentation](https://openmined.github.io/toolbox/latest/features/notifications/) for configuration and usage.
 
 ## Troubleshooting screenpipe
 
