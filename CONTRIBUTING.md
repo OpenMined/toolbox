@@ -72,6 +72,19 @@ uv build --package syft_toolbox
 uv publish dist/syft-toolbox-* --token <your_token>
 ```
 
+### Documentation Versioning
+
+Documentation is automatically deployed via GitHub Actions when creating version tags.
+If automatic deployment fails, you can manually deploy docs:
+
+```bash
+# Deploy a new version and update the latest alias
+mike deploy --push --update-aliases ${NEW_VERSION} latest
+
+# Set default version (only needed for first release)
+mike set-default --push latest
+```
+
 ## Documentation
 
 To serve the docs locally, run this in the repo root:
