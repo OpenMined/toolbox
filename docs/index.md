@@ -1,6 +1,3 @@
-!!! warning "Beta Documentation"
-These docs are in beta and subject to change. Please refer to the [README.md](https://github.com/OpenMined/toolbox/blob/main/README.md) for the latest information.
-
 # Toolbox
 
 [![PyPI version](https://badge.fury.io/py/syft-toolbox.svg)](https://badge.fury.io/py/syft-toolbox)
@@ -9,8 +6,6 @@ These docs are in beta and subject to change. Please refer to the [README.md](ht
 [![GitHub stars](https://img.shields.io/github/stars/OpenMined/toolbox?style=social)](https://github.com/OpenMined/toolbox)
 
 A privacy-first tool to install MCP servers and background agents for your personal data.
-
-<!-- <div style="position: relative; padding-bottom: 64.92335437330928%; height: 0;"><iframe src="https://www.loom.com/embed/8c85f602fe4c47a5b8b8ddc827d4a048?sid=6c3f7861-1e74-43dd-a296-23e2f546a933" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div> -->
 
 ## Overview
 
