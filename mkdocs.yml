@@ -16,6 +16,7 @@ theme:
     - navigation.sections
     - navigation.expand
     - content.code.copy
+    - content.code.annotate
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
@@ -71,3 +72,5 @@ markdown_extensions:
   - admonition
   - toc:
       permalink: true
+  - attr_list
+  - md_in_html
