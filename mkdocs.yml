@@ -4,6 +4,7 @@ site_url: https://openmined.github.io/toolbox
 
 theme:
   name: material
+  custom_dir: docs/overrides
   favicon: assets/logo.svg
   logo: assets/logo.svg
   features:
