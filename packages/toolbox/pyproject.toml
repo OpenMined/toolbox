@@ -17,6 +17,7 @@ dependencies = [
     "requests>=2.32.4",
     "numpy>=2.3.2",
     "posthog>=6.5.0",
+    "fastapi[standard]>=0.116.1",
 ]
 
 name = "syft_toolbox"

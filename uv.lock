@@ -11,6 +11,7 @@ members = [
     "slack-mcp",
     "syft-toolbox",
     "syftbox-queryengine",
+    "toolbox-events",
     "toolbox-mono",
     "whatsapp-desktop-mcp",
 ]
@@ -1120,7 +1121,9 @@ source = { editable = "packages/obsidian_mcp" }
 dependencies = [
     { name = "fastapi", extra = ["standard"] },
     { name = "mcp", extra = ["cli"] },
+    { name = "toolbox-events" },
     { name = "uvicorn" },
+    { name = "watchfiles" },
 ]
 
 [package.dev-dependencies]
@@ -1133,7 +1136,9 @@ dev = [
 requires-dist = [
     { name = "fastapi", extras = ["standard"], specifier = ">=0.116.1" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.10.0" },
+    { name = "toolbox-events", editable = "packages/toolbox_events" },
     { name = "uvicorn", specifier = ">=0.35.0" },
+    { name = "watchfiles", specifier = ">=1.1.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -2164,6 +2169,7 @@ source = { editable = "packages/toolbox" }
 dependencies = [
     { name = "anthropic" },
     { name = "croniter" },
+    { name = "fastapi", extra = ["standard"] },
     { name = "leveldb-312" },
     { name = "loguru" },
     { name = "mcp" },
@@ -2192,6 +2198,7 @@ dev = [
 requires-dist = [
     { name = "anthropic", specifier = ">=0.52.2" },
     { name = "croniter", specifier = ">=6.0.0" },
+    { name = "fastapi", extras = ["standard"], specifier = ">=0.116.1" },
     { name = "leveldb-312", specifier = "==1.0.0" },
     { name = "loguru", specifier = ">=0.7.3" },
     { name = "mcp", specifier = ">=1.9.2" },
@@ -2311,6 +2318,37 @@ wheels = [
 ]
 
 [[package]]
+name = "toolbox-events"
+version = "0.1.0"
+source = { editable = "packages/toolbox_events" }
+dependencies = [
+    { name = "httpx" },
+    { name = "loguru" },
+    { name = "pydantic" },
+    { name = "pydantic-settings" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+    { name = "pytest-xdist" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "loguru", specifier = ">=0.7.3" },
+    { name = "pydantic", specifier = ">=2.11.7" },
+    { name = "pydantic-settings", specifier = ">=2.10.1" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
+]
+
+[[package]]
 name = "toolbox-mono"
 version = "0.1.0"
 source = { editable = "." }
@@ -2321,12 +2359,15 @@ dependencies = [
     { name = "slack-mcp" },
     { name = "syft-toolbox" },
     { name = "syftbox-queryengine" },
+    { name = "toolbox-events" },
     { name = "whatsapp-desktop-mcp" },
 ]
 
 [package.dev-dependencies]
 dev = [
     { name = "pre-commit" },
+    { name = "pytest" },
+    { name = "pytest-xdist" },
     { name = "ruff" },
 ]
 
@@ -2338,12 +2379,15 @@ requires-dist = [
     { name = "slack-mcp", editable = "packages/slack_mcp" },
     { name = "syft-toolbox", editable = "packages/toolbox" },
     { name = "syftbox-queryengine", editable = "packages/syftbox_queryengine" },
+    { name = "toolbox-events", editable = "packages/toolbox_events" },
     { name = "whatsapp-desktop-mcp", editable = "packages/whatsapp_desktop_mcp" },
 ]
 
 [package.metadata.requires-dev]
 dev = [
     { name = "pre-commit", specifier = ">=4.2.0" },
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
     { name = "ruff", specifier = ">=0.12.9" },
 ]
 

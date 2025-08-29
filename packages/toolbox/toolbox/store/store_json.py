@@ -217,10 +217,10 @@ STORE = {
         "mcp_deployment_methods": {"all": "infered"},
         "deployment": {
             "type": "python",
-            "module": "pdf_mcp.app",
+            "module": "obsidian_mcp.app",
         },
         "default_settings": {
-            "default_read_access": ["PDF Documents"],
+            "default_read_access": ["Obsidian Vault"],
             "default_write_access": [],
             "default_model": None,
             "default_proxy": "mcp-remote",
