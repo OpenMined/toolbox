@@ -1,13 +1,12 @@
 import os
 import traceback
-import uuid
 from functools import wraps
 from typing import Any, Dict, Optional
 
 from posthog import Posthog, identify_context
 
 from toolbox import __version__
-from toolbox.settings import TOOLBOX_SETTINGS_DIR, settings
+from toolbox.settings import get_anonymous_user_id, settings
 
 # PostHog configuration
 # safe to hardcode, its a public write-only key
@@ -20,32 +19,6 @@ posthog = Posthog(
     project_api_key=POSTHOG_PUBLIC_KEY,
     host=POSTHOG_HOST,
 )
-
-
-def _get_analytics_id_file():
-    """Get the analytics ID file path"""
-    config_dir = TOOLBOX_SETTINGS_DIR
-    config_dir.mkdir(exist_ok=True)
-    return config_dir / ".analytics_id"
-
-
-def get_anonymous_user_id() -> str:
-    """Generate stable anonymous ID using config directory"""
-    id_file = _get_analytics_id_file()
-
-    if id_file.exists():
-        return id_file.read_text().strip()
-
-    # Generate new ID
-    new_id = str(uuid.uuid4())
-    set_anonymous_user_id(new_id)
-    return new_id
-
-
-def set_anonymous_user_id(user_id: str) -> None:
-    """Set the anonymous user ID"""
-    id_file = _get_analytics_id_file()
-    id_file.write_text(user_id)
 
 
 if not settings.analytics_enabled:

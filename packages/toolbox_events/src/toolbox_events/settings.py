@@ -23,3 +23,17 @@ class EventSourceSettings(BaseSettings):
     )
 
     kind: str = "stdin"
+
+
+class NotifierSettings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_prefix="TOOLBOX_EVENTS_NOTIFIER_",
+        case_sensitive=False,
+    )
+
+    kind: str = "memory"
+    default_topic: str | None = None
+
+    # ntfy settings (https://docs.ntfy.sh/publish/)
+    server_url: str = "https://ntfy.sh"
+    timeout: float = 30.0

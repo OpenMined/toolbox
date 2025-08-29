@@ -19,6 +19,15 @@ We collect anonymous analytics to understand:
 • How the CLI is used
 • No personal data is collected[/dim]"""
 
+NOTIFICATION_MESSAGE = f"""[yellow]📱 Notifications[/yellow]
+Toolbox triggers can send you notifications with ntfy.sh
+
+Your default notification topic is [yellow]{settings.default_notification_topic}[/yellow]
+To change this, run [cyan]tb set-notification-topic <topic>[/cyan].
+
+To receive notifications on your phone, install [link=https://ntfy.sh]ntfy.sh[/link] and subscribe to your topic.
+"""
+
 
 def run_setup():
     console = Console()
@@ -41,6 +50,10 @@ def run_setup():
         settings.analytics_enabled = False
     else:
         settings.analytics_enabled = True
+
+    console.print()
+    console.print(NOTIFICATION_MESSAGE)
+    console.print()
 
     settings.save()
     console.print(

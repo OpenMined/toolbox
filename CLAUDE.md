@@ -109,3 +109,50 @@ cd packages/syftbox_queryengine
 - You can first start the syftbox_queryengine, and then start the notes_mcp
 - The Syftboxquery engine will register an account with the NoteMCP server
 - The NoteMCP server will then start polling the Syftbox query engine for new data and indexed data
+
+## Documentation Development
+
+### Setup
+
+Documentation uses MkDocs with Material theme, managed as part of the uv workspace:
+
+```bash
+# Install dev dependencies (includes mkdocs-material)
+uv sync
+
+# Serve docs locally with hot reload
+uv run mkdocs serve
+
+# Build static site
+uv run mkdocs build
+```
+
+### Documentation Structure
+
+- **docs/**: Main documentation directory
+  - **index.md**: Landing page with overview
+  - **getting-started/**: Installation and quick start guides
+  - **features/**: Feature documentation (triggers, notifications)
+  - **use-cases/**: Specific use case examples (Slack integration)
+  - **assets/**: Static assets (logo, custom CSS)
+- **mkdocs.yml**: MkDocs configuration with navigation and theme settings
+
+### Deployment
+
+Documentation automatically deploys to GitHub Pages at https://openmined.github.io/toolbox when pushing to branches ending with `/mkdocs`:
+
+```bash
+# Push to trigger deployment
+git push origin your-branch/mkdocs
+```
+
+The GitHub Actions workflow (`.github/workflows/docs.yml`) handles deployment using `mkdocs gh-deploy`.
+
+### Style Guidelines
+
+- Use Material theme features for consistent styling
+- Include code examples with syntax highlighting
+- Add appropriate admonitions (warning, info, tip) for important information
+- Keep navigation structure flat and intuitive
+- Use tables for comparing features or listing options
+- Follow the existing CSS theme in `docs/assets/stylesheets/extra.css`
