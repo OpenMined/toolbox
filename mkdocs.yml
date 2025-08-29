@@ -1,6 +1,6 @@
 site_name: Toolbox
 site_description: Privacy-first toolbox for installing local and remote MCP servers
-site_url: https://openmined.github.io/toolbox
+site_url: https://openmined.github.io/toolbox/
 
 theme:
   name: material
@@ -43,7 +43,6 @@ extra:
   version:
     provider: mike
     default: latest
-    alias: true
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/OpenMined/toolbox
