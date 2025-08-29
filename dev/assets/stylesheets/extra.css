@@ -152,3 +152,22 @@
   height: 24px !important;
   width: auto !important;
 } */
+
+/* Version warning banner styling */
+.md-banner--warning {
+  background-color: #ff6b35 !important;
+  color: #ffffff !important;
+}
+
+.md-banner--warning a {
+  color: #ffffff !important;
+}
+
+.md-banner--warning a:hover {
+  opacity: 0.9;
+}
+
+.md-banner--warning strong {
+  color: #ffffff !important;
+  font-weight: 600;
+}
