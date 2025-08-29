@@ -49,20 +49,31 @@ Add this to your .zshrc or .bashrc to exclude yourself permanently.
 
 Contact developers to get invited to the PostHog workspace for viewing metrics and error tracking.
 
-## Release to Pypi
+## Release to PyPI
 
 To bump the version, tag the commit, and publish to PyPI:
 
-Make sure you're on main with no uncommitted changes, then:
+Since main is protected, create a release branch after bumping the version:
 
 ```bash
+# Start from main
+git checkout main
+git pull origin main
+
 # bump version, see https://docs.astral.sh/uv/guides/package/#updating-your-version
 uv version --package syft_toolbox --bump minor
 NEW_VERSION=$(uv version --package syft_toolbox --short)
 
-# commit to git and tag version
+# Create release branch with the new version
+git checkout -b release/v${NEW_VERSION}
 git commit -am "Release v${NEW_VERSION}"
-git push
+git push -u origin release/v${NEW_VERSION}
+
+# Create PR and merge to main
+# After PR is merged, checkout main and create tag
+
+git checkout main
+git pull origin main
 git tag "v${NEW_VERSION}"
 git push origin "v${NEW_VERSION}"
 
@@ -71,3 +82,5 @@ rm -rf dist/
 uv build --package syft_toolbox
 uv publish dist/syft-toolbox-* --token <your_token>
 ```
+
+Note: The tag push will trigger the docs deployment workflow to create a new versioned documentation.
