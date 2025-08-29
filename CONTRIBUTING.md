@@ -70,6 +70,19 @@ git commit -am "Release v${NEW_VERSION}"
 git push -u origin release/v${NEW_VERSION}
 
 # Create PR and merge to main
+  # Create PR specifying repo and head branch
+  gh pr create \
+    --repo OpenMined/toolbox \
+    --title "Release v${NEW_VERSION}" \
+    --body "Release v${NEW_VERSION}" \
+    --base main \
+    --head release/v${NEW_VERSION}
+
+  # Then merge it
+  gh pr merge release/v${NEW_VERSION} \
+    --repo OpenMined/toolbox \
+    --merge \
+    --auto
 # After PR is merged, checkout main and create tag
 
 git checkout main
