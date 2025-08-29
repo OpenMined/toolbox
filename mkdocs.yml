@@ -1,0 +1,76 @@
+site_name: Toolbox
+site_description: Privacy-first toolbox for installing local and remote MCP servers
+site_url: https://openmined.github.io/toolbox
+
+theme:
+  name: material
+  custom_dir: docs/overrides
+  favicon: assets/logo.svg
+  logo: assets/logo.svg
+  features:
+    - search.suggest
+    - search.highlight
+    - navigation.instant
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.sections
+    - navigation.expand
+    - content.code.copy
+    - content.code.annotate
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: white
+      accent: deep orange
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: grey
+      accent: deep orange
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+
+repo_url: https://github.com/OpenMined/toolbox
+repo_name: OpenMined/toolbox
+
+plugins:
+  - search
+
+extra:
+  version:
+    provider: mike
+    default: latest
+    alias: true
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/OpenMined/toolbox
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/syft-toolbox/
+  generator: false
+
+extra_css:
+  - assets/stylesheets/extra.css
+
+nav:
+  - Getting Started:
+      - Overview: index.md
+      - Installation: getting-started/installation.md
+      - Quick Start: getting-started/quick-start.md
+  - Features:
+      - Triggers: features/triggers.md
+      - Notifications: features/notifications.md
+  - Use Cases:
+      - Slack: use-cases/slack.md
+
+markdown_extensions:
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.superfences
+  - admonition
+  - toc:
+      permalink: true
+  - attr_list
+  - md_in_html
