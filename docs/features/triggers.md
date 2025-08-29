@@ -114,7 +114,8 @@ for event in events:
 ```
 
 !!! note
-`get_events()` returns only unprocessed events that match the trigger's registered event names and sources. Once consumed, events won't be received again in subsequent trigger runs.
+
+    `get_events()` returns only unprocessed events that match the trigger's registered event names and sources. Once consumed, events won't be received again in subsequent trigger runs.
 
 #### Step 3: Register the Trigger
 
