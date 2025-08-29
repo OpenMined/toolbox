@@ -1,13 +1,19 @@
-from typing import Any
+from typing import Any, Optional
 
 from toolbox_events.events.models import Event
 from toolbox_events.events.sinks import EventSink
 from toolbox_events.events.sources import EventSource
-from toolbox_events.settings import EventSinkSettings, EventSourceSettings
+from toolbox_events.notifications.notifiers import Notifier
+from toolbox_events.settings import (
+    EventSinkSettings,
+    EventSourceSettings,
+    NotifierSettings,
+)
 
 # Global lazy-initialized instances
 _default_event_sink: EventSink | None = None
 _default_event_source: EventSource | None = None
+_default_notifier: Notifier | None = None
 
 
 def get_default_event_sink() -> EventSink:
@@ -37,6 +43,15 @@ def get_default_event_source() -> EventSource:
     return _default_event_source
 
 
+def get_default_notifier() -> Notifier:
+    """Get or create the default notifier."""
+    global _default_notifier
+    if _default_notifier is None:
+        config = NotifierSettings()
+        _default_notifier = Notifier.from_config(config)
+    return _default_notifier
+
+
 def send_event(
     name: str,
     data: dict[str, Any],
@@ -51,3 +66,15 @@ def get_events() -> list[Event]:
     """Get events using the default event source."""
     source = get_default_event_source()
     return source.get_events()
+
+
+def notify(
+    message: str,
+    title: Optional[str] = None,
+    priority: int = 3,
+    tags: Optional[list[str]] = None,
+    topic: Optional[str] = None,
+) -> None:
+    """Send a notification using the default notifier."""
+    notifier = get_default_notifier()
+    notifier.notify(message, title, priority, tags, topic)

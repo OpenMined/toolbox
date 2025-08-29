@@ -1,3 +1,4 @@
+import uuid
 from pathlib import Path
 
 from pydantic import BaseModel, Field
@@ -12,6 +13,49 @@ TOOLBOX_DIR = Path(__file__).parent.parent
 TOOLBOX_WORKSPACE_DIR = TOOLBOX_DIR.parent.parent
 TOOLBOX_SETTINGS_DIR = Path.home() / ".toolbox"
 TOOLBOX_CONFIG_FILE = TOOLBOX_SETTINGS_DIR / "config.json"
+
+
+def _get_anonymous_id_file():
+    """Get the analytics ID file path"""
+    from toolbox.settings import TOOLBOX_SETTINGS_DIR
+
+    config_dir = TOOLBOX_SETTINGS_DIR
+    config_dir.mkdir(exist_ok=True)
+    return config_dir / ".analytics_id"
+
+
+def set_anonymous_user_id(user_id: str) -> None:
+    """Set the anonymous user ID"""
+    id_file = _get_anonymous_id_file()
+    id_file.write_text(user_id)
+
+
+def get_anonymous_user_id() -> str:
+    """Generate stable anonymous ID using config directory"""
+    id_file = _get_anonymous_id_file()
+
+    if id_file.exists():
+        return id_file.read_text().strip()
+
+    # Generate new ID
+    new_id = str(uuid.uuid4())
+    set_anonymous_user_id(new_id)
+    return new_id
+
+
+def get_default_notification_topic() -> str:
+    """
+    Get a unique default topic for this user: "tb-<username>-<user_id[:4]>"
+
+    Returns:
+        str: The default notification topic
+    """
+    username = Path.home().name
+
+    # Add 4 chars from user ID for uniqueness
+    user_id = get_anonymous_user_id()
+
+    return f"tb-{username}-{user_id[:4]}"
 
 
 class DaemonSettings(BaseModel):
@@ -45,6 +89,11 @@ class Settings(BaseSettings):
     skip_slack_auth: bool = Field(default=False)
     do_whatsapp_desktop_check: bool = Field(default=True)
     use_discord_env_var: bool = Field(default=True)
+
+    # Notification settings
+    default_notification_topic: str = Field(
+        default_factory=get_default_notification_topic
+    )
 
     model_config = SettingsConfigDict(
         json_file=TOOLBOX_CONFIG_FILE,

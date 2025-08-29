@@ -75,6 +75,10 @@ class Scheduler:
     def create_trigger_env_vars(self, trigger: Trigger) -> dict[str, str]:
         env = os.environ.copy()
         env["TOOLBOX_EVENTS_SOURCE_KIND"] = "stdin"
+        env["TOOLBOX_EVENTS_NOTIFIER_DEFAULT_TOPIC"] = (
+            settings.default_notification_topic
+        )
+        env["TOOLBOX_EVENTS_NOTIFIER_KIND"] = "ntfy"
 
         return env
 
