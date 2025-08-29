@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+         <loc>https://openmined.github.io/toolbox/</loc>
+         <lastmod>2025-08-29</lastmod>
+    </url>
+    <url>
+         <loc>https://openmined.github.io/toolbox/features/notifications/</loc>
+         <lastmod>2025-08-29</lastmod>
+    </url>
+    <url>
+         <loc>https://openmined.github.io/toolbox/features/triggers/</loc>
+         <lastmod>2025-08-29</lastmod>
+    </url>
+    <url>
+         <loc>https://openmined.github.io/toolbox/getting-started/installation/</loc>
+         <lastmod>2025-08-29</lastmod>
+    </url>
+    <url>
+         <loc>https://openmined.github.io/toolbox/getting-started/quick-start/</loc>
+         <lastmod>2025-08-29</lastmod>
+    </url>
+    <url>
+         <loc>https://openmined.github.io/toolbox/use-cases/slack/</loc>
+         <lastmod>2025-08-29</lastmod>
+    </url>
+</urlset>
