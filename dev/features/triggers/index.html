@@ -1133,6 +1133,11 @@
 <li><code>0 9 * * 1</code> - Every Monday at 9:00</li>
 </ul>
 <p>For more detailed cron syntax and examples, see <a href="https://crontab.guru/">crontab.guru</a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Cron Schedule Format</p>
+<p>Toolbox uses <a href="https://github.com/pallets-eco/croniter">croniter</a> for parsing cron schedules and supports 6-field cron expressions, where the first field represents seconds.</p>
+<p><strong>Example:</strong> <code>*/10 * * * * *</code> runs every 10 seconds</p>
+</div>
 <h2 id="event-driven-triggers">Event-Driven Triggers<a class="headerlink" href="#event-driven-triggers" title="Permanent link">&para;</a></h2>
 <p>Event-driven triggers respond to events sent by MCP servers. Toolbox automatically routes events from MCP servers to registered trigger scripts.</p>
 <h3 id="example-slack-to-obsidian-workflow">Example: Slack to Obsidian Workflow<a class="headerlink" href="#example-slack-to-obsidian-workflow" title="Permanent link">&para;</a></h3>
