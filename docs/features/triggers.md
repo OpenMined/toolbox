@@ -54,6 +54,12 @@ The `--cron` parameter accepts standard cron expressions:
 
 For more detailed cron syntax and examples, see [crontab.guru](https://crontab.guru/).
 
+!!! note "Cron Schedule Format"
+
+    Toolbox uses [croniter](https://github.com/pallets-eco/croniter) for parsing cron schedules and supports 6-field cron expressions, where the first field represents seconds.
+
+    **Example:** `*/10 * * * * *` runs every 10 seconds
+
 ## Event-Driven Triggers
 
 Event-driven triggers respond to events sent by MCP servers. Toolbox automatically routes events from MCP servers to registered trigger scripts.
