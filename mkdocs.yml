@@ -62,7 +62,7 @@ nav:
       - Triggers: features/triggers.md
       - Notifications: features/notifications.md
   - Use Cases:
-      - Slack: use-cases/slack.md
+      - Slack: use-cases/use_cases.md
 
 markdown_extensions:
   - pymdownx.highlight:
