@@ -153,6 +153,8 @@ def install_mcp(
         )
         context.mcp = mcp
 
+        context.on_mcp_obj_init_finished()
+
         if client == "claude":
             if mcp.has_client_json:
                 add_mcp_to_claude_desktop_config(mcp)

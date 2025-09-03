@@ -183,7 +183,7 @@ class InstalledMCP(BaseModel):
 
             if deployment_method not in jsons_bodies_for_deployment_methods:
                 raise ValueError(
-                    f"The chosen deployment method is not available for {client}"
+                    f"The chosen deployment method {deployment_method} is not available for {client}. Available deployment methods are: {list(jsons_bodies_for_deployment_methods.keys())}"
                 )
 
             json_body = jsons_bodies_for_deployment_methods[deployment_method]
