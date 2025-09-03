@@ -25,10 +25,10 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 
 ## Use cases
 
-- 🧠🔎 Customizable, Custom Topic Tracking (Discord, Whatsapp, Github, Slack) Follow technical topics across multiple Discord servers (or other sources) with periodic, fully customizable summaries. Tailor what you want to see using simple prompt files — get only the updates that matter, automatically and efficiently.
+- 🧠🔎 Customizable, Custom Topic Tracking (Discord, Whatsapp, Github, Slack) Follow technical topics across multiple Discord servers (or other sources) with periodic, fully customizable summaries. Tailor what you want to see using simple prompt files — get only the updates that matter, automatically and efficiently. ([video](https://www.loom.com/share/d784d8afe18e41f39ee11e757a07abc7))
 - 📋⚡ One-Command Ticket Creation (Obsidian, Github) — Turn your Obsidian TODOs into GitHub issues with a single command: no copy-pasting, no clicking, just seamless ticket creation directly from your notes.
 - 🔔✨ LLM-driven custom notifications (Slack, Discord, Whatsapp) Use simple prompts or code to write instructions to decide when a message deserves a reminder (forgot to respond, missed a todo, etc)
-- 📊🪄 Organize your communication for Projects or Campaigns (Slack, Discord, Google Sheets, Google Calendar) Log every person you’ve reached out to around a certain topic into a Google Sheet, complete with date, calendar events and status
+- 📊🪄 Organize your communication for Projects or Campaigns (Slack, Discord, Google Sheets, Google Calendar) Log every person you’ve reached out to around a certain topic into a Google Sheet, complete with date, calendar events and status ([video](https://www.loom.com/share/4f285471edf442218dc9b8f27c03b27c))
 
 ## Requirements
 
