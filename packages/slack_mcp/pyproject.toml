@@ -14,7 +14,8 @@ dependencies = [
     "loguru==0.7.3",
     "mcp>=1.9.2",
     "fastsyftbox",
-    "syft_core==0.2.8"
+    "syft_core==0.2.8",
+    "toolbox-events",
 ]
 
 name = "slack_mcp"
@@ -30,6 +31,7 @@ build-backend = "hatchling.build"
 
 [tool.uv.sources]
 fastsyftbox = { git = "https://github.com/OpenMined/fastsyftbox.git", rev = "fix-startup" }
+toolbox-events = { workspace = true }
 
 [tool.uv]
 dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4", "typer==0.16.0"]

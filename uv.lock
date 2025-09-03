@@ -2276,6 +2276,7 @@ dependencies = [
     { name = "slack-sdk" },
     { name = "sqlite-vec" },
     { name = "syft-core" },
+    { name = "toolbox-events" },
     { name = "tqdm" },
     { name = "uvicorn" },
 ]
@@ -2308,6 +2309,7 @@ requires-dist = [
     { name = "slack-sdk", specifier = "==3.35.0" },
     { name = "sqlite-vec", specifier = "==0.1.7a2" },
     { name = "syft-core", specifier = "==0.2.8" },
+    { name = "toolbox-events", editable = "packages/toolbox_events" },
     { name = "tqdm", specifier = "==4.67.1" },
     { name = "uvicorn", specifier = ">=0.34.3" },
 ]
