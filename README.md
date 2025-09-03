@@ -111,15 +111,18 @@ tb log <appname>
 
 ## Store
 
-| Name                 | Clients | Default Deployment  | Read Access            | Write Access          | Install                           |
-| -------------------- | ------- | ------------------- | ---------------------- | --------------------- | --------------------------------- |
-| slack-mcp            | claude  | proxy-to-om-enclave | Slack Messages         | Slack Messages        | `tb install slack-mcp`            |
-| discord-mcp          | claude  | proxy-to-om-enclave | Discord Messages       | Discord Messages      | `tb install discord-mcp`          |
-| obsidian-mcp         | claude  | proxy-to-om-enclave | Obsidian notes         | Obsidian Notes        | `tb install obsidian-mcp`         |
-| github-mcp           | claude  | stdio               | Issues, PRs, Settings  | Issues, PRs, Settings | `tb install github-mcp`           |
-| whatsapp-desktop-mcp | claude  | proxy-to-om-enclave | WhatsApp Messages      | WhatsApp Messages     | `tb install whatsapp-desktop-mcp` |
-| pdf-mcp              | claude  | proxy-to-om-enclave | Local Documents        | Document Embeddings   | `tb install pdf-mcp`              |
-| meeting-notes-mcp    | claude  | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes         | `tb install meeting-notes-mcp`    |
+All mcp servers support claude desktop and claude-code, cursor support is coming soon.
+
+| Name                 | Default Deployment | Read/Write Access                     | Install                           |
+| -------------------- | ------------------ | ------------------------------------- | --------------------------------- |
+| slack-mcp            | proxy-to-local     | Slack Messages                        | `tb install slack-mcp`            |
+| discord-mcp          | proxy-to-local     | Discord Messages                      | `tb install discord-mcp`          |
+| obsidian-mcp         | proxy-to-local     | Obsidian notes                        | `tb install obsidian-mcp`         |
+| github-mcp           | stdio              | Issues, PRs, Settings                 | `tb install github-mcp`           |
+| whatsapp-desktop-mcp | proxy-to-local     | WhatsApp Messages                     | `tb install whatsapp-desktop-mcp` |
+| pdf-mcp              | proxy-to-local     | Local Documents                       | `tb install pdf-mcp`              |
+| google-sheets-mcp    | stdio              | Google sheets                         | `tb install google-sheets-mcp`    |
+| meeting-notes-mcp    | proxy-to-local     | Apple Audio Recordings, meeting notes | `tb install meeting-notes-mcp`    |
 
 # Triggers
 
