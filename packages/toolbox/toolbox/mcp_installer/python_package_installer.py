@@ -19,6 +19,7 @@ from toolbox.mcp_installer.uv_utils import (
     prepare_env_with_uv,
 )
 from toolbox.settings import settings
+from toolbox.triggers.trigger_utils import add_event_sink_to_env
 from toolbox.utils.utils import DEFAULT_LOG_FILE
 
 
@@ -115,7 +116,6 @@ def install_python_mcp(store_element: "StoreElement", context: "InstallationCont
             store_element.local_package_path,
         )
     else:
-        # print("\n\n\nUsing remote packages!!!!\n\n\n")
         install_python_package_from_git(
             installation_dir,
             package_url=store_element.package_url,
@@ -132,5 +132,12 @@ def install_python_mcp(store_element: "StoreElement", context: "InstallationCont
         else:
             start_process = False
 
+    env = context.context_settings
+    add_event_sink_to_env(env, mcp.name, settings.daemon.url)
+
     if start_process:
-        run_python_mcp(installation_dir, module, env=context.context_settings)
+        run_python_mcp(
+            installation_dir,
+            module,
+            env=env,
+        )

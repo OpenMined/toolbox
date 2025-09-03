@@ -1,4 +1,16 @@
 [project]
+name = "syft_toolbox"
+version = "0.3.1"
+description = "Privacy-first toolbox for managing MCP (Model Context Protocol) servers for personal data"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "Apache-2.0"
+keywords = ["mcp", "privacy", "personal-data", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3.12",
+]
 dependencies = [
     "anthropic>=0.52.2",
     "mcp>=1.9.2",
@@ -17,13 +29,14 @@ dependencies = [
     "requests>=2.32.4",
     "numpy>=2.3.2",
     "posthog>=6.5.0",
+    "fastapi[standard]>=0.116.1",
 ]
 
-name = "syft_toolbox"
-version = "0.2.0"
-description = "Add your description here"
-readme = "README.md"
-requires-python = ">=3.12"
+[project.urls]
+Homepage = "https://github.com/OpenMined/toolbox"
+Repository = "https://github.com/OpenMined/toolbox"
+Documentation = "https://openmined.github.io/toolbox"
+Issues = "https://github.com/OpenMined/toolbox/issues"
 
 [build-system]
 requires = ["hatchling"]
@@ -36,10 +49,7 @@ dev-dependencies = ["pre-commit>=4.1.0", "pytest-xdist>=3.6.1", "pytest>=8.3.4"]
 pycookiecheat = { git = "https://github.com/koenvanderveen/pycookiecheat", branch = "master" }
 
 [dependency-groups]
-dev = [
-    "pytest-xdist>=3.6.1",
-    "pytest>=8.3.4",
-]
+dev = ["pytest-xdist>=3.6.1", "pytest>=8.3.4"]
 
 [project.scripts]
 toolbox = "toolbox.cli.cli:app"

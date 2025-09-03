@@ -8,7 +8,7 @@ from rich.rule import Rule
 import toolbox
 from toolbox import __version__
 from toolbox.analytics import track_cli_command
-from toolbox.cli import daemon_cli, trigger_cli
+from toolbox.cli import daemon_cli, event_cli, trigger_cli
 from toolbox.db import conn
 from toolbox.installer import (
     call_mcp,
@@ -21,7 +21,7 @@ from toolbox.installer import (
     start_mcp_and_requirements,
     stop_mcp,
 )
-from toolbox.settings import settings
+from toolbox.settings import get_anonymous_user_id, settings
 from toolbox.setup import run_setup
 from toolbox.store.store_json import STORE
 
@@ -62,9 +62,8 @@ def info():
 def show_settings():
     # CLI to show settings
     console = Console()
-    settings_dump = settings.model_dump()
-    for k, v in settings_dump.items():
-        console.print(f"{k}: {v}")
+    settings_dump = settings.model_dump_json(indent=2)
+    console.print(settings_dump)
 
 
 @track_cli_command()
@@ -126,7 +125,7 @@ def list_store():
 
 @track_cli_command()
 def reset():
-    from toolbox.analytics import get_anonymous_user_id, set_anonymous_user_id
+    from toolbox.settings import set_anonymous_user_id
 
     analytics_id = get_anonymous_user_id()
 
@@ -149,6 +148,21 @@ def call(app_name: str, endpoint: str):
     call_mcp(conn, app_name, endpoint)
 
 
+@track_cli_command()
+def set_notification_topic(
+    topic: str = typer.Argument(
+        ..., help="The notification topic to use (e.g., tb-username-a3f2)"
+    ),
+):
+    """Set the default notification topic"""
+    settings.default_notification_topic = topic
+    settings.save()
+
+    console = Console()
+    console.print(f"✓ Set default notification topic to: [yellow]{topic}[/yellow]")
+    console.print("This will be used as the default topic for all notifications.")
+
+
 app.command()(setup)
 app.command(name="settings")(show_settings)
 app.command()(info)
@@ -161,10 +175,12 @@ app.command()(reset)
 app.command()(call)
 app.command()(start)
 app.command()(stop)
+app.command()(set_notification_topic)
 
 # Add subgroups
 app.add_typer(daemon_cli.app, name="daemon", help="Daemon management commands")
 app.add_typer(trigger_cli.app, name="trigger", help="Trigger management commands")
+app.add_typer(event_cli.app, name="event", help="Event management commands")
 
 
 if __name__ == "__main__":

@@ -26,6 +26,14 @@ To run them manually:
 uv run pre-commit run --all-files
 ```
 
+## Adding a new package
+
+To add a new package to the workspace, run from the root of the repo:
+
+```
+uv init --lib packages/<package_name>
+```
+
 ## Analytics
 
 We use PostHog for anonymous CLI analytics (commands, errors, usage patterns).
@@ -41,20 +49,42 @@ Add this to your .zshrc or .bashrc to exclude yourself permanently.
 
 Contact developers to get invited to the PostHog workspace for viewing metrics and error tracking.
 
-## Release to Pypi
+## Release to PyPI
 
 To bump the version, tag the commit, and publish to PyPI:
 
-Make sure you're on main with no uncommitted changes, then:
+Since main is protected, create a release branch after bumping the version:
 
 ```bash
+# Start from main
+git checkout main
+git pull origin main
+
 # bump version, see https://docs.astral.sh/uv/guides/package/#updating-your-version
 uv version --package syft_toolbox --bump minor
 NEW_VERSION=$(uv version --package syft_toolbox --short)
 
-# commit to git and tag version
+# Create release branch with the new version
+git checkout -b release/v${NEW_VERSION}
 git commit -am "Release v${NEW_VERSION}"
-git push
+git push -u origin release/v${NEW_VERSION}
+
+# Create PR and merge to main
+gh pr create \
+    --repo OpenMined/toolbox \
+    --title "Release v${NEW_VERSION}" \
+    --body "Release v${NEW_VERSION}" \
+    --base main \
+    --head release/v${NEW_VERSION}
+
+gh pr merge release/v${NEW_VERSION} \
+    --repo OpenMined/toolbox \
+    --merge \
+    --auto
+
+# After PR is merged, checkout main and create tag
+git checkout main
+git pull origin main
 git tag "v${NEW_VERSION}"
 git push origin "v${NEW_VERSION}"
 
@@ -62,4 +92,25 @@ git push origin "v${NEW_VERSION}"
 rm -rf dist/
 uv build --package syft_toolbox
 uv publish dist/syft-toolbox-* --token <your_token>
+```
+
+### Documentation Versioning
+
+Documentation is automatically deployed via GitHub Actions when creating version tags.
+If automatic deployment fails, you can manually deploy docs:
+
+```bash
+# Deploy a new version and update the latest alias
+mike deploy --push --update-aliases ${NEW_VERSION} latest
+
+# Set default version (only needed for first release)
+mike set-default --push latest
+```
+
+## Documentation
+
+To serve the docs locally, run this in the repo root:
+
+```
+mkdocs serve
 ```

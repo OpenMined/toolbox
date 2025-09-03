@@ -1,0 +1,20 @@
+[project]
+name = "toolbox_events"
+version = "0.1.0"
+description = "A package for managing events in the toolbox"
+readme = "README.md"
+authors = [{ name = "eelcovdw", email = "eelcovdw@gmail.com" }]
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "loguru>=0.7.3",
+    "pydantic>=2.11.7",
+    "pydantic-settings>=2.10.1",
+]
+
+[build-system]
+requires = ["uv_build>=0.8.3,<0.9.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = ["pytest>=8.4.1", "pytest-xdist>=3.8.0"]
