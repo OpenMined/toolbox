@@ -4,6 +4,7 @@ import time
 from datetime import datetime
 
 from slack_sdk import WebClient
+from toolbox_events import send_event
 from tqdm import tqdm
 
 from slack_mcp.db import (
@@ -60,7 +61,10 @@ def get_webclient():
 
 
 def run_slack_mesage_dump_background_worker_single(
-    conn, client, min_ts, min_batch_length=10 * 60
+    conn,
+    client,
+    min_ts,
+    min_batch_length,
 ):
     print("getting active channels")
 
@@ -102,29 +106,71 @@ def run_slack_mesage_dump_background_worker_single(
             )
             continue
 
+        # Truncate batch_start to only get new messages
+        if latest_message_ts > batch_start:
+            # Add small offset to exclude the last message we already have
+            batch_start = latest_message_ts + 1e-6
+            print(
+                f"Truncating batch to only fetch messages after {datetime.fromtimestamp(batch_start).strftime('%Y-%m-%d %H:%M:%S')}"
+            )
+
+        # Skip if batch is empty after truncation
+        if batch_start >= batch_end:
+            print("Skipping batch - no new messages to fetch")
+            continue
+
         # TODO: this is probably more efficient with search?
-        all_messaages_flat = get_messages_from_channels(
+        all_messages_flat = get_messages_from_channels(
             client,
             channel_ids,
             from_ts=batch_start,
             to_ts=batch_end,
         )
 
-        print(f"Got {len(all_messaages_flat)} messages, adding to db")
-        for msg in all_messaages_flat:
+        print(f"Got {len(all_messages_flat)} messages, adding to db")
+        for msg in all_messages_flat:
             # TODO: fix threading here
             # skip bot messages for now
             if "user" not in msg:
                 continue
             upsert_message(conn, msg)
 
+        send_new_message_batch_event(all_messages_flat, batch_start, batch_end)
+
+
+def send_new_message_batch_event(all_messages, batch_start, batch_end):
+    # Only send event if batch_start is shorter than 24 hours ago
+    if batch_start < time.time() - 24 * 60 * 60:
+        return
+
+    # skip bot messages
+    messages_filtered = [msg for msg in all_messages if "user" in msg]
+    if len(messages_filtered) == 0:
+        return
+
+    send_event(
+        "slack.message.new_batch",
+        {
+            "messages": messages_filtered,
+            "batch_start": batch_start,
+            "batch_end": batch_end,
+        },
+    )
+
 
 def run_slack_mesage_dump_background_worker_loop():
     # check what the last timestamp is locally
+    sleep_interval = 60
+    min_ts = time.time() - 365 * 24 * 60 * 60  # one year ago
+
     with get_slack_connection() as conn:
         client = get_webclient()
 
         while True:
-            min_ts = time.time() - 365 * 24 * 60 * 60  # one year ago
-            run_slack_mesage_dump_background_worker_single(conn, client, min_ts)
-            time.sleep(60)
+            run_slack_mesage_dump_background_worker_single(
+                conn,
+                client,
+                min_ts,
+                min_batch_length=sleep_interval,
+            )
+            time.sleep(sleep_interval)
