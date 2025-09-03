@@ -8,7 +8,13 @@
 
 # Toolbox
 
+[![PyPI version](https://badge.fury.io/py/syft-toolbox.svg)](https://badge.fury.io/py/syft-toolbox)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/OpenMined/toolbox/blob/main/LICENSE)
+[![Tests](https://github.com/OpenMined/toolbox/actions/workflows/pytest.yml/badge.svg)](https://github.com/OpenMined/toolbox/actions/workflows/ci.yml)
+
 Toolbox is a cli tool for installing and managing [MCP](https://github.com/modelcontextprotocol/python-sdk) servers and background agents, **made for developers**.
+
+Toolbox is currently in beta and <span style="color: orange;"><b>macOS only</b></span>
 
 - Toolbox supports popular developer tools (think github, slack, discord, obsidian, gmail etc.), and clients (claude desktop, cursor), making it easier to deploy useful MCP servers without having them managed by a specific client
 - With toolbox you can install **mcp servers** with **background agents** and their dependencies using
