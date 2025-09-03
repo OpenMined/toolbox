@@ -23,6 +23,13 @@ from toolbox.triggers.trigger_utils import add_event_sink_to_env
 from toolbox.utils.utils import DEFAULT_LOG_FILE
 
 
+def uvx_path() -> Path:
+    result = subprocess.run(["which", "uvx"], capture_output=True, text=True)
+    if result.returncode != 0:
+        raise ValueError("uvx is not installed")
+    return Path(result.stdout.strip()).expanduser()
+
+
 def run_python_mcp(installation_dir: Path, mcp_module: str, env: dict | None = None):
     SHELL = os.environ.get("SHELL", "/bin/sh")
     final_env = prepare_env_with_uv(env)

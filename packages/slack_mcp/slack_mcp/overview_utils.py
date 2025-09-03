@@ -215,3 +215,32 @@ def get_last_week_messages_with_threads_with_names(
                     )
 
     return messages_by_channel
+
+
+def get_last_messages_with_threads_with_names(
+    client, channel_ids, channelid_to_name, userid_to_name, n_days=7
+):
+    messages_by_channel = {}
+    n_days_ago = datetime.now() - timedelta(days=n_days)
+    oldest_ts = time.mktime(n_days_ago.timetuple())
+
+    for channel_id in channel_ids:
+        messages_by_channel[channel_id] = get_channel_messages_with_thread_tree(
+            client, channel_id, oldest_ts
+        )
+
+    for channel_id, messages in messages_by_channel.items():
+        for message in messages:
+            message["channel_name"] = channelid_to_name[channel_id]
+            message["user_name"] = userid_to_name.get(
+                message.get("user", None), "Unknown User"
+            )
+            # If there are replies/threads, add channel_name and user_name to each reply
+            if "replies" in message and isinstance(message["replies"], list):
+                for reply in message["replies"]:
+                    reply["channel_name"] = channelid_to_name[channel_id]
+                    reply["user_name"] = userid_to_name.get(
+                        reply.get("user", None), "Unknown User"
+                    )
+
+    return messages_by_channel

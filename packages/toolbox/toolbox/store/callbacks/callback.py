@@ -58,6 +58,9 @@ class Callback(BaseModel):
     def on_data_stats(self, mcp: "InstalledMCP"):
         pass
 
+    def on_mcp_obj_init_finished(self, context: InstallationContext):
+        pass
+
 
 class RequestedSecret(BaseModel):
     result_name: str

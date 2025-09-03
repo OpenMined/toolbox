@@ -92,7 +92,7 @@ Once you've installed an MCP server, it's automatically available in Claude Desk
 - Learn about [Triggers](../features/triggers.md) to automate tasks
 - Set up [Notifications](../features/notifications.md) for important events
 - Browse available MCP servers with `tb list-store`
-- Check out [Use Cases](../use-cases/slack.md) for inspiration
+- Check out [Use Cases](../use-cases/use_cases.md) for inspiration
 
 ## Getting Help
 
