@@ -1,0 +1,27 @@
+# Vue.js development commands
+
+# Install dependencies and run development server
+run-dev:
+    npm install
+    npm run dev
+
+# Install dependencies only
+install:
+    npm install
+
+# Run development server (assumes dependencies are installed)
+dev:
+    npm run dev
+
+# Build for production
+build:
+    npm run build
+
+# Preview production build
+preview:
+    npm run preview
+
+# Clean node_modules and reinstall
+clean-install:
+    rm -rf node_modules package-lock.json
+    npm install
