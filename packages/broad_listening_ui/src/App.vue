@@ -37,6 +37,7 @@ import MiddlePanel from "./components/MiddlePanel.vue";
 import RightPanel from "./components/RightPanel.vue";
 import TwitterDashboard from "./components/TwitterDashboard.vue";
 import AIPapersDashboard from "./components/AIPapersDashboard.vue";
+import DiscordDashboard from "./components/DiscordDashboard.vue";
 import AddConnector from "./components/AddConnector.vue";
 import AddList from "./components/AddList.vue";
 
@@ -48,6 +49,7 @@ export default {
     RightPanel,
     TwitterDashboard,
     AIPapersDashboard,
+    DiscordDashboard,
     AddConnector,
     AddList,
   },

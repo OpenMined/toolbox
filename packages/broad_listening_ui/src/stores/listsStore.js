@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { useChatStore } from "./chatStore";
 
 export const useListsStore = defineStore("lists", {
   state: () => ({
@@ -341,6 +342,9 @@ export const useListsStore = defineStore("lists", {
   actions: {
     setCurrentList(listId) {
       this.currentListId = listId;
+      // Update chat store when list changes
+      const chatStore = useChatStore();
+      chatStore.updateConversationsForList(listId);
     },
 
     setCurrentView(view) {

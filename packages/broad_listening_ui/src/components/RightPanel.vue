@@ -2,15 +2,54 @@
   <div class="h-full flex flex-col">
     <!-- Previous Questions Section -->
     <div class="p-4 border-b border-gray-200">
-      <h3 class="text-sm font-medium text-gray-900 mb-3">Previous Questions</h3>
-      <div class="max-h-40 overflow-y-auto space-y-2">
+      <h3
+        class="text-sm font-medium text-gray-900 mb-3"
+        v-if="listsStore.currentList && listsStore.currentListDateRange"
+      >
+        Chat about {{ listsStore.currentList.name }} •
+        {{ formatDateRange(listsStore.currentListDateRange) }}
+      </h3>
+
+      <!-- New Chat Button -->
+      <div
+        class="py-2 px-1 hover:bg-gray-50 cursor-pointer transition-colors rounded-md flex items-center space-x-2 mb-2"
+        @click="handleNewChat"
+      >
+        <svg
+          class="w-4 h-4 text-gray-500"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+          />
+        </svg>
+        <span class="text-sm text-gray-600">New Chat</span>
+      </div>
+
+      <!-- Chats Header -->
+      <p
+        v-if="chatStore.conversations.length > 0"
+        class="text-xs text-gray-500 mb-2 px-1 mt-3"
+      >
+        Chats
+      </p>
+
+      <div class="max-h-40 overflow-y-auto space-y-1">
         <div
           v-for="conversation in chatStore.conversations"
           :key="conversation.id"
-          class="p-2 bg-gray-50 rounded-lg hover:bg-gray-100 cursor-pointer transition-colors"
+          class="py-2 px-1 hover:bg-gray-100 cursor-pointer transition-colors rounded-md"
+          :class="{
+            'bg-gray-100': chatStore.selectedConversationId === conversation.id,
+          }"
           @click="chatStore.selectConversation(conversation.id)"
         >
-          <p class="text-sm text-gray-700 truncate">
+          <p class="text-sm text-gray-600 truncate leading-relaxed">
             {{ conversation.question }}
           </p>
         </div>
@@ -21,6 +60,7 @@
     <div class="flex-1 flex flex-col">
       <!-- Messages -->
       <div class="flex-1 overflow-y-auto p-4 space-y-4">
+        <!-- Empty state when no conversations exist -->
         <div
           v-if="chatStore.conversations.length === 0"
           class="text-center text-gray-500 mt-8"
@@ -28,20 +68,36 @@
           <p>Ask a question about the content in your list</p>
         </div>
 
+        <!-- Empty state when no conversation is selected (new chat mode) -->
+        <div
+          v-else-if="!currentConversation"
+          class="flex items-center justify-center h-full"
+        >
+          <div class="text-center text-gray-500">
+            <h2
+              class="text-lg font-medium text-gray-800"
+              v-if="listsStore.currentList && listsStore.currentListDateRange"
+            >
+              Chat about {{ listsStore.currentList.name }} •
+              {{ formatDateRange(listsStore.currentListDateRange) }}
+            </h2>
+          </div>
+        </div>
+
         <div v-else>
-          <!-- Show latest conversation -->
-          <div v-if="latestConversation" class="space-y-4">
+          <!-- Show selected conversation or latest if none selected -->
+          <div v-if="currentConversation" class="space-y-4">
             <!-- User Question -->
             <div class="flex justify-end">
               <div class="bg-blue-500 text-white p-3 rounded-lg max-w-xs">
-                <p class="text-sm">{{ latestConversation.question }}</p>
+                <p class="text-sm">{{ currentConversation.question }}</p>
               </div>
             </div>
 
             <!-- AI Answer -->
-            <div class="flex justify-start">
+            <div v-if="currentConversation.answer" class="flex justify-start">
               <div class="bg-gray-100 text-gray-900 p-3 rounded-lg max-w-xs">
-                <p class="text-sm">{{ latestConversation.answer }}</p>
+                <p class="text-sm">{{ currentConversation.answer }}</p>
               </div>
             </div>
           </div>
@@ -64,6 +120,7 @@
       <div class="p-4 border-t border-gray-200">
         <div class="flex space-x-2">
           <input
+            ref="chatInput"
             v-model="chatStore.currentQuestion"
             type="text"
             placeholder="Ask a question..."
@@ -85,19 +142,35 @@
 </template>
 
 <script>
-import { computed } from "vue";
+import { computed, ref, watch, nextTick } from "vue";
 import { useChatStore } from "../stores/chatStore";
+import { useListsStore } from "../stores/listsStore";
 
 export default {
   name: "RightPanel",
   setup() {
     const chatStore = useChatStore();
+    const listsStore = useListsStore();
+    const chatInput = ref(null);
 
-    const latestConversation = computed(() => {
-      return chatStore.conversations.length > 0
-        ? chatStore.conversations[0]
-        : null;
+    const currentConversation = computed(() => {
+      // Only show conversation if one is specifically selected
+      // When selectedConversationId is null, we're in "new chat" mode
+      return chatStore.selectedConversation || null;
     });
+
+    const formatDateRange = (dateRange) => {
+      if (!dateRange) return "";
+
+      const fromDate = new Date(dateRange.from);
+      const toDate = new Date(dateRange.to);
+
+      const options = { month: "short", day: "numeric" };
+      const fromFormatted = fromDate.toLocaleDateString("en-US", options);
+      const toFormatted = toDate.toLocaleDateString("en-US", options);
+
+      return `${fromFormatted} - ${toFormatted}`;
+    };
 
     const handleSubmit = () => {
       if (chatStore.currentQuestion.trim() && !chatStore.isLoading) {
@@ -105,10 +178,32 @@ export default {
       }
     };
 
+    const handleNewChat = () => {
+      chatStore.startNewChat();
+      chatStore.focusInput();
+    };
+
+    // Watch for focus input signal
+    watch(
+      () => chatStore.shouldFocusInput,
+      (shouldFocus) => {
+        if (shouldFocus && chatInput.value) {
+          nextTick(() => {
+            chatInput.value.focus();
+            chatStore.clearFocusInput();
+          });
+        }
+      },
+    );
+
     return {
       chatStore,
-      latestConversation,
+      listsStore,
+      chatInput,
+      currentConversation,
+      formatDateRange,
       handleSubmit,
+      handleNewChat,
     };
   },
 };

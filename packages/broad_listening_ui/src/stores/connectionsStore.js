@@ -23,6 +23,15 @@ export const useConnectionsStore = defineStore("connections", {
         isActive: false,
         icon: "papers",
       },
+      {
+        id: 3,
+        name: "Discord",
+        type: "discord",
+        isActive: false,
+        icon: "discord",
+        serverCount: 3,
+        messageCount: 1247,
+      },
     ],
     dashboardData: {
       twitter: {
@@ -101,6 +110,16 @@ export const useConnectionsStore = defineStore("connections", {
           "openai/text-embedding-3-small": 178,
         },
       },
+      discord: {
+        totalServers: 3,
+        totalChannels: 8,
+        totalMessages: 1247,
+        latestActivity: "Jan 15",
+        embeddingCounts: {
+          "ollama/nomic-embed-text": 156,
+          "openai/text-embedding-3-small": 98,
+        },
+      },
     },
   }),
 
@@ -126,6 +145,8 @@ export const useConnectionsStore = defineStore("connections", {
           this.currentDashboard = "TwitterDashboard";
         } else if (connection.type === "ai-papers") {
           this.currentDashboard = "AIPapersDashboard";
+        } else if (connection.type === "discord") {
+          this.currentDashboard = "DiscordDashboard";
         }
       }
     },

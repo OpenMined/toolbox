@@ -6,6 +6,8 @@ export const useChatStore = defineStore("chat", {
     currentQuestion: "",
     conversations: [],
     currentListId: 1,
+    selectedConversationId: null, // null means "new chat"
+    shouldFocusInput: false,
     conversationsByList: {
       1: [
         // Vibe coding
@@ -71,6 +73,15 @@ export const useChatStore = defineStore("chat", {
     isLoading: false,
   }),
 
+  getters: {
+    selectedConversation: (state) => {
+      if (!state.selectedConversationId) return null;
+      return state.conversations.find(
+        (c) => c.id === state.selectedConversationId,
+      );
+    },
+  },
+
   actions: {
     setHighlighted(highlighted) {
       this.isHighlighted = highlighted;
@@ -83,6 +94,25 @@ export const useChatStore = defineStore("chat", {
     async askQuestion(question) {
       if (!question.trim()) return;
 
+      // Create conversation with question immediately
+      const newConversation = {
+        id: Date.now(),
+        question,
+        answer: null, // No answer yet
+      };
+
+      // Add to the list-specific storage, and conversations will reference it
+      if (!this.conversationsByList[this.currentListId]) {
+        this.conversationsByList[this.currentListId] = [];
+      }
+      this.conversationsByList[this.currentListId].unshift(newConversation);
+      // Update conversations to reflect the current list
+      this.conversations = this.conversationsByList[this.currentListId];
+
+      // Auto-select the new conversation to show it in the chat area
+      this.selectedConversationId = newConversation.id;
+
+      this.currentQuestion = "";
       this.isLoading = true;
 
       // Mock API call - replace with real API later
@@ -94,28 +124,33 @@ export const useChatStore = defineStore("chat", {
         }, 1500);
       });
 
-      this.conversations.unshift({
-        id: Date.now(),
-        question,
-        answer: mockAnswer,
-      });
-
-      this.currentQuestion = "";
+      // Update the existing conversation with the answer
+      newConversation.answer = mockAnswer;
       this.isLoading = false;
     },
 
     selectConversation(conversationId) {
-      const conversation = this.conversations.find(
-        (c) => c.id === conversationId,
-      );
-      if (conversation) {
-        this.currentQuestion = conversation.question;
-      }
+      this.selectedConversationId = conversationId;
+      // Don't set currentQuestion when selecting - let the UI handle it
+    },
+
+    startNewChat() {
+      this.selectedConversationId = null;
+      this.currentQuestion = "";
+    },
+
+    focusInput() {
+      this.shouldFocusInput = true;
+    },
+
+    clearFocusInput() {
+      this.shouldFocusInput = false;
     },
 
     updateConversationsForList(listId) {
       this.currentListId = listId;
       this.conversations = this.conversationsByList[listId] || [];
+      this.selectedConversationId = null; // Reset to new chat when changing lists
     },
 
     initializeDefaultConversations() {

@@ -1,15 +1,18 @@
 <template>
   <div class="h-full flex flex-col p-4">
-    <!-- Account Section -->
+    <!-- Vera Brand Section -->
     <div class="mb-6">
       <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
         <div class="w-8 h-8 flex items-center justify-center">
-          <img src="../assets/om-icon.svg" alt="OM Icon" class="w-8 h-8" />
+          <img
+            src="../assets/om-icon.svg"
+            alt="OpenMined Logo"
+            class="w-8 h-8"
+          />
         </div>
         <div>
-          <p class="text-sm font-medium text-gray-900">
-            {{ connectionsStore.userAccount.email }}
-          </p>
+          <p class="text-lg font-bold text-gray-900">Vera</p>
+          <p class="text-xs text-gray-600">by OpenMined</p>
         </div>
       </div>
     </div>
@@ -71,6 +74,22 @@
         </div>
       </div>
     </div>
+
+    <!-- User Account Section (Bottom) -->
+    <div class="mt-4 pt-4 border-t border-gray-200">
+      <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+        <img
+          :src="getUserAvatarUrl()"
+          alt="User Avatar"
+          class="w-8 h-8 rounded-full"
+        />
+        <div>
+          <p class="text-sm font-medium text-gray-900">
+            {{ connectionsStore.userAccount.email }}
+          </p>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -86,10 +105,10 @@ export default {
     const listsStore = useListsStore();
     const chatStore = useChatStore();
 
-    const userInitials = connectionsStore.userAccount.email
-      .split("@")[0]
-      .charAt(0)
-      .toUpperCase();
+    const getUserAvatarUrl = () => {
+      const username = connectionsStore.userAccount.email.split("@")[0];
+      return `https://i.pravatar.cc/128?u=${username}`;
+    };
 
     const selectList = (listId) => {
       // Close dashboard to show middle/right panels
@@ -108,7 +127,7 @@ export default {
       connectionsStore,
       listsStore,
       chatStore,
-      userInitials,
+      getUserAvatarUrl,
       selectList,
       showAddList,
     };

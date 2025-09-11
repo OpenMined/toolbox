@@ -88,10 +88,13 @@ export default {
 
       if (view.id === "ask") {
         chatStore.setHighlighted(true);
+        chatStore.startNewChat(); // Start a new chat when clicking Ask
+        chatStore.focusInput(); // Signal to focus the input
         // Reset highlight after 2 seconds
         setTimeout(() => {
           chatStore.setHighlighted(false);
         }, 2000);
+        return; // Don't change the view, keep showing the feed
       }
 
       listsStore.setCurrentView(view.id);

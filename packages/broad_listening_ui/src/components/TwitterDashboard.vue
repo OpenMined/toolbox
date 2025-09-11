@@ -1,138 +1,109 @@
 <template>
-  <div class="h-full bg-white">
-    <!-- Dashboard Header -->
-    <div class="p-6 border-b border-gray-200">
+  <div class="h-full bg-gray-50 overflow-y-auto">
+    <!-- Header -->
+    <div class="bg-white border-b border-gray-200 px-6 py-4">
       <div class="flex items-center justify-between">
-        <h2 class="text-2xl font-bold text-gray-900">Twitter Dashboard</h2>
-        <button
-          @click="connectionsStore.closeDashboard()"
-          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
-        >
-          <svg
-            class="w-6 h-6"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
+        <div>
+          <h1 class="text-2xl font-bold text-gray-900">Twitter Dashboard</h1>
+          <p class="text-sm text-gray-600">Monitor your Twitter activity</p>
+        </div>
+        <div class="flex items-center space-x-4">
+          <div
+            class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full"
           >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 18L18 6M6 6l12 12"
-            ></path>
-          </svg>
-        </button>
+            Connected
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="p-6">
-      <!-- Stats Grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Twitter Handle -->
-        <div class="bg-blue-50 rounded-lg p-4">
-          <div class="flex items-center">
-            <div class="p-2 bg-blue-500 rounded-lg">
-              <svg
-                class="w-6 h-6 text-white"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
-                />
-              </svg>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Your Handle</p>
-              <p class="text-lg font-bold text-gray-900">
-                {{ dashboardData.handle }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Total Tweets -->
-        <div class="bg-green-50 rounded-lg p-4">
-          <div class="flex items-center">
-            <div class="p-2 bg-green-500 rounded-lg">
-              <svg
-                class="w-6 h-6 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"
-                ></path>
-              </svg>
-            </div>
-            <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Total Tweets</p>
-              <p class="text-lg font-bold text-gray-900">
-                {{ dashboardData.totalTweets }}
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <!-- SyftBox Tweets -->
-        <div class="bg-purple-50 rounded-lg p-4">
-          <div class="flex items-center">
-            <div
-              class="p-2 bg-purple-500 rounded-lg flex items-center justify-center"
+    <!-- Main Content -->
+    <div class="p-6 space-y-6">
+      <!-- Account Info -->
+      <div class="bg-white rounded-lg border border-gray-200 p-6">
+        <div class="flex items-center space-x-4">
+          <div
+            class="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center"
+          >
+            <svg
+              class="w-8 h-8 text-white"
+              fill="currentColor"
+              viewBox="0 0 24 24"
             >
-              <img src="../assets/om-icon.svg" alt="SyftBox" class="w-6 h-6" />
+              <path
+                d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
+              />
+            </svg>
+          </div>
+          <div class="flex-1">
+            <h2 class="text-xl font-bold text-gray-900">
+              {{ dashboardData.handle }}
+            </h2>
+            <div class="flex space-x-4 text-sm text-gray-600">
+              <span>2,847 followers</span>
+              <span>934 following</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Stats Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div
+                class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center"
+              >
+                <span class="text-white text-sm font-bold">📝</span>
+              </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">
-                Tweets from SyftBox Network
-              </p>
-              <p class="text-lg font-bold text-gray-900">
-                {{ dashboardData.syftboxTweets }}
-              </p>
+              <dt class="text-sm font-medium text-gray-500 truncate">
+                Total Tweets
+              </dt>
+              <dd class="text-lg font-semibold text-gray-900">
+                {{ dashboardData.totalTweets }}
+              </dd>
             </div>
           </div>
         </div>
 
-        <!-- Latest Tweet Date -->
-        <div class="bg-orange-50 rounded-lg p-4">
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
           <div class="flex items-center">
-            <div class="p-2 bg-orange-500 rounded-lg">
-              <svg
-                class="w-6 h-6 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
+            <div class="flex-shrink-0">
+              <div
+                class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center"
               >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                ></path>
-              </svg>
+                <span class="text-white text-sm font-bold">📦</span>
+              </div>
             </div>
             <div class="ml-4">
-              <p class="text-sm font-medium text-gray-600">Latest Tweet</p>
-              <div class="flex items-center space-x-2">
-                <p class="text-lg font-bold text-gray-900">
-                  {{ dashboardData.latestTweetDate }}
-                </p>
-                <svg
-                  class="w-4 h-4 text-black"
-                  fill="currentColor"
-                  viewBox="0 0 20 20"
-                >
-                  <path
-                    fill-rule="evenodd"
-                    d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z"
-                    clip-rule="evenodd"
-                  ></path>
-                </svg>
+              <dt class="text-sm font-medium text-gray-500 truncate">
+                SyftBox Tweets
+              </dt>
+              <dd class="text-lg font-semibold text-gray-900">
+                {{ dashboardData.syftboxTweets }}
+              </dd>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white rounded-lg border border-gray-200 p-4">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div
+                class="w-8 h-8 bg-orange-500 rounded-md flex items-center justify-center"
+              >
+                <span class="text-white text-sm font-bold">📅</span>
               </div>
+            </div>
+            <div class="ml-4">
+              <dt class="text-sm font-medium text-gray-500 truncate">
+                Latest Tweet
+              </dt>
+              <dd class="text-lg font-semibold text-gray-900">
+                {{ dashboardData.latestTweetDate }}
+              </dd>
             </div>
           </div>
         </div>
