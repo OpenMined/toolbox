@@ -2,7 +2,10 @@
   <div class="h-full flex flex-col p-4">
     <!-- Omni Brand Section -->
     <div class="mb-6">
-      <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+      <div
+        @click="goToWelcome"
+        class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+      >
         <div class="w-8 h-8 flex items-center justify-center">
           <img
             src="../assets/om-icon.svg"
@@ -115,12 +118,21 @@ export default {
       connectionsStore.closeDashboard();
       // Set current list
       listsStore.setCurrentList(listId);
+      // Close chat panel by default when opening a list
+      chatStore.closeChatPanel();
       // Update chat conversations for the selected list
       chatStore.updateConversationsForList(listId);
     };
 
     const showAddList = () => {
-      connectionsStore.setDashboardView("AddList");
+      connectionsStore.setDashboardView("CreateList");
+    };
+
+    const goToWelcome = () => {
+      // Close any open dashboard
+      connectionsStore.closeDashboard();
+      // Clear current list to show welcome page
+      listsStore.currentListId = null;
     };
 
     return {
@@ -130,6 +142,7 @@ export default {
       getUserAvatarUrl,
       selectList,
       showAddList,
+      goToWelcome,
     };
   },
 };

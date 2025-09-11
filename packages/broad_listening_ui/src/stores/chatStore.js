@@ -8,6 +8,7 @@ export const useChatStore = defineStore("chat", {
     currentListId: 1,
     selectedConversationId: null, // null means "new chat"
     shouldFocusInput: false,
+    isChatPanelOpen: false,
     conversationsByList: {
       1: [
         // Vibe coding
@@ -141,6 +142,14 @@ export const useChatStore = defineStore("chat", {
 
     focusInput() {
       this.shouldFocusInput = true;
+    },
+
+    openChatPanel() {
+      this.isChatPanelOpen = true;
+    },
+
+    closeChatPanel() {
+      this.isChatPanelOpen = false;
     },
 
     clearFocusInput() {

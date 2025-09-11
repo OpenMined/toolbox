@@ -360,6 +360,32 @@ export const useListsStore = defineStore("lists", {
       });
     },
 
+    addList(newList) {
+      const id = Date.now();
+      const listToAdd = {
+        id,
+        name: newList.name,
+        itemCount: newList.itemCount,
+        sources: newList.sources,
+        globalFilters: newList.globalFilters,
+      };
+
+      this.lists.push(listToAdd);
+
+      // Initialize empty data for the new list
+      this.listData[id] = {
+        dateRange: {
+          from: newList.globalFilters.startDate || "",
+          to: newList.globalFilters.endDate || "",
+        },
+        tweets: [],
+        summary:
+          "New list created. Items will appear as they match your filters.",
+      };
+
+      return id;
+    },
+
     showAddList() {
       // This will be handled in the component
     },

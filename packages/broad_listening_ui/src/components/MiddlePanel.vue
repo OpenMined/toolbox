@@ -88,6 +88,7 @@ export default {
 
       if (view.id === "ask") {
         chatStore.setHighlighted(true);
+        chatStore.openChatPanel(); // Open the chat panel
         chatStore.startNewChat(); // Start a new chat when clicking Ask
         chatStore.focusInput(); // Signal to focus the input
         // Reset highlight after 2 seconds
