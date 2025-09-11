@@ -40,6 +40,7 @@ import AIPapersDashboard from "./components/AIPapersDashboard.vue";
 import DiscordDashboard from "./components/DiscordDashboard.vue";
 import AddConnector from "./components/AddConnector.vue";
 import AddList from "./components/AddList.vue";
+import ConnectorManager from "./components/ConnectorManager.vue";
 
 export default {
   name: "App",
@@ -52,6 +53,7 @@ export default {
     DiscordDashboard,
     AddConnector,
     AddList,
+    ConnectorManager,
   },
   setup() {
     const chatStore = useChatStore();

@@ -1,4 +1,5 @@
 import { defineStore } from "pinia";
+import { DATA_SOURCES } from "../constants/dataSources";
 
 export const useConnectionsStore = defineStore("connections", {
   state: () => ({
@@ -164,7 +165,11 @@ export const useConnectionsStore = defineStore("connections", {
     },
 
     showAddConnector() {
-      this.setDashboardView("AddConnector");
+      this.setDashboardView("ConnectorManager");
+    },
+
+    getDataSources() {
+      return DATA_SOURCES;
     },
   },
 });
