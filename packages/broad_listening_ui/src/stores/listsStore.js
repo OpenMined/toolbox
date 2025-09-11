@@ -28,6 +28,10 @@ export const useListsStore = defineStore("lists", {
     ],
     listData: {
       1: {
+        dateRange: {
+          from: "2024-11-15",
+          to: "2024-12-28",
+        },
         tweets: [
           {
             id: 1,
@@ -37,6 +41,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "RetroCode",
               handle: "@retrocode_dev",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1588180280910397440/hP8GtFeC_400x400.jpg",
             },
             likes: 342,
             reactions: 89,
@@ -50,6 +56,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "VibesCoder",
               handle: "@vibes_coder",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1584508555726422017/LJjmzFgD_400x400.jpg",
             },
             likes: 156,
             reactions: 43,
@@ -63,6 +71,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "SynthDev",
               handle: "@synthwave_dev",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1579552280645206016/b2rfCHOe_400x400.jpg",
             },
             likes: 278,
             reactions: 67,
@@ -76,6 +86,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "MoodCode",
               handle: "@moodcode_hq",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1582796999012077568/lXK8S7nG_400x400.jpg",
             },
             likes: 423,
             reactions: 112,
@@ -83,9 +95,13 @@ export const useListsStore = defineStore("lists", {
           },
         ],
         summary:
-          "The vibe coding community is focused on creating aesthetically pleasing development experiences that combine coding with music, visual themes, and nostalgic elements. Key trends include retro terminal aesthetics, synthwave-inspired development environments, and tools that integrate mood and music into the coding workflow.",
+          "• Retro aesthetics dominating: terminal emulators, green-on-black themes, and vintage computing vibes [1,3]\n• Music-driven development: lo-fi beats, synthwave soundtracks integrated into coding workflows [2,4]\n• Mood-based tooling: editors that adapt themes to Spotify playlists and emotional states [4]\n• ASCII art and visual programming: neural style transfer turning code into art [2]",
       },
       2: {
+        dateRange: {
+          from: "2024-10-01",
+          to: "2024-12-15",
+        },
         tweets: [
           {
             id: 5,
@@ -95,6 +111,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "AI News Hub",
               handle: "@ainews_hub",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1590834832027918337/6qF4hYnJ_400x400.jpg",
             },
             likes: 892,
             reactions: 234,
@@ -108,6 +126,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "ML Updates",
               handle: "@ml_updates",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1587456789456789456/abcd1234_400x400.jpg",
             },
             likes: 567,
             reactions: 143,
@@ -121,6 +141,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "OpenAI Research",
               handle: "@openai_research",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1634058036934500352/b4F1eVpJ_400x400.jpg",
             },
             likes: 734,
             reactions: 189,
@@ -134,6 +156,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "DeepMind Updates",
               handle: "@deepmind_news",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1543897644427907075/QNyb85yY_400x400.jpg",
             },
             likes: 445,
             reactions: 98,
@@ -141,9 +165,13 @@ export const useListsStore = defineStore("lists", {
           },
         ],
         summary:
-          "Latest LLM releases show significant advances in context length, multimodal capabilities, and specialized coding performance. OpenAI, Anthropic, Meta, and Google are pushing boundaries with larger context windows, faster inference, and improved reasoning across text, code, and visual inputs.",
+          "• Massive context windows: GPT-4.5 Turbo (200K tokens), Claude 3.5 Sonnet (1M+ tokens) [5,6]\n• Multimodal breakthroughs: real-time conversation, video understanding, native training [6,8]\n• Coding excellence: Code Llama 3 70B beating GPT-4 on HumanEval benchmark [7]\n• Speed improvements: 40% faster inference across major model releases [5,8]",
       },
       3: {
+        dateRange: {
+          from: "2024-09-20",
+          to: "2024-12-10",
+        },
         tweets: [
           {
             id: 9,
@@ -153,6 +181,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "RAG Research",
               handle: "@rag_research",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1589123456789012345/xyz12345_400x400.jpg",
             },
             likes: 234,
             reactions: 67,
@@ -166,6 +196,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "Search Engineer",
               handle: "@search_eng",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1582456789123456789/searcheng_400x400.jpg",
             },
             likes: 189,
             reactions: 45,
@@ -179,6 +211,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "LangChain Dev",
               handle: "@langchain_dev",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1576297983333912576/CgsRFpdo_400x400.jpg",
             },
             likes: 356,
             reactions: 89,
@@ -192,6 +226,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "Vector DB Pro",
               handle: "@vectordb_pro",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1583789456123456789/vectordb_400x400.jpg",
             },
             likes: 278,
             reactions: 73,
@@ -199,9 +235,13 @@ export const useListsStore = defineStore("lists", {
           },
         ],
         summary:
-          "RAG (Retrieval-Augmented Generation) development focuses on improving accuracy through hybrid search methods, knowledge graph integration, and advanced query processing. The community is building sophisticated pipelines that combine semantic and keyword search with multi-step reasoning for complex question answering.",
+          "• Hybrid search dominance: combining vector similarity with keyword matching for better retrieval [10]\n• Knowledge graph integration: 94% accuracy on complex multi-hop questions [9]\n• Simplified tooling: ChromaDB + LangChain enabling sub-100 line implementations [11]\n• Advanced techniques: query decomposition, document reranking, and answer synthesis [12]",
       },
       4: {
+        dateRange: {
+          from: "2024-08-05",
+          to: "2024-12-20",
+        },
         tweets: [
           {
             id: 13,
@@ -211,6 +251,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "AGI Research",
               handle: "@agi_research",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1591234567891234567/agiresrch_400x400.jpg",
             },
             likes: 1247,
             reactions: 389,
@@ -224,6 +266,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "Frontier AI Lab",
               handle: "@frontier_ai",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1586456789012345678/frontier_400x400.jpg",
             },
             likes: 892,
             reactions: 234,
@@ -237,6 +281,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "AI Safety News",
               handle: "@ai_safety_news",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1580987654321098765/aisafety_400x400.jpg",
             },
             likes: 567,
             reactions: 156,
@@ -250,6 +296,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "Multi-Agent AI",
               handle: "@multiagent_ai",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1585432109876543210/multiagnt_400x400.jpg",
             },
             likes: 734,
             reactions: 198,
@@ -263,6 +311,8 @@ export const useListsStore = defineStore("lists", {
             author: {
               name: "Scaling Laws",
               handle: "@scaling_laws",
+              avatarUrl:
+                "https://pbs.twimg.com/profile_images/1592345678901234567/scaling_400x400.jpg",
             },
             likes: 923,
             reactions: 267,
@@ -270,7 +320,7 @@ export const useListsStore = defineStore("lists", {
           },
         ],
         summary:
-          "Frontier AI labs are achieving breakthrough capabilities in mathematical reasoning, code generation, and multi-agent collaboration. Key developments include emergent reasoning in large models, human-level performance on complex tasks, and successful alignment techniques that maintain both safety and capability advancement.",
+          "• Reasoning breakthroughs: OpenAI o1 showing emergent capabilities in mathematics and coding [13]\n• Human-level programming: AlphaCode 3 solving competitive programming at expert level [14]\n• Multi-agent systems: Claude, GPT-4, and Gemini collaborating on complex problems [16]\n• Safety + capability: Constitutional AI aligning powerful models without performance loss [15]",
       },
     },
     mockSummary:
@@ -284,6 +334,8 @@ export const useListsStore = defineStore("lists", {
       state.listData[state.currentListId]?.tweets || [],
     currentListSummary: (state) =>
       state.listData[state.currentListId]?.summary || state.mockSummary,
+    currentListDateRange: (state) =>
+      state.listData[state.currentListId]?.dateRange || null,
   },
 
   actions: {

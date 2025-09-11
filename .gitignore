@@ -2,6 +2,9 @@ packages/notes_mcp/data/*
 .claude/settings.local.json
 */.DS_Store
 
+examples/home_latest_timeline.json
+examples/home_latest_timeline_2.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

@@ -1,8 +1,13 @@
 <template>
   <div class="p-4 hover:bg-gray-50 transition-colors">
     <div class="flex space-x-3">
-      <!-- Blue dot instead of profile image -->
-      <div class="w-2 h-2 bg-blue-500 rounded-full mt-2 flex-shrink-0"></div>
+      <!-- Author profile image -->
+      <img
+        :src="getAuthorAvatarUrl(item.author)"
+        :alt="`${item.author.name} avatar`"
+        class="w-10 h-10 rounded-full flex-shrink-0"
+        @error="onImageError"
+      />
 
       <!-- Tweet content -->
       <div class="flex-1 min-w-0">
@@ -65,6 +70,22 @@ export default {
     item: {
       type: Object,
       required: true,
+    },
+  },
+  methods: {
+    getAuthorAvatarUrl(author) {
+      // Use the real avatar URL from mock data if available, otherwise use pravatar fallback with unique seed
+      if (author.avatarUrl) {
+        return author.avatarUrl;
+      }
+      // Use the handle as a seed to get consistent but unique avatars
+      const seed = author.handle.replace("@", "");
+      return `https://i.pravatar.cc/128?u=${seed}`;
+    },
+    onImageError(event) {
+      // Fallback to pravatar with a seed based on the author name
+      const seed = this.item.author.handle.replace("@", "");
+      event.target.src = `https://i.pravatar.cc/128?u=${seed}`;
     },
   },
 };

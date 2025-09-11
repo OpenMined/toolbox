@@ -32,11 +32,6 @@
         <FeedView />
       </div>
 
-      <!-- Summary View -->
-      <div v-else-if="listsStore.currentView === 'summary'" class="h-full p-6">
-        <SummaryView />
-      </div>
-
       <!-- Timeline View (Disabled) -->
       <div
         v-else-if="listsStore.currentView === 'timeline'"
@@ -60,21 +55,18 @@
 import { useListsStore } from "../stores/listsStore";
 import { useChatStore } from "../stores/chatStore";
 import FeedView from "./FeedView.vue";
-import SummaryView from "./SummaryView.vue";
 
 export default {
   name: "MiddlePanel",
   components: {
     FeedView,
-    SummaryView,
   },
   setup() {
     const listsStore = useListsStore();
     const chatStore = useChatStore();
 
     const views = [
-      { id: "feed", label: "Feed", disabled: false },
-      { id: "summary", label: "Summary", disabled: false },
+      { id: "feed", label: "Smart Feed", disabled: false },
       { id: "timeline", label: "Timeline", disabled: true },
       { id: "ask", label: "Ask", disabled: false },
     ];
