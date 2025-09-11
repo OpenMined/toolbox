@@ -5,7 +5,7 @@ from pathlib import Path
 
 import sqlite_vec
 
-from toolbox_store.models import StoreConfig, ToolboxDocument
+from toolbox_store.models import StoreConfig, ToolboxDocument, ToolboxEmbedding
 
 
 def convert_field(value):
@@ -51,62 +51,124 @@ class Database:
         return f"{self.collection}_chunks"
 
     def create_schema(self) -> None:
-        self.conn.execute(f"""
-            CREATE TABLE IF NOT EXISTS {self.documents_table} (
-                id TEXT PRIMARY KEY,
-                metadata JSON,
-                source TEXT,
-                content TEXT,
-                created_at DATETIME
-            )
-        """)
+        try:
+            self.conn.execute(f"""
+                CREATE TABLE IF NOT EXISTS {self.documents_table} (
+                    id TEXT PRIMARY KEY,
+                    metadata JSON,
+                    source TEXT,
+                    content TEXT,
+                    created_at DATETIME
+                )
+            """)
 
-        # Virtual table for embeddings - minimal fields only
-        self.conn.execute(f"""
-            CREATE VIRTUAL TABLE IF NOT EXISTS {self.embeddings_table} USING vec0(
-                embedding float[{self.config.embedding_dim}],
-                document_id TEXT,
-                chunk_idx INTEGER
-            )
-        """)
+            # Virtual table for embeddings - minimal fields only
+            self.conn.execute(f"""
+                CREATE VIRTUAL TABLE IF NOT EXISTS {self.embeddings_table} USING vec0(
+                    embedding float[{self.config.embedding_dim}],
+                    document_id TEXT,
+                    chunk_idx INTEGER
+                )
+            """)
 
-        # Regular table for chunk metadata
-        self.conn.execute(f"""
-            CREATE TABLE IF NOT EXISTS {self.chunks_table} (
-                document_id TEXT NOT NULL,
-                chunk_idx INTEGER NOT NULL,
-                chunk_text TEXT NOT NULL,
-                chunk_start INTEGER,
-                chunk_end INTEGER,
-                content_hash TEXT,
-                created_at DATETIME,
-                PRIMARY KEY (document_id, chunk_idx),
-                FOREIGN KEY (document_id) REFERENCES {self.documents_table}(id)
-            )
-        """)
+            # Regular table for chunk metadata
+            self.conn.execute(f"""
+                CREATE TABLE IF NOT EXISTS {self.chunks_table} (
+                    document_id TEXT NOT NULL,
+                    chunk_idx INTEGER NOT NULL,
+                    content TEXT NOT NULL,
+                    chunk_start INTEGER,
+                    chunk_end INTEGER,
+                    content_hash TEXT,
+                    created_at DATETIME,
+                    PRIMARY KEY (document_id, chunk_idx),
+                    FOREIGN KEY (document_id) REFERENCES {self.documents_table}(id)
+                )
+            """)
 
-        self.conn.commit()
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
 
     def insert_documents(self, documents: list[ToolboxDocument]):
-        for doc in documents:
-            # Get all fields that aren't excluded
-            doc_dict = doc.model_dump(exclude={"embeddings"})
+        if not documents:
+            return
 
-            # Build query dynamically based on fields
-            fields = list(doc_dict.keys())
+        try:
+            # Get fields from first document to build query
+            first_doc = documents[0].model_dump(exclude={"embeddings"})
+            fields = list(first_doc.keys())
             placeholders = [f":{field}" for field in fields]
 
             query = f"""
-                INSERT INTO {self.documents_table} ({", ".join(fields)})
+                INSERT OR REPLACE INTO {self.documents_table} ({", ".join(fields)})
                 VALUES ({", ".join(placeholders)})
             """
 
-            for key, value in doc_dict.items():
-                doc_dict[key] = convert_field(value)
+            # Prepare data for bulk insert with named parameters
+            data = []
+            for doc in documents:
+                doc_dict = doc.model_dump(exclude={"embeddings"})
+                # Convert field values
+                for key, value in doc_dict.items():
+                    doc_dict[key] = convert_field(value)
+                data.append(doc_dict)
 
-            self.conn.execute(query, doc_dict)
+            self.conn.executemany(query, data)
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
 
-        self.conn.commit()
+    def insert_embeddings(self, embeddings: list[ToolboxEmbedding]) -> None:
+        if not embeddings:
+            return
+
+        try:
+            # Prepare chunk data for bulk insert
+            chunk_data = [
+                (
+                    emb.document_id,
+                    emb.chunk_idx,
+                    emb.chunk_start,
+                    emb.chunk_end,
+                    emb.content,
+                    emb.content_hash,
+                    convert_field(emb.created_at),
+                )
+                for emb in embeddings
+            ]
+
+            # Bulk insert chunks
+            self.conn.executemany(
+                f"""
+                INSERT OR REPLACE INTO {self.chunks_table}
+                (document_id, chunk_idx, chunk_start, chunk_end, content, content_hash, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                chunk_data,
+            )
+
+            # Prepare embedding data for bulk insert
+            embedding_data = [
+                (emb.embedding, emb.document_id, emb.chunk_idx) for emb in embeddings
+            ]
+
+            # Bulk insert embeddings
+            self.conn.executemany(
+                f"""
+                INSERT INTO {self.embeddings_table}
+                (embedding, document_id, chunk_idx)
+                VALUES (?, ?, ?)
+                """,
+                embedding_data,
+            )
+
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
 
     def get_all_documents(self) -> list[ToolboxDocument]:
         # utility method
