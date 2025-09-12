@@ -8,7 +8,13 @@
 
 # Toolbox
 
+[![PyPI version](https://badge.fury.io/py/syft-toolbox.svg)](https://badge.fury.io/py/syft-toolbox)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://github.com/OpenMined/toolbox/blob/main/LICENSE)
+[![Tests](https://github.com/OpenMined/toolbox/actions/workflows/pytest.yml/badge.svg)](https://github.com/OpenMined/toolbox/actions/workflows/ci.yml)
+
 Toolbox is a cli tool for installing and managing [MCP](https://github.com/modelcontextprotocol/python-sdk) servers and background agents, **made for developers**.
+
+Toolbox is currently in beta and <span style="color: orange;"><b>macOS only</b></span>
 
 - Toolbox supports popular developer tools (think github, slack, discord, obsidian, gmail etc.), and clients (claude desktop, cursor), making it easier to deploy useful MCP servers without having them managed by a specific client
 - With toolbox you can install **mcp servers** with **background agents** and their dependencies using
@@ -26,10 +32,10 @@ Toolbox is a cli tool for installing and managing [MCP](https://github.com/model
 
 ## Use cases
 
-- 🧠🔎 Customizable, Custom Topic Tracking (Discord, Whatsapp, Github, Slack) Follow technical topics across multiple Discord servers (or other sources) with periodic, fully customizable summaries. Tailor what you want to see using simple prompt files — get only the updates that matter, automatically and efficiently.
+- 🧠🔎 Customizable, Custom Topic Tracking (Discord, Whatsapp, Github, Slack) Follow technical topics across multiple Discord servers (or other sources) with periodic, fully customizable summaries. Tailor what you want to see using simple prompt files — get only the updates that matter, automatically and efficiently. ([video](https://www.loom.com/share/d784d8afe18e41f39ee11e757a07abc7))
 - 📋⚡ One-Command Ticket Creation (Obsidian, Github) — Turn your Obsidian TODOs into GitHub issues with a single command: no copy-pasting, no clicking, just seamless ticket creation directly from your notes.
 - 🔔✨ LLM-driven custom notifications (Slack, Discord, Whatsapp) Use simple prompts or code to write instructions to decide when a message deserves a reminder (forgot to respond, missed a todo, etc)
-- 📊🪄 Organize your communication for Projects or Campaigns (Slack, Discord, Google Sheets, Google Calendar) Log every person you’ve reached out to around a certain topic into a Google Sheet, complete with date, calendar events and status
+- 📊🪄 Organize your communication for Projects or Campaigns (Slack, Discord, Google Sheets, Google Calendar) Log every person you’ve reached out to around a certain topic into a Google Sheet, complete with date, calendar events and status ([video](https://www.loom.com/share/4f285471edf442218dc9b8f27c03b27c))
 
 ## Requirements
 
@@ -111,15 +117,18 @@ tb log <appname>
 
 ## Store
 
-| Name                 | Clients | Default Deployment  | Read Access            | Write Access          | Install                           |
-| -------------------- | ------- | ------------------- | ---------------------- | --------------------- | --------------------------------- |
-| slack-mcp            | claude  | proxy-to-om-enclave | Slack Messages         | Slack Messages        | `tb install slack-mcp`            |
-| discord-mcp          | claude  | proxy-to-om-enclave | Discord Messages       | Discord Messages      | `tb install discord-mcp`          |
-| obsidian-mcp         | claude  | proxy-to-om-enclave | Obsidian notes         | Obsidian Notes        | `tb install obsidian-mcp`         |
-| github-mcp           | claude  | stdio               | Issues, PRs, Settings  | Issues, PRs, Settings | `tb install github-mcp`           |
-| whatsapp-desktop-mcp | claude  | proxy-to-om-enclave | WhatsApp Messages      | WhatsApp Messages     | `tb install whatsapp-desktop-mcp` |
-| pdf-mcp              | claude  | proxy-to-om-enclave | Local Documents        | Document Embeddings   | `tb install pdf-mcp`              |
-| meeting-notes-mcp    | claude  | proxy-to-om-enclave | Apple Audio Recordings | Meeting Notes         | `tb install meeting-notes-mcp`    |
+All mcp servers support claude desktop and claude-code, cursor support is coming soon.
+
+| Name                 | Default Deployment | Read/Write Access                     | Install                           |
+| -------------------- | ------------------ | ------------------------------------- | --------------------------------- |
+| slack-mcp            | proxy-to-local     | Slack Messages                        | `tb install slack-mcp`            |
+| discord-mcp          | proxy-to-local     | Discord Messages                      | `tb install discord-mcp`          |
+| obsidian-mcp         | proxy-to-local     | Obsidian notes                        | `tb install obsidian-mcp`         |
+| github-mcp           | stdio              | Issues, PRs, Settings                 | `tb install github-mcp`           |
+| whatsapp-desktop-mcp | proxy-to-local     | WhatsApp Messages                     | `tb install whatsapp-desktop-mcp` |
+| pdf-mcp              | proxy-to-local     | Local Documents                       | `tb install pdf-mcp`              |
+| google-sheets-mcp    | stdio              | Google sheets                         | `tb install google-sheets-mcp`    |
+| meeting-notes-mcp    | proxy-to-local     | Apple Audio Recordings, meeting notes | `tb install meeting-notes-mcp`    |
 
 # Triggers
 

@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from toolbox.store.callbacks.auth.auth_discord_callback import DiscordAuthCallback
 from toolbox.store.callbacks.auth.auth_slack_callback import SlackAuthCallback
+from toolbox.store.callbacks.google_sheets_callback import GoogleSheetsMCPAuthCallback
 from toolbox.store.callbacks.pdf_callback import (
     InstallPDFMCPCallback,
     PDFMCPDataStatsCallback,
@@ -205,6 +206,20 @@ class ObsidianMCP(StoreElement):
     ]
 
 
+class GoogleSheetsMCP(StoreElement):
+    name: str = "google-sheets-mcp"
+    local_package_path: Path | None = None
+    package_url: str = "https://github.com/xing5/mcp-google-sheets"
+    branch: str = "main"
+
+    callbacks: list[Callback] = [
+        GoogleSheetsMCPAuthCallback(),
+    ]
+
+    def healthcheck(self, mcp: "InstalledMCP") -> bool:
+        return True
+
+
 # TODO: make generic
 STORE_ELEMENTS = {
     "github-mcp": GithubMCP(),
@@ -215,4 +230,5 @@ STORE_ELEMENTS = {
     "whatsapp-desktop-mcp": WhatsappDesktopMCP(),
     "pdf-mcp": PDFMCP(),
     "obsidian-mcp": ObsidianMCP(),
+    "google-sheets-mcp": GoogleSheetsMCP(),
 }

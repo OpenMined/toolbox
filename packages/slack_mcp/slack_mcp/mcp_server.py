@@ -9,7 +9,6 @@ from slack_mcp import db
 from slack_mcp.embeddings import get_embedding, ollama_available
 from slack_mcp.models import ChunkWithMessages, NamesMatchResponse
 from slack_mcp.overview_utils import (
-    get_last_week_messages_with_threads_with_names,
     get_my_active_channels_from_search,
 )
 from slack_mcp.utils import (
@@ -69,16 +68,25 @@ def send_message(channel_id: str, message: str) -> dict:
     return {"status": "success"}
 
 
-@mcp.tool()
-def get_last_messages_in_my_channels(last_n_days: int = 7) -> dict:
-    """get slack messages for all channels you are in until last_n_days ago"""
-    channel_ids = get_my_active_channels_from_search(client, last_n_days=last_n_days)
-    channelid_to_name, user_id_to_real_name = compute_channelid_to_name_cached(client)
+# @mcp.tool()
+# def get_last_messages_in_my_channels(last_n_days: int = 7) -> dict:
+#     """get slack messages for all channels you are in until last_n_days ago"""
+#     channel_ids = get_my_active_channels_from_search(client, last_n_days=last_n_days)
+#     channelid_to_name, user_id_to_real_name = compute_channelid_to_name_cached(client)
 
-    messages_by_channel = get_last_week_messages_with_threads_with_names(
-        client, channel_ids, channelid_to_name, user_id_to_real_name
-    )
-    return messages_by_channel
+#     messages_by_channel = get_last_messages_with_threads_with_names(
+#         client, channel_ids, channelid_to_name, user_id_to_real_name, n_days=last_n_days
+#     )
+#     return messages_by_channel
+
+
+@mcp.tool()
+def get_active_channels(last_n_days: int = 7) -> dict:
+    """Get all slack channels with messages in the last last_n_days ago"""
+    channel_ids = get_my_active_channels_from_search(client, last_n_days=last_n_days)
+    # TODO, fix with names, but this makes parsing easier for the MCP Client
+    res = {f"channel nr {i}": channel_id for i, channel_id in enumerate(channel_ids)}
+    return res
 
 
 @mcp.tool()

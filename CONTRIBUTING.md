@@ -40,7 +40,7 @@ We use PostHog for anonymous CLI analytics (commands, errors, usage patterns).
 Exclude yourself from analytics during development:
 
 ```bash
-export TOOLBOX_TEST_USER="true"
+export TOOLBOX_DEV_MODE="true"
 ```
 
 Add this to your .zshrc or .bashrc to exclude yourself permanently.

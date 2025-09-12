@@ -229,6 +229,27 @@ STORE = {
             "default_deployment_method": "proxy-to-local-http",
         },
     },
+    "google-sheets-mcp": {
+        "url": "https://github.com/OpenMined/toolbox/tree/main/packages/google_sheets_mcp",
+        "json_bodies_for_client_for_deployment_method": {
+            "all": {
+                "stdio": {
+                    "command": "~/.cargo/bin/uvx",
+                    "args": ["mcp-google-sheets@latest"],
+                }
+            }
+        },
+        "mcp_deployment_methods": {"all": "infered"},
+        "default_settings": {
+            "default_read_access": ["Google Sheets"],
+            "default_write_access": ["Google Sheets"],
+            "default_model": None,
+            "default_proxy": "",
+            "default_host": "local",
+            "default_managed_by": "toolbox (local)",
+            "default_deployment_method": "stdio",
+        },
+    },
 }
 
 

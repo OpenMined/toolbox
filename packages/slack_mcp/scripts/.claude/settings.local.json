@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__slack-mcp__get_history",
+      "mcp__slack-mcp__get_active_channels"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}
