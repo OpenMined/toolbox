@@ -98,6 +98,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         json_file=TOOLBOX_CONFIG_FILE,
         nested_model_default_partial_update=True,
+        env_prefix="TOOLBOX_",
     )
 
     @property
