@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 import time
 from datetime import datetime
 
@@ -66,7 +67,7 @@ def run_slack_mesage_dump_background_worker_single(
     min_ts,
     min_batch_length,
 ):
-    print("getting active channels")
+    print("getting active channels", file=sys.stderr)
 
     n_days_since_min_ts = (time.time() - min_ts) // (24 * 60 * 60)
     channel_ids = get_my_active_channels_from_search(
@@ -88,7 +89,8 @@ def run_slack_mesage_dump_background_worker_single(
         date_str_end = datetime.fromtimestamp(batch_end).strftime("%Y-%m-%d")
 
         print(
-            f"Processing batch from {date_str_start} to {date_str_end} for {len(channel_ids)} channels"
+            f"Processing batch from {date_str_start} to {date_str_end} for {len(channel_ids)} channels",
+            file=sys.stderr,
         )
 
         batch_length = batch_end - batch_start
@@ -139,14 +141,16 @@ def run_slack_mesage_dump_background_worker_single(
 
 
 def send_new_message_batch_event(all_messages, batch_start, batch_end):
-    # Only send event if batch_start is shorter than 24 hours ago
-    if batch_start < time.time() - 24 * 60 * 60:
+    # Only send event if batch_start is shorter than 10 minutes ago
+    if batch_start < time.time() - 10 * 60:
         return
 
     # skip bot messages
     messages_filtered = [msg for msg in all_messages if "user" in msg]
     if len(messages_filtered) == 0:
         return
+
+    print(f"Sending event for {len(messages_filtered)} new messages", file=sys.stderr)
 
     send_event(
         "slack.message.new_batch",
@@ -161,7 +165,7 @@ def send_new_message_batch_event(all_messages, batch_start, batch_end):
 def run_slack_mesage_dump_background_worker_loop():
     # check what the last timestamp is locally
     sleep_interval = 60
-    min_ts = time.time() - 365 * 24 * 60 * 60  # one year ago
+    min_ts = time.time() - 1 * 24 * 60 * 60  # one year ago
 
     with get_slack_connection() as conn:
         client = get_webclient()

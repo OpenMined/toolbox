@@ -29,7 +29,6 @@ from toolbox.store.callbacks.callback import (
     ObsidianFindVaultCallback,
     RegisterNotesMCPAppHeartbeatMCPCallback,
     RegisterNotesMCPCallback,
-    RegisterSlackMCPCallback,
     ScreenpipeExternalDependencyCallback,
     SlackMCPDataStatsCallback,
     SyftboxAuthCallback,
@@ -117,7 +116,7 @@ class SlackMCP(StoreElement):
     branch: str = "main"
     callbacks: list[Callback] = [
         SlackAuthCallback(),
-        RegisterSlackMCPCallback(),
+        # RegisterSlackMCPCallback(),
         SlackMCPDataStatsCallback(),
         SyftboxExternalDependencyCallback(),
     ]
