@@ -1,52 +1,77 @@
+from pathlib import Path
 from typing import Generic, TypeVar, overload
 
-from toolbox_store.models import ToolboxDocument, ToolboxEmbedding
+from toolbox_store.db import TBDatabase
+from toolbox_store.embedding import OllamaEmbedder
+from toolbox_store.models import StoreConfig, TBDocument, TBDocumentChunk
+from toolbox_store.query_builder import ChunkQueryBuilder
 
-T = TypeVar("T", bound=ToolboxDocument)
+T = TypeVar("T", bound=TBDocument)
 
 
 class ToolboxStore(Generic[T]):
+    # @overload to auto set generic arg to TBDocument (not needed in 3.13+)
     @overload
-    def __init__(self, collection: str, model: type[T]) -> None: ...
+    def __init__(
+        self,
+        collection: str,
+        document_class: type[T],
+        db_path: str | Path = ":memory:",
+        config: StoreConfig | None = None,
+        reset: bool = False,
+    ) -> None: ...
 
     @overload
     def __init__(
-        self: "ToolboxStore[ToolboxDocument]", collection: str, model: None = None
+        self: "ToolboxStore[TBDocument]",
+        collection: str,
+        document_class: None = None,
+        db_path: str | Path = ":memory:",
+        config: StoreConfig | None = None,
+        reset: bool = False,
     ) -> None: ...
 
-    def __init__(self, collection: str, model: type[T] | None = None) -> None:
+    def __init__(
+        self,
+        collection: str,
+        document_class: type[T] | None = None,
+        db_path: str | Path = ":memory:",
+        config: StoreConfig | None = None,
+        reset: bool = False,
+    ) -> None:
         self.collection = collection
-        self.model = model or ToolboxDocument
+        self.document_class = document_class or TBDocument
+        self.config = config or StoreConfig()
+        self.db = TBDatabase(
+            collection,
+            db_path=db_path,
+            config=self.config,
+            reset=reset,
+            document_class=self.document_class,
+        )
+        self.db.create_schema()
+        self.embedder = OllamaEmbedder(
+            model_name=self.config.embedding_model,
+            batch_size=self.config.batch_size,
+            chunk_size=self.config.chunk_size,
+            chunk_overlap=self.config.chunk_overlap,
+            ollama_url=self.config.ollama_url,
+        )
 
-    def insert_docs(self, docs: list[T], embed_immediately: bool = True) -> None:
-        pass
+    def insert_docs(self, docs: list[T], create_embeddings: bool = True) -> None:
+        self.db.insert_documents(docs)
+        if create_embeddings:
+            chunks = self.embed_documents(docs)
+            self.insert_chunks(chunks)
 
-    def insert_embeddings(self, embeddings: list[ToolboxEmbedding]) -> None:
-        pass
+    def insert_chunks(self, chunks: list[TBDocumentChunk]) -> None:
+        self.db.insert_chunks(chunks)
 
-    def embed_batch(self, docs: list[T]) -> list[ToolboxEmbedding]:
-        pass
+    def embed_documents(self, docs: list[T]) -> list[TBDocumentChunk]:
+        return self.embedder.chunk_and_embed(docs)
 
-    def search(self) -> "SearchQueryBuilder[T]":
-        return SearchQueryBuilder(self, self.model)
+    def embed_query(self, query: str | list[str]) -> list[list[float]]:
+        return self.embedder.embed_query(query)
 
-
-class SearchQueryBuilder(Generic[T]):
-    def __init__(self, store: "ToolboxStore[T]", model: type[T]):
-        self.store = store
-        self.model = model
-
-    def semantic(self, query: str) -> "SearchQueryBuilder[T]":
-        return self
-
-    def filter(self, filters: dict) -> "SearchQueryBuilder[T]":
-        return self
-
-    def limit(self, n: int) -> "SearchQueryBuilder[T]":
-        return self
-
-    def offset(self, n: int) -> "SearchQueryBuilder[T]":
-        return self
-
-    def to_pydantic(self) -> list[T]:
-        return []
+    def search(self) -> ChunkQueryBuilder[T]:
+        return ChunkQueryBuilder[T](self, self.document_class)

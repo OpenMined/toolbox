@@ -1,11 +1,20 @@
 import json
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
+from typing import Generic, TypeVar, overload
 
+import numpy as np
 import sqlite_vec
 
-from toolbox_store.models import StoreConfig, ToolboxDocument, ToolboxEmbedding
+from toolbox_store.models import (
+    RetrievedChunk,
+    StoreConfig,
+    TBDocument,
+    TBDocumentChunk,
+)
+
+T = TypeVar("T", bound=TBDocument)
 
 
 def convert_field(value):
@@ -17,10 +26,36 @@ def convert_field(value):
     return value
 
 
-class Database:
+def deserialize_float32(blob: bytes) -> list[float]:
+    """Deserialize bytes back to list of floats."""
+    return np.frombuffer(blob, dtype=np.float32).tolist()
+
+
+class TBDatabase(Generic[T]):
+    @overload
     def __init__(
         self,
         collection: str,
+        document_class: type[T],
+        db_path: str | Path = ":memory:",
+        config: StoreConfig | None = None,
+        reset: bool = False,
+    ) -> None: ...
+
+    @overload
+    def __init__(
+        self: "TBDatabase[TBDocument]",
+        collection: str,
+        document_class: None = None,
+        db_path: str | Path = ":memory:",
+        config: StoreConfig | None = None,
+        reset: bool = False,
+    ) -> None: ...
+
+    def __init__(
+        self,
+        collection: str,
+        document_class: type[T] | None = None,
         db_path: str | Path = ":memory:",
         config: StoreConfig | None = None,
         reset: bool = False,
@@ -34,6 +69,7 @@ class Database:
         self.conn.enable_load_extension(True)
         sqlite_vec.load(self.conn)
         self.config = config or StoreConfig()
+        self.document_class = document_class or TBDocument
 
     def reset(self):
         self.db_path.unlink(missing_ok=True)
@@ -91,13 +127,13 @@ class Database:
             self.conn.rollback()
             raise
 
-    def insert_documents(self, documents: list[ToolboxDocument]):
+    def insert_documents(self, documents: list[T]):
         if not documents:
             return
 
         try:
             # Get fields from first document to build query
-            first_doc = documents[0].model_dump(exclude={"embeddings"})
+            first_doc = documents[0].model_dump()
             fields = list(first_doc.keys())
             placeholders = [f":{field}" for field in fields]
 
@@ -109,7 +145,7 @@ class Database:
             # Prepare data for bulk insert with named parameters
             data = []
             for doc in documents:
-                doc_dict = doc.model_dump(exclude={"embeddings"})
+                doc_dict = doc.model_dump()
                 # Convert field values
                 for key, value in doc_dict.items():
                     doc_dict[key] = convert_field(value)
@@ -121,8 +157,8 @@ class Database:
             self.conn.rollback()
             raise
 
-    def insert_embeddings(self, embeddings: list[ToolboxEmbedding]) -> None:
-        if not embeddings:
+    def insert_chunks(self, chunks: list[TBDocumentChunk]) -> None:
+        if not chunks:
             return
 
         try:
@@ -137,7 +173,7 @@ class Database:
                     emb.content_hash,
                     convert_field(emb.created_at),
                 )
-                for emb in embeddings
+                for emb in chunks
             ]
 
             # Bulk insert chunks
@@ -150,9 +186,14 @@ class Database:
                 chunk_data,
             )
 
-            # Prepare embedding data for bulk insert
+            # Prepare embedding data for bulk insert (serialize embeddings)
             embedding_data = [
-                (emb.embedding, emb.document_id, emb.chunk_idx) for emb in embeddings
+                (
+                    sqlite_vec.serialize_float32(emb.embedding),
+                    emb.document_id,
+                    emb.chunk_idx,
+                )
+                for emb in chunks
             ]
 
             # Bulk insert embeddings
@@ -170,7 +211,7 @@ class Database:
             self.conn.rollback()
             raise
 
-    def get_all_documents(self) -> list[ToolboxDocument]:
+    def get_all_documents(self) -> list[T]:
         # utility method
         cursor = self.conn.execute(f"SELECT * FROM {self.documents_table}")
         rows = cursor.fetchall()
@@ -179,45 +220,129 @@ class Database:
             row_dict = dict(row)
             if row_dict.get("metadata"):
                 row_dict["metadata"] = json.loads(row_dict["metadata"])
-            documents.append(ToolboxDocument.model_validate(row_dict))
+            documents.append(self.document_class.model_validate(row_dict))
         return documents
 
-
-if __name__ == "__main__":
-    data_dir = Path(__file__).parent.parent.parent / "data"
-    print(data_dir.absolute())
-    db_path = data_dir / "test.db"
-
-    db = Database("test", db_path=db_path, reset=True)
-    db.create_schema()
-
-    max_docs = 10
-    docs_to_insert = []
-    for doc in data_dir.glob("*.txt"):
-        if len(docs_to_insert) >= max_docs:
-            break
-        content = doc.read_text()
-        document = ToolboxDocument(
-            content=content,
-            metadata={
-                "source": str(doc),
-                "created_at": datetime.fromtimestamp(
-                    doc.stat().st_ctime, tz=timezone.utc
-                ).isoformat(),
-                "updated_at": datetime.fromtimestamp(
-                    doc.stat().st_mtime, tz=timezone.utc
-                ).isoformat(),
-            },
-            source=f"file://{doc.as_posix()}",
+    def get_documents(self, ids: list[str]) -> list[T]:
+        if not ids:
+            return []
+        placeholders = ",".join("?" for _ in ids)
+        cursor = self.conn.execute(
+            f"SELECT * FROM {self.documents_table} WHERE id IN ({placeholders})", ids
         )
-        docs_to_insert.append(document)
-    db.insert_documents(docs_to_insert)
+        rows = cursor.fetchall()
+        documents = []
+        for row in rows:
+            row_dict = dict(row)
+            if row_dict.get("metadata"):
+                row_dict["metadata"] = json.loads(row_dict["metadata"])
+            documents.append(self.document_class.model_validate(row_dict))
+        return documents
 
-    all_docs = db.get_all_documents()
-    print(f"Retrieved {len(all_docs)} documents from the database.")
-    for k, v in all_docs[0].model_dump().items():
-        if isinstance(v, str) and len(v) > 100:
-            v = v[:100] + "..."
-        elif isinstance(v, dict):
-            v = json.dumps(v, indent=2)
-        print(f"{k}: {v}")
+    def semantic_search(
+        self,
+        query_embedding: list[float],
+        limit: int = 10,
+        offset: int = 0,
+    ) -> list[RetrievedChunk]:
+        """
+        Perform semantic search using a query embedding.
+        Returns list of RetrievedEmbedding objects with distance scores.
+        """
+        # Single query joining embeddings with chunks to get all needed data
+        # Note: sqlite-vec requires LIMIT in the virtual table query, we apply OFFSET in outer query
+        cursor = self.conn.execute(
+            f"""
+            SELECT * FROM (
+                SELECT
+                    c.*,
+                    d.*,
+                    e.*,
+                    e.distance as distance
+                FROM (
+                    SELECT *, distance FROM {self.embeddings_table}
+                    WHERE embedding MATCH :query_embedding
+                    ORDER BY distance
+                    LIMIT :total_limit
+                ) as e
+                INNER JOIN {self.chunks_table} c
+                    ON e.document_id = c.document_id
+                    AND e.chunk_idx = c.chunk_idx
+                INNER JOIN {self.documents_table} d
+                    ON e.document_id = d.id
+                ORDER BY distance
+            )
+            LIMIT :limit OFFSET :offset
+            """,
+            {
+                "query_embedding": sqlite_vec.serialize_float32(query_embedding),
+                "total_limit": limit + offset,  # Fetch enough results to handle offset
+                "limit": limit,
+                "offset": offset,
+            },
+        )
+
+        results = []
+        for row in cursor.fetchall():
+            # Deserialize embedding from blob format
+            embedding_blob = row["embedding"]
+            if isinstance(embedding_blob, bytes):
+                embedding = deserialize_float32(embedding_blob)
+            else:
+                embedding = embedding_blob
+
+            # Create RetrievedEmbedding object from Row
+            retrieved = RetrievedChunk(
+                document_id=row["document_id"],
+                chunk_idx=row["chunk_idx"],
+                chunk_start=row["chunk_start"],
+                chunk_end=row["chunk_end"],
+                content=row["content"],
+                content_hash=row["content_hash"],
+                created_at=row["created_at"],
+                embedding=embedding,
+                distance=row["distance"],
+            )
+            results.append(retrieved)
+
+        return results
+
+
+# if __name__ == "__main__":
+#     data_dir = Path(__file__).parent.parent.parent / "experimental" / "data"
+#     print(data_dir.absolute())
+#     db_path = data_dir / "test.db"
+
+#     db = TBDatabase("test", db_path=db_path, reset=True)
+#     db.create_schema()
+
+#     max_docs = 10
+#     docs_to_insert = []
+#     for doc in data_dir.glob("*.txt"):
+#         if len(docs_to_insert) >= max_docs:
+#             break
+#         content = doc.read_text()
+#         document = TBDocument(
+#             content=content,
+#             metadata={
+#                 "source": str(doc),
+#                 "created_at": datetime.fromtimestamp(
+#                     doc.stat().st_ctime, tz=timezone.utc
+#                 ).isoformat(),
+#                 "updated_at": datetime.fromtimestamp(
+#                     doc.stat().st_mtime, tz=timezone.utc
+#                 ).isoformat(),
+#             },
+#             source=f"file://{doc.as_posix()}",
+#         )
+#         docs_to_insert.append(document)
+#     db.insert_documents(docs_to_insert)
+
+#     all_docs = db.get_all_documents()
+#     print(f"Retrieved {len(all_docs)} documents from the database.")
+#     for k, v in all_docs[0].model_dump().items():
+#         if isinstance(v, str) and len(v) > 100:
+#             v = v[:100] + "..."
+#         elif isinstance(v, dict):
+#             v = json.dumps(v, indent=2)
+#         print(f"{k}: {v}")
