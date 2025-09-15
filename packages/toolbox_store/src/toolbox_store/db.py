@@ -2,11 +2,12 @@ import json
 import sqlite3
 from datetime import datetime
 from pathlib import Path
-from typing import Generic, TypeVar, overload
+from typing import Any, Generic, TypeVar, overload
 
 import numpy as np
 import sqlite_vec
 
+from toolbox_store.filters import build_where_clause
 from toolbox_store.models import (
     RetrievedChunk,
     StoreConfig,
@@ -86,6 +87,10 @@ class TBDatabase(Generic[T]):
     def chunks_table(self) -> str:
         return f"{self.collection}_chunks"
 
+    @property
+    def fts_table(self) -> str:
+        return f"{self.collection}_fts"
+
     def create_schema(self) -> None:
         try:
             self.conn.execute(f"""
@@ -119,6 +124,20 @@ class TBDatabase(Generic[T]):
                     created_at DATETIME,
                     PRIMARY KEY (document_id, chunk_idx),
                     FOREIGN KEY (document_id) REFERENCES {self.documents_table}(id)
+                )
+            """)
+            self.conn.execute(f"""
+                CREATE INDEX IF NOT EXISTS idx_{self.chunks_table}_document_id
+                ON {self.chunks_table}(document_id)
+            """)
+
+            # FTS5 virtual table for full-text search
+            self.conn.execute(f"""
+                CREATE VIRTUAL TABLE IF NOT EXISTS {self.fts_table} USING fts5(
+                    document_id UNINDEXED,
+                    chunk_idx UNINDEXED,
+                    content,
+                    tokenize='porter unicode61'
                 )
             """)
 
@@ -160,6 +179,16 @@ class TBDatabase(Generic[T]):
     def insert_chunks(self, chunks: list[TBDocumentChunk]) -> None:
         if not chunks:
             return
+
+        for chunk in chunks:
+            if chunk.embedding is None:
+                raise ValueError(
+                    "Chunk embedding cannot be None when inserting chunks."
+                )
+            if len(chunk.embedding) != self.config.embedding_dim:
+                raise ValueError(
+                    f"Chunk embedding dimension {len(chunk.embedding)} does not match dimension {self.config.embedding_dim}."
+                )
 
         try:
             # Prepare chunk data for bulk insert
@@ -206,6 +235,19 @@ class TBDatabase(Generic[T]):
                 embedding_data,
             )
 
+            # Populate FTS5 table for full-text search
+            fts_data = [
+                (chunk.document_id, chunk.chunk_idx, chunk.content) for chunk in chunks
+            ]
+            self.conn.executemany(
+                f"""
+                INSERT INTO {self.fts_table}
+                (document_id, chunk_idx, content)
+                VALUES (?, ?, ?)
+                """,
+                fts_data,
+            )
+
             self.conn.commit()
         except Exception:
             self.conn.rollback()
@@ -242,6 +284,7 @@ class TBDatabase(Generic[T]):
     def semantic_search(
         self,
         query_embedding: list[float],
+        filters: dict[str, Any] | None = None,
         limit: int = 10,
         offset: int = 0,
     ) -> list[RetrievedChunk]:
@@ -249,37 +292,47 @@ class TBDatabase(Generic[T]):
         Perform semantic search using a query embedding.
         Returns list of RetrievedEmbedding objects with distance scores.
         """
+
+        params_dict = {
+            "query_embedding": sqlite_vec.serialize_float32(query_embedding),
+            "limit": limit,
+            "offset": offset,
+            "total_limit": limit + offset,
+        }
+
+        if filters:
+            where_clause, where_params = build_where_clause(filters)
+            if any(key in params_dict for key in where_params):
+                raise ValueError("Filter parameters conflict with reserved names.")
+            params_dict.update(where_params)
+            where_clause = f"""AND document_id IN (
+                    SELECT id FROM {self.documents_table} d
+                    WHERE {where_clause}
+                )"""
+        else:
+            where_clause, where_params = "", None
+
         # Single query joining embeddings with chunks to get all needed data
         # Note: sqlite-vec requires LIMIT in the virtual table query, we apply OFFSET in outer query
         cursor = self.conn.execute(
             f"""
-            SELECT * FROM (
-                SELECT
-                    c.*,
-                    d.*,
-                    e.*,
-                    e.distance as distance
-                FROM (
-                    SELECT *, distance FROM {self.embeddings_table}
-                    WHERE embedding MATCH :query_embedding
-                    ORDER BY distance
-                    LIMIT :total_limit
-                ) as e
-                INNER JOIN {self.chunks_table} c
-                    ON e.document_id = c.document_id
-                    AND e.chunk_idx = c.chunk_idx
-                INNER JOIN {self.documents_table} d
-                    ON e.document_id = d.id
+            SELECT
+                c.*,
+                e.*
+            FROM (
+                SELECT *, distance FROM {self.embeddings_table}
+                WHERE embedding MATCH :query_embedding
+                {where_clause}
                 ORDER BY distance
-            )
+                LIMIT :total_limit
+            ) as e
+            INNER JOIN {self.chunks_table} c
+                ON e.document_id = c.document_id
+                AND e.chunk_idx = c.chunk_idx
+            ORDER BY distance
             LIMIT :limit OFFSET :offset
             """,
-            {
-                "query_embedding": sqlite_vec.serialize_float32(query_embedding),
-                "total_limit": limit + offset,  # Fetch enough results to handle offset
-                "limit": limit,
-                "offset": offset,
-            },
+            params_dict,
         )
 
         results = []
@@ -306,6 +359,83 @@ class TBDatabase(Generic[T]):
             results.append(retrieved)
 
         return results
+
+    def keyword_search(
+        self,
+        query: str,
+        filters: dict[str, Any] | None = None,
+        limit: int = 10,
+        offset: int = 0,
+    ) -> list[RetrievedChunk]:
+        """
+        Perform keyword search using FTS5.
+        Returns list of RetrievedChunk objects with BM25 rank scores.
+        """
+
+        params_dict = {
+            "query": query,
+            "limit": limit,
+            "offset": offset,
+        }
+
+        if filters:
+            where_clause, where_params = build_where_clause(filters)
+            if any(key in params_dict for key in where_params):
+                raise ValueError("Filter parameters conflict with reserved names.")
+            params_dict.update(where_params)
+            where_clause = f"""AND f.document_id IN (
+                    SELECT id FROM {self.documents_table} d
+                    WHERE {where_clause}
+                )"""
+        else:
+            where_clause = ""
+
+        # Query FTS5 table and join with chunks to get full data
+        cursor = self.conn.execute(
+            f"""
+            SELECT
+                c.*,
+                f.rank as distance
+            FROM {self.fts_table} f
+            INNER JOIN {self.chunks_table} c
+                ON f.document_id = c.document_id
+                AND f.chunk_idx = c.chunk_idx
+            WHERE {self.fts_table} MATCH :query
+            {where_clause}
+            ORDER BY rank
+            LIMIT :limit OFFSET :offset
+            """,
+            params_dict,
+        )
+
+        results = []
+        for row in cursor.fetchall():
+            # Create RetrievedChunk object from Row
+            # Note: we don't have embeddings in keyword search
+            retrieved = RetrievedChunk(
+                document_id=row["document_id"],
+                chunk_idx=row["chunk_idx"],
+                chunk_start=row["chunk_start"],
+                chunk_end=row["chunk_end"],
+                content=row["content"],
+                content_hash=row["content_hash"],
+                created_at=row["created_at"],
+                embedding=None,  # No embedding in keyword search
+                distance=row["distance"],  # This is the BM25 rank
+            )
+            results.append(retrieved)
+
+        return results
+
+    def close(self):
+        if self.conn:
+            self.conn.close()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()
 
 
 # if __name__ == "__main__":

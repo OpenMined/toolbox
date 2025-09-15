@@ -3,6 +3,7 @@ import itertools
 from functools import cached_property
 
 from semantic_text_splitter import TextSplitter
+from tqdm import tqdm
 
 from toolbox_store.models import StoreConfig, TBDocument, TBDocumentChunk
 from toolbox_store.ollama_client import OllamaEmbeddingClient
@@ -81,6 +82,7 @@ class OllamaEmbedder:
         texts: str | list[str],
         batch_size: int | None = None,
         prompt_type: str | None = None,
+        show_progress: bool = True,
     ) -> list[list[float]]:
         self._setup()
         if isinstance(texts, str):
@@ -90,7 +92,12 @@ class OllamaEmbedder:
 
         embeddings = []
         batch_size_ = batch_size or self.batch_size
-        for batch in itertools.batched(texts, batch_size_):
+        iterator = itertools.batched(texts, batch_size_)
+        if show_progress:
+            iterator = tqdm(
+                iterator, total=(len(texts) + batch_size_ - 1) // batch_size_
+            )
+        for batch in iterator:
             batch_embeddings = self.ollama_client.embed(self.model_name, batch)
             embeddings.extend(batch_embeddings)
 
@@ -101,14 +108,18 @@ class OllamaEmbedder:
         texts: str | list[str],
         batch_size: int | None = None,
     ) -> list[list[float]]:
-        return self.embed(texts, batch_size=batch_size, prompt_type="document")
+        return self.embed(
+            texts, batch_size=batch_size, prompt_type="document", show_progress=True
+        )
 
     def embed_query(
         self,
         texts: str | list[str],
         batch_size: int | None = None,
     ) -> list[list[float]]:
-        return self.embed(texts, batch_size=batch_size, prompt_type="query")
+        return self.embed(
+            texts, batch_size=batch_size, prompt_type="query", show_progress=False
+        )
 
     def chunk(self, documents: list[TBDocument]) -> list[dict]:
         """Chunk documents into smaller pieces with metadata."""

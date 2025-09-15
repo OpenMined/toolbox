@@ -71,7 +71,7 @@ def build_condition(
     field: str, op: str, value: Any, param_base: str, params: dict[str, Any]
 ) -> str:
     """Build SQL condition for a single filter."""
-    sql_field = build_sql_field(field)
+    sql_field = build_sql_field(field, "d")
 
     if op == "isnull":
         return f"{sql_field} IS {'NULL' if value else 'NOT NULL'}"

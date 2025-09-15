@@ -1,5 +1,6 @@
 # %%
 # from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 
 from toolbox_store.data_loaders import load_from_dir
@@ -19,10 +20,12 @@ store.insert_docs(
     create_embeddings=True,
 )
 
+# %%
 query = (
     store.search()
     .semantic("Airport security")
-    # .where({"metadata.created_at__gte": datetime(2025, 9, 1)}) # TODO filters
+    .where({"created_at__gte": datetime(2025, 9, 1)})
+    .where({"created_at__lt": datetime(2025, 10, 1)})
     # .keyword("history AI") # TODO sqlite fts index
     # .hybrid(semantic_weight=0.8) # TODO linear combination of fts + semantic
     # .rerank() # TODO reranker support
@@ -36,4 +39,57 @@ for chunk in chunks:
     print(f"- Chunk (doc {chunk.document_id}, dist {chunk.distance:.4f}):")
     print(f"  {chunk.content[:200]}...")
     print()
+# %%
+
+docs = query.get_documents()
+print(f"Retrieved {len(docs)} documents")
+
+for doc in docs:
+    print(f"- Document {doc.id} (metadata: {doc.metadata}):")
+    print(f"  {doc.content[:200]}...")
+    print(f"  num retrieved chunks: {len(doc.chunks)}")
+    print(f"  min distance: {doc.chunks[0].distance if doc.chunks else 'N/A'}")
+    print()
+
+# %%
+query = (
+    store.search()
+    .keyword("yates")
+    .where({"metadata.filename__contains": "001"})
+    .chunk_limit(10)
+)
+
+docs = query.get_documents()
+print(f"Retrieved {len(docs)} documents")
+
+for doc in docs:
+    print(f"- Document {doc.id} (metadata: {doc.metadata}):")
+    print(f"  {doc.content[:200]}...")
+    print(f"  num retrieved chunks: {len(doc.chunks)}")
+    print(f"  min distance: {doc.chunks[0].distance if doc.chunks else 'N/A'}")
+    print()
+
+# %%
+
+query = (
+    store.search()
+    .semantic("airport security")  # vector similarity
+    .keyword("yates")  # bm25
+    .hybrid(method="rrf")  # fuse semantic + keyword scores
+    .where(
+        {
+            "created_at__gte": datetime.now() - timedelta(days=7),
+            "metadata.filename__contains": "001",
+        }
+    )
+    .chunk_limit(10)
+)
+
+chunks = query.get_documents()
+print(f"Retrieved {len(chunks)} chunks")
+for chunk in chunks:
+    print(f"- Chunk (doc {chunk.document_id}, dist {chunk.distance:.4f}):")
+    print(f"  {chunk.content[:500]}...")
+    print()
+
 # %%

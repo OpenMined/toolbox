@@ -9,7 +9,7 @@ ds = datasets.load_dataset("permutans/fineweb-bbc-news", "sample-10BT", split="t
 
 data_dir = Path(".") / "fineweb-bbc-news"
 data_dir.mkdir(exist_ok=True)
-n = 100
+n = 5000
 leading_zeros = len(str(n))
 
 for i, item in enumerate(ds.select(range(n))):

@@ -80,7 +80,7 @@ class TBDocumentChunk(BaseModel):
     created_at: datetime = Field(default_factory=_utcnow)
     content: str
     content_hash: str
-    embedding: list[float]
+    embedding: list[float] | None
 
     @model_validator(mode="after")
     def ensure_utc_for_all_datetimes(self) -> Self:
