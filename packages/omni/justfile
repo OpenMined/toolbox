@@ -1,0 +1,48 @@
+#!/usr/bin/env just --justfile
+# Vue.js and FastAPI development commands
+
+# Kill existing dev processes
+kill-dev:
+    #!/bin/bash
+    pkill -f "npm run dev" || true
+    pkill -f "python.*main.py" || true
+    pkill -f "uvicorn.*main:app" || true
+
+
+# Install dependencies only
+install:
+    #!/bin/bash
+    npm install
+    uv pip install -e .
+
+# Run both frontend and backend development servers
+dev:
+    #!/bin/bash
+    just kill-dev
+    trap 'just kill-dev' EXIT
+    echo "Starting backend server..."
+    cd omni && python main.py &
+    BACKEND_PID=$!
+    echo "Backend started with PID: $BACKEND_PID"
+    echo "Starting frontend server..."
+    npm run dev &
+    FRONTEND_PID=$!
+    echo "Frontend started with PID: $FRONTEND_PID"
+    wait
+
+# Build for production
+build:
+    #!/bin/bash
+    npm run build
+
+# Preview production build
+preview:
+    #!/bin/bash
+    npm run preview
+
+# Clean node_modules and reinstall
+clean-install:
+    #!/bin/bash
+    rm -rf node_modules package-lock.json
+    npm install
+    uv pip install -e .

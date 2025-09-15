@@ -13,6 +13,7 @@ dependencies = [
     "obsidian_mcp",
     "pdf_mcp",
     "toolbox_events",
+    "omni"
 ]
 
 [build-system]
@@ -28,6 +29,7 @@ syftbox_queryengine = { workspace = true }
 pdf_mcp = { workspace = true }
 obsidian_mcp = { workspace = true }
 toolbox_events = { workspace = true }
+omni = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*"]
