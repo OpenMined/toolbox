@@ -87,15 +87,25 @@ export default {
       if (view.disabled) return;
 
       if (view.id === "ask") {
-        chatStore.setHighlighted(true);
-        chatStore.openChatPanel(); // Open the chat panel
-        chatStore.startNewChat(); // Start a new chat when clicking Ask
-        chatStore.focusInput(); // Signal to focus the input
-        // Reset highlight after 2 seconds
-        setTimeout(() => {
-          chatStore.setHighlighted(false);
-        }, 2000);
+        // Toggle chat panel instead of just opening it
+        if (chatStore.isChatPanelOpen) {
+          chatStore.closeChatPanel();
+        } else {
+          chatStore.setHighlighted(true);
+          chatStore.openChatPanel(); // Open the chat panel
+          chatStore.startNewChat(); // Start a new chat when clicking Ask
+          chatStore.focusInput(); // Signal to focus the input
+          // Reset highlight after 2 seconds
+          setTimeout(() => {
+            chatStore.setHighlighted(false);
+          }, 2000);
+        }
         return; // Don't change the view, keep showing the feed
+      }
+
+      // Close chat panel when switching to other views
+      if (chatStore.isChatPanelOpen) {
+        chatStore.closeChatPanel();
       }
 
       listsStore.setCurrentView(view.id);
