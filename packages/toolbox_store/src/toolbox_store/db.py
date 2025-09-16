@@ -106,7 +106,7 @@ class TBDatabase(Generic[T]):
             # Virtual table for embeddings - minimal fields only
             self.conn.execute(f"""
                 CREATE VIRTUAL TABLE IF NOT EXISTS {self.embeddings_table} USING vec0(
-                    embedding float[{self.config.embedding_dim}],
+                    embedding float[{self.config.embedding_dim}] distance_metric={self.config.distance_metric},
                     document_id TEXT,
                     chunk_idx INTEGER
                 )

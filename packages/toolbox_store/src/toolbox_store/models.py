@@ -1,7 +1,7 @@
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Self
+from typing import Literal, Self
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, JsonValue, model_validator
@@ -33,6 +33,7 @@ class StoreConfig(BaseSettings):
     batch_size: int = 8
     chunk_size: int = 1000
     chunk_overlap: int = 100
+    distance_metric: Literal["cosine", "l1", "l2"] = "cosine"
 
 
 class TBDocument(BaseModel):
