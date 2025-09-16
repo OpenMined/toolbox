@@ -52,8 +52,11 @@ class ChunkQueryBuilder(Generic[T]):
         self._chunk_offset: int | None = None
         self._filters: dict[str, Any] | None = None
 
+        # Hybrid search parameters
         self._hybrid_method: str = "rrf"
         self._hybrid_k: int = 60
+        self._semantic_weight: float = 1.0
+        self._keyword_weight: float = 1.0
 
     def semantic(self, query: str | list[float]) -> Self:
         self._semantic_query = query
@@ -77,19 +80,30 @@ class ChunkQueryBuilder(Generic[T]):
         self._chunk_offset = n
         return self
 
-    def hybrid(self, method: str = "rrf", **kwargs) -> Self:
+    def hybrid(
+        self,
+        method: str = "rrf",
+        *,
+        k: int = 60,
+        semantic_weight: float = 1.0,
+        keyword_weight: float = 1.0,
+    ) -> Self:
         """Configure hybrid search method.
 
         Args:
             method: Currently only 'rrf' (Reciprocal Rank Fusion) is supported
-            **kwargs: Method-specific parameters (e.g., k=60 for RRF)
+            k: RRF constant (default 60, standard in literature)
+            semantic_weight: Weight for semantic results (default 1.0)
+            keyword_weight: Weight for keyword results (default 1.0)
 
         Returns:
             Self for chaining
         """
         self._hybrid_method = method
         if method == "rrf":
-            self._hybrid_k = kwargs.get("k", 60)
+            self._hybrid_k = k
+            self._semantic_weight = semantic_weight
+            self._keyword_weight = keyword_weight
         else:
             raise ValueError(f"Unsupported hybrid method: {method}")
         return self
@@ -153,7 +167,12 @@ class ChunkQueryBuilder(Generic[T]):
             )
 
             # Combine using RRF
-            combined = combine_rrf(semantic_results, keyword_results, k=self._hybrid_k)
+            combined = combine_rrf(
+                semantic_results,
+                keyword_results,
+                weights=[self._semantic_weight, self._keyword_weight],
+                k=self._hybrid_k,
+            )
 
             # Apply final limit and offset
             end = offset + limit
@@ -203,44 +222,50 @@ class ChunkQueryBuilder(Generic[T]):
 
 
 def combine_rrf(
-    semantic_results: list[RetrievedChunk],
-    keyword_results: list[RetrievedChunk],
+    *result_sets: list[RetrievedChunk],
+    weights: list[float] | None = None,
     k: int = 60,
 ) -> list[RetrievedChunk]:
-    """Combine search results using Reciprocal Rank Fusion.
+    """Combine multiple search result sets using weighted Reciprocal Rank Fusion.
 
-    RRF(d) = Σ(r ∈ R) 1 / (k + r(d))
+    RRF(d) = Σ(r ∈ R) weight_r * (1 / (k + rank_r(d)))
 
     Args:
-        semantic_results: Results from semantic search (assumed to be rank-ordered)
-        keyword_results: Results from keyword search (assumed to be rank-ordered)
+        *result_sets: Variable number of search result lists (each assumed to be rank-ordered)
+        weights: Optional weights for each result set (defaults to equal weights)
         k: RRF constant (default 60, standard in literature)
 
     Returns:
         Combined and re-ranked results
     """
+    if not result_sets:
+        return []
+
+    # Use equal weights if not provided
+    if weights is None:
+        weights = [1.0] * len(result_sets)
+
+    if len(weights) != len(result_sets):
+        raise ValueError(
+            f"Number of weights ({len(weights)}) must match number of result sets ({len(result_sets)})"
+        )
+
     # Calculate RRF scores
     rrf_scores = {}
 
-    # Add scores from semantic search
-    for rank, chunk in enumerate(semantic_results, 1):
-        key = (chunk.document_id, chunk.chunk_idx)
-        rrf_scores[key] = rrf_scores.get(key, 0) + 1 / (k + rank)
+    # Add weighted scores from each result set
+    for weight, results in zip(weights, result_sets):
+        for rank, chunk in enumerate(results, 1):
+            key = (chunk.document_id, chunk.chunk_idx)
+            rrf_scores[key] = rrf_scores.get(key, 0) + weight * (1 / (k + rank))
 
-    # Add scores from keyword search
-    for rank, chunk in enumerate(keyword_results, 1):
-        key = (chunk.document_id, chunk.chunk_idx)
-        rrf_scores[key] = rrf_scores.get(key, 0) + 1 / (k + rank)
-
-    # Build a map of keys to chunks (preferring semantic results for metadata)
+    # Build a map of keys to chunks (first occurrence wins)
     chunk_map = {}
-    for chunk in semantic_results:
-        key = (chunk.document_id, chunk.chunk_idx)
-        chunk_map[key] = chunk
-    for chunk in keyword_results:
-        key = (chunk.document_id, chunk.chunk_idx)
-        if key not in chunk_map:
-            chunk_map[key] = chunk
+    for results in result_sets:
+        for chunk in results:
+            key = (chunk.document_id, chunk.chunk_idx)
+            if key not in chunk_map:
+                chunk_map[key] = chunk
 
     # Sort by RRF score (higher is better) and rebuild results
     sorted_keys = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)

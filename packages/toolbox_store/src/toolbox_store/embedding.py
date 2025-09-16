@@ -49,7 +49,27 @@ class Embedder(ABC):
     def base_model_name(self) -> str:
         return self.model_name.split(":")[0]
 
+    def _format_with_prompt(
+        self, texts: list[str], prompt_type: str | None = None
+    ) -> list[str]:
+        if prompt_type is None:
+            return texts
+
+        if self.base_model_name not in PROMPTS:
+            return texts
+
+        model_prompts = PROMPTS[self.base_model_name]
+        prompt_template = model_prompts.get(prompt_type, None)
+        if prompt_template is None:
+            return texts
+
+        return [f"{prompt_template}{text}" for text in texts]
+
     @abstractmethod
+    def _embed(self, batch: list[str]) -> list[list[float]]:
+        """Generate embeddings for a batch of texts."""
+        pass
+
     def embed(
         self,
         texts: str | list[str],
@@ -58,7 +78,23 @@ class Embedder(ABC):
         show_progress: bool = True,
     ) -> list[list[float]]:
         """Generate embeddings for the given texts."""
-        pass
+        if isinstance(texts, str):
+            texts = [texts]
+
+        texts = self._format_with_prompt(texts, prompt_type)
+
+        embeddings = []
+        batch_size_ = batch_size or self.batch_size
+        iterator = itertools.batched(texts, batch_size_)
+        if show_progress:
+            iterator = tqdm(
+                iterator, total=(len(texts) + batch_size_ - 1) // batch_size_
+            )
+        for batch in iterator:
+            batch_embeddings = self._embed(batch)
+            embeddings.extend(batch_embeddings)
+
+        return embeddings
 
     def embed_document(
         self,
@@ -140,47 +176,9 @@ class OllamaEmbedder(Embedder):
                 f"Make sure Ollama is running and accessible. Error: {e}"
             ) from e
 
-    def _format_with_prompt(
-        self, texts: list[str], prompt_type: str | None = None
-    ) -> list[str]:
-        if prompt_type is None:
-            return texts
-
-        if self.base_model_name not in PROMPTS:
-            return texts
-
-        model_prompts = PROMPTS[self.base_model_name]
-        prompt_template = model_prompts.get(prompt_type, None)
-        if prompt_template is None:
-            return texts
-
-        return [f"{prompt_template}{text}" for text in texts]
-
-    def embed(
-        self,
-        texts: str | list[str],
-        batch_size: int | None = None,
-        prompt_type: str | None = None,
-        show_progress: bool = True,
-    ) -> list[list[float]]:
+    def _embed(self, batch: list[str]) -> list[list[float]]:
         self._setup()
-        if isinstance(texts, str):
-            texts = [texts]
-
-        texts = self._format_with_prompt(texts, prompt_type)
-
-        embeddings = []
-        batch_size_ = batch_size or self.batch_size
-        iterator = itertools.batched(texts, batch_size_)
-        if show_progress:
-            iterator = tqdm(
-                iterator, total=(len(texts) + batch_size_ - 1) // batch_size_
-            )
-        for batch in iterator:
-            batch_embeddings = self.ollama_client.embed(self.model_name, batch)
-            embeddings.extend(batch_embeddings)
-
-        return embeddings
+        return self.ollama_client.embed(self.model_name, batch)
 
 
 class RandomEmbedder(Embedder):
@@ -197,16 +195,10 @@ class RandomEmbedder(Embedder):
         super().__init__(model_name, chunk_size, chunk_overlap, batch_size)
         self.embedding_dim = embedding_dim
 
-    def embed(
-        self,
-        texts: str | list[str],
-        batch_size: int | None = None,
-        prompt_type: str | None = None,
-        show_progress: bool = True,
-    ) -> list[list[float]]:
+    def _embed(self, batch: list[str]) -> list[list[float]]:
         import numpy as np
 
-        n = 1 if isinstance(texts, str) else len(texts)
+        n = len(batch)
         embeddings = np.random.random((n, self.embedding_dim))
         return embeddings.tolist()
 

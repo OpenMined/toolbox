@@ -1,5 +1,6 @@
 import re
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Self
 from uuid import uuid4
 
@@ -7,6 +8,8 @@ from pydantic import BaseModel, Field, JsonValue, model_validator
 from pydantic_settings import BaseSettings
 
 KEY_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
+TOOLBOX_DIR = Path.home() / ".toolbox"
+DEFAULT_CACHE_PATH = TOOLBOX_DIR / "vector_cache.db"
 
 
 def is_valid_field_identifier(key: str) -> bool:
