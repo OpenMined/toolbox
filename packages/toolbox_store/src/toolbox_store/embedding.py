@@ -1,5 +1,6 @@
 import hashlib
 import itertools
+from abc import ABC, abstractmethod
 from functools import cached_property
 
 from semantic_text_splitter import TextSplitter
@@ -30,53 +31,25 @@ PROMPTS: dict[str, dict[str, str]] = {
 }
 
 
-class OllamaEmbedder:
+class Embedder(ABC):
+    """Base class for all embedders with shared functionality."""
+
     def __init__(
         self,
-        model_name: str = "embeddinggemma:300m",
+        model_name: str = "base",
         chunk_size: int = 1000,
         chunk_overlap: int = 100,
         batch_size: int = 8,
-        ollama_url: str = "http://localhost:11434",
     ):
         self.model_name = model_name
         self.batch_size = batch_size
-        self.ollama_client = OllamaEmbeddingClient(ollama_url=ollama_url)
         self.splitter = TextSplitter(capacity=chunk_size, overlap=chunk_overlap)
-
-    def _setup(self):
-        try:
-            if not self.ollama_client.model_exists(self.model_name):
-                print(
-                    f"Model '{self.model_name}' not found locally. Pulling from Ollama..."
-                )
-                self.ollama_client.pull(self.model_name, show_updates=True)
-        except Exception as e:
-            raise RuntimeError(
-                f"Cannot connect to Ollama at {self.ollama_client.ollama_url}. "
-                f"Make sure Ollama is running and accessible. Error: {e}"
-            ) from e
 
     @cached_property
     def base_model_name(self) -> str:
         return self.model_name.split(":")[0]
 
-    def _format_with_prompt(
-        self, texts: list[str], prompt_type: str | None = None
-    ) -> list[str]:
-        if prompt_type is None:
-            return texts
-
-        if self.base_model_name not in PROMPTS:
-            return texts
-
-        model_prompts = PROMPTS[self.base_model_name]
-        prompt_template = model_prompts.get(prompt_type, None)
-        if prompt_template is None:
-            return texts
-
-        return [f"{prompt_template}{text}" for text in texts]
-
+    @abstractmethod
     def embed(
         self,
         texts: str | list[str],
@@ -84,24 +57,8 @@ class OllamaEmbedder:
         prompt_type: str | None = None,
         show_progress: bool = True,
     ) -> list[list[float]]:
-        self._setup()
-        if isinstance(texts, str):
-            texts = [texts]
-
-        texts = self._format_with_prompt(texts, prompt_type)
-
-        embeddings = []
-        batch_size_ = batch_size or self.batch_size
-        iterator = itertools.batched(texts, batch_size_)
-        if show_progress:
-            iterator = tqdm(
-                iterator, total=(len(texts) + batch_size_ - 1) // batch_size_
-            )
-        for batch in iterator:
-            batch_embeddings = self.ollama_client.embed(self.model_name, batch)
-            embeddings.extend(batch_embeddings)
-
-        return embeddings
+        """Generate embeddings for the given texts."""
+        pass
 
     def embed_document(
         self,
@@ -158,36 +115,116 @@ class OllamaEmbedder:
         ]
 
 
-if __name__ == "__main__":
-    from pathlib import Path
+class OllamaEmbedder(Embedder):
+    def __init__(
+        self,
+        model_name: str = "embeddinggemma:300m",
+        chunk_size: int = 1000,
+        chunk_overlap: int = 100,
+        batch_size: int = 8,
+        ollama_url: str = "http://localhost:11434",
+    ):
+        super().__init__(model_name, chunk_size, chunk_overlap, batch_size)
+        self.ollama_client = OllamaEmbeddingClient(ollama_url=ollama_url)
 
-    from toolbox_store.data_loaders import load_from_dir
+    def _setup(self):
+        try:
+            if not self.ollama_client.model_exists(self.model_name):
+                print(
+                    f"Model '{self.model_name}' not found locally. Pulling from Ollama..."
+                )
+                self.ollama_client.pull(self.model_name, show_updates=True)
+        except Exception as e:
+            raise RuntimeError(
+                f"Cannot connect to Ollama at {self.ollama_client.ollama_url}. "
+                f"Make sure Ollama is running and accessible. Error: {e}"
+            ) from e
 
-    # Use same data directory as db.py
-    data_dir = Path(__file__).parent.parent.parent / "experimental" / "data"
-    print(f"Data directory: {data_dir.absolute()}")
+    def _format_with_prompt(
+        self, texts: list[str], prompt_type: str | None = None
+    ) -> list[str]:
+        if prompt_type is None:
+            return texts
 
-    max_docs = 3  # Test with just a few documents
-    docs = load_from_dir(data_dir, max_docs=max_docs)
+        if self.base_model_name not in PROMPTS:
+            return texts
 
-    # Test embed_documents
-    config = StoreConfig()
-    embedder = OllamaEmbedder(
-        model_name=config.embedding_model,
-        chunk_size=config.chunk_size,
-        chunk_overlap=config.chunk_overlap,
-    )
+        model_prompts = PROMPTS[self.base_model_name]
+        prompt_template = model_prompts.get(prompt_type, None)
+        if prompt_template is None:
+            return texts
 
-    chunks = embedder.chunk_and_embed(docs)
+        return [f"{prompt_template}{text}" for text in texts]
 
-    print(f"\nCreated {len(chunks)} embeddings")
+    def embed(
+        self,
+        texts: str | list[str],
+        batch_size: int | None = None,
+        prompt_type: str | None = None,
+        show_progress: bool = True,
+    ) -> list[list[float]]:
+        self._setup()
+        if isinstance(texts, str):
+            texts = [texts]
 
-    # Show some details about the first few embeddings
-    for i, chunk in enumerate(chunks[:5]):
-        print(f"\nEmbedding {i}:")
-        print(f"  - Document ID: {chunk.document_id}")
-        print(f"  - Chunk index: {chunk.chunk_idx}")
-        print(f"  - Chunk range: [{chunk.chunk_start}:{chunk.chunk_end}]")
-        print(f"  - Content preview: {chunk.content[:100]}...")
-        print(f"  - Embedding shape: {len(chunk.embedding)} dimensions")
-        print(f"  - Content hash: {chunk.content_hash[:16]}...")
+        texts = self._format_with_prompt(texts, prompt_type)
+
+        embeddings = []
+        batch_size_ = batch_size or self.batch_size
+        iterator = itertools.batched(texts, batch_size_)
+        if show_progress:
+            iterator = tqdm(
+                iterator, total=(len(texts) + batch_size_ - 1) // batch_size_
+            )
+        for batch in iterator:
+            batch_embeddings = self.ollama_client.embed(self.model_name, batch)
+            embeddings.extend(batch_embeddings)
+
+        return embeddings
+
+
+class RandomEmbedder(Embedder):
+    """Mock embedder that returns random embeddings for testing."""
+
+    def __init__(
+        self,
+        model_name: str = "mock",
+        chunk_size: int = 1000,
+        chunk_overlap: int = 100,
+        batch_size: int = 8,
+        embedding_dim: int = 768,
+    ):
+        super().__init__(model_name, chunk_size, chunk_overlap, batch_size)
+        self.embedding_dim = embedding_dim
+
+    def embed(
+        self,
+        texts: str | list[str],
+        batch_size: int | None = None,
+        prompt_type: str | None = None,
+        show_progress: bool = True,
+    ) -> list[list[float]]:
+        import numpy as np
+
+        n = 1 if isinstance(texts, str) else len(texts)
+        embeddings = np.random.random((n, self.embedding_dim))
+        return embeddings.tolist()
+
+
+def get_embedder(config: StoreConfig) -> Embedder:
+    if config.embedding_model == "random":
+        return RandomEmbedder(
+            model_name="random",
+            chunk_size=config.chunk_size,
+            chunk_overlap=config.chunk_overlap,
+            batch_size=config.batch_size,
+            embedding_dim=config.embedding_dim,
+        )
+    else:
+        return OllamaEmbedder(
+            model_name=config.embedding_model,
+            chunk_size=config.chunk_size,
+            chunk_overlap=config.chunk_overlap,
+            batch_size=config.batch_size,
+            ollama_url=config.ollama_url,
+        )

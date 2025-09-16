@@ -253,9 +253,42 @@ class TBDatabase(Generic[T]):
             self.conn.rollback()
             raise
 
-    def get_all_documents(self) -> list[T]:
-        # utility method
-        cursor = self.conn.execute(f"SELECT * FROM {self.documents_table}")
+    def get_documents(
+        self,
+        filters: dict[str, Any] | None = None,
+        limit: int | None = None,
+        offset: int = 0,
+    ) -> list[T]:
+        """
+        Get documents with optional filtering and pagination.
+
+        Args:
+            filters: Django-style filters (e.g., {'metadata.author': 'john', 'created_at__gte': '2024-01-01'})
+            limit: Maximum number of documents to return
+            offset: Number of documents to skip
+        """
+
+        # Build base query
+        query = f"SELECT * FROM {self.documents_table} d"
+        params = {}
+
+        # Add WHERE clause if filters provided
+        if filters:
+            where_clause, filter_params = build_where_clause(filters)
+            if where_clause:
+                query += f" WHERE {where_clause}"
+                params.update(filter_params)
+
+        # Add ORDER BY for consistent pagination
+        query += " ORDER BY id"
+
+        # Add LIMIT and OFFSET
+        if limit is not None:
+            query += f" LIMIT {limit}"
+        if offset > 0:
+            query += f" OFFSET {offset}"
+
+        cursor = self.conn.execute(query, params)
         rows = cursor.fetchall()
         documents = []
         for row in rows:
@@ -265,7 +298,7 @@ class TBDatabase(Generic[T]):
             documents.append(self.document_class.model_validate(row_dict))
         return documents
 
-    def get_documents(self, ids: list[str]) -> list[T]:
+    def get_documents_by_id(self, ids: list[str]) -> list[T]:
         if not ids:
             return []
         placeholders = ",".join("?" for _ in ids)

@@ -2,9 +2,9 @@ from pathlib import Path
 from typing import Generic, TypeVar, overload
 
 from toolbox_store.db import TBDatabase
-from toolbox_store.embedding import OllamaEmbedder
+from toolbox_store.embedding import get_embedder
 from toolbox_store.models import StoreConfig, TBDocument, TBDocumentChunk
-from toolbox_store.query_builder import ChunkQueryBuilder
+from toolbox_store.query_builder import ChunkQueryBuilder, DocumentQueryBuilder
 
 T = TypeVar("T", bound=TBDocument)
 
@@ -50,13 +50,7 @@ class ToolboxStore(Generic[T]):
             document_class=self.document_class,
         )
         self.db.create_schema()
-        self.embedder = OllamaEmbedder(
-            model_name=self.config.embedding_model,
-            batch_size=self.config.batch_size,
-            chunk_size=self.config.chunk_size,
-            chunk_overlap=self.config.chunk_overlap,
-            ollama_url=self.config.ollama_url,
-        )
+        self.embedder = get_embedder(self.config)
 
     def insert_docs(self, docs: list[T], create_embeddings: bool = True) -> None:
         self.db.insert_documents(docs)
@@ -73,5 +67,8 @@ class ToolboxStore(Generic[T]):
     def embed_query(self, query: str | list[str]) -> list[list[float]]:
         return self.embedder.embed_query(query)
 
-    def search(self) -> ChunkQueryBuilder[T]:
+    def search_chunks(self) -> ChunkQueryBuilder[T]:
         return ChunkQueryBuilder[T](self, self.document_class)
+
+    def search_documents(self) -> DocumentQueryBuilder[T]:
+        return DocumentQueryBuilder[T](self, self.document_class)

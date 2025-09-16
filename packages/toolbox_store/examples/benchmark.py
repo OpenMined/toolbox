@@ -137,7 +137,7 @@ def main():
 
     def semantic_query():
         query = random.choice(test_queries)
-        return store.search().semantic(query).chunk_limit(10).get_chunks()
+        return store.search_chunks().semantic(query).chunk_limit(10).get()
 
     stats = benchmark_query(store, semantic_query)
     print(
@@ -150,11 +150,11 @@ def main():
     def semantic_filter_query():
         query = random.choice(test_queries)
         return (
-            store.search()
+            store.search_chunks()
             .semantic(query)
             .where(date_filter)
             .chunk_limit(10)
-            .get_chunks()
+            .get()
         )
 
     stats = benchmark_query(store, semantic_filter_query)
@@ -167,7 +167,7 @@ def main():
 
     def keyword_query():
         keyword = random.choice(test_keywords)
-        return store.search().keyword(keyword).chunk_limit(10).get_chunks()
+        return store.search_chunks().keyword(keyword).chunk_limit(10).get()
 
     stats = benchmark_query(store, keyword_query)
     print(
@@ -180,11 +180,11 @@ def main():
     def keyword_filter_query():
         keyword = random.choice(test_keywords)
         return (
-            store.search()
+            store.search_chunks()
             .keyword(keyword)
             .where(date_filter)
             .chunk_limit(10)
-            .get_chunks()
+            .get()
         )
 
     stats = benchmark_query(store, keyword_filter_query)
@@ -199,12 +199,12 @@ def main():
         query = random.choice(test_queries)
         keyword = random.choice(test_keywords)
         return (
-            store.search()
+            store.search_chunks()
             .semantic(query)
             .keyword(keyword)
             .hybrid(method="rrf")
             .chunk_limit(10)
-            .get_chunks()
+            .get()
         )
 
     stats = benchmark_query(store, hybrid_query)
@@ -219,13 +219,13 @@ def main():
         query = random.choice(test_queries)
         keyword = random.choice(test_keywords)
         return (
-            store.search()
+            store.search_chunks()
             .semantic(query)
             .keyword(keyword)
             .hybrid(method="rrf")
             .where(date_filter)
             .chunk_limit(10)
-            .get_chunks()
+            .get()
         )
 
     stats = benchmark_query(store, hybrid_filter_query)

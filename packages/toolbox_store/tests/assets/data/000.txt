@@ -1,0 +1,12 @@
+Machine Learning Fundamentals
+
+Machine learning is a subset of artificial intelligence that enables systems to learn and improve from experience without being explicitly programmed. It focuses on developing computer programs that can access data and use it to learn for themselves.
+
+The primary aim of machine learning is to allow computers to learn automatically without human intervention or assistance and adjust actions accordingly. Machine learning algorithms build mathematical models based on training data to make predictions or decisions without being explicitly programmed to perform the task.
+
+Types of Machine Learning:
+1. Supervised Learning: The algorithm learns from labeled training data
+2. Unsupervised Learning: The algorithm finds patterns in unlabeled data
+3. Reinforcement Learning: The algorithm learns through interaction with an environment
+
+Applications include recommendation systems, fraud detection, image recognition, and natural language processing.

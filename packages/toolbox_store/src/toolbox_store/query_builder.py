@@ -8,6 +8,40 @@ if TYPE_CHECKING:
 T = TypeVar("T", bound=TBDocument)
 
 
+class DocumentQueryBuilder(Generic[T]):
+    """Query builder for document-level queries with filtering and pagination."""
+
+    def __init__(self, store: "ToolboxStore[T]", document_class: type[T]):
+        self.store = store
+        self.document_class = document_class
+        self._filters: dict[str, Any] | None = None
+        self._limit: int | None = None
+        self._offset: int = 0
+
+    def where(self, filters: dict[str, Any]) -> Self:
+        """Add filters to the query."""
+        if self._filters is None:
+            self._filters = {}
+        self._filters.update(filters)
+        return self
+
+    def limit(self, n: int) -> Self:
+        """Set the maximum number of documents to return."""
+        self._limit = n
+        return self
+
+    def offset(self, n: int) -> Self:
+        """Set the number of documents to skip."""
+        self._offset = n
+        return self
+
+    def get(self) -> list[T]:
+        """Execute the query and return documents."""
+        return self.store.db.get_documents(
+            filters=self._filters, limit=self._limit, offset=self._offset
+        )
+
+
 class ChunkQueryBuilder(Generic[T]):
     def __init__(self, store: "ToolboxStore[T]", document_class: type[T]):
         self.store = store
@@ -99,7 +133,7 @@ class ChunkQueryBuilder(Generic[T]):
 
         return self.store.db.keyword_search(**query_args)
 
-    def get_chunks(self) -> list[RetrievedChunk]:
+    def get(self) -> list[RetrievedChunk]:
         # Check if any query is set
         if self._semantic_query is None and self._keyword_query is None:
             raise ValueError(
@@ -140,7 +174,7 @@ class ChunkQueryBuilder(Generic[T]):
         return []
 
     def get_documents(self) -> list[T]:
-        chunks = self.get_chunks()
+        chunks = self.get()
         chunks_by_doc_id = {}
         min_distance_by_doc_id = {}
 
@@ -156,7 +190,7 @@ class ChunkQueryBuilder(Generic[T]):
 
         # Get documents from database
         doc_ids = list(chunks_by_doc_id.keys())
-        documents = self.store.db.get_documents(doc_ids)
+        documents = self.store.db.get_documents_by_id(doc_ids)
 
         # Attach chunks to documents
         for doc in documents:
