@@ -3405,6 +3405,8 @@ dependencies = [
 dev = [
     { name = "datasets" },
     { name = "ipykernel" },
+    { name = "pytest" },
+    { name = "pytest-xdist" },
 ]
 
 [package.metadata]
@@ -3422,6 +3424,8 @@ requires-dist = [
 dev = [
     { name = "datasets", specifier = ">=4.0.0" },
     { name = "ipykernel", specifier = ">=6.30.1" },
+    { name = "pytest", specifier = ">=8.4.1" },
+    { name = "pytest-xdist", specifier = ">=3.8.0" },
 ]
 
 [[package]]
