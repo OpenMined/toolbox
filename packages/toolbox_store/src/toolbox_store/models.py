@@ -1,7 +1,8 @@
+import hashlib
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Literal, Self
+from typing import Any, Literal, Self
 from uuid import uuid4
 
 from pydantic import BaseModel, Field, JsonValue, model_validator
@@ -26,6 +27,10 @@ def _utcnow():
     return datetime.now(tz=timezone.utc)
 
 
+def hash_content(content: str) -> str:
+    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+
+
 class StoreConfig(BaseSettings):
     ollama_url: str = "http://localhost:11434"
     embedding_dim: int = 768
@@ -42,8 +47,20 @@ class TBDocument(BaseModel):
     metadata: dict[str, JsonValue] = Field(default_factory=dict)
     source: str
     created_at: datetime = Field(default_factory=_utcnow)
+    updated_at: datetime = Field(default_factory=_utcnow)
+    content_hash: str
 
     chunks: list["RetrievedChunk"] = Field(default_factory=list, exclude=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_hash_if_not_present(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "content" not in data:
+                return data
+            if "content_hash" not in data:
+                data["content_hash"] = hash_content(data["content"])
+        return data
 
     @model_validator(mode="after")
     def ensure_utc_for_all_datetimes(self) -> Self:
@@ -85,6 +102,16 @@ class TBDocumentChunk(BaseModel):
     content: str
     content_hash: str
     embedding: list[float] | None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_hash_if_not_present(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "content" not in data:
+                return data
+            if "content_hash" not in data:
+                data["content_hash"] = hash_content(data["content"])
+        return data
 
     @model_validator(mode="after")
     def ensure_utc_for_all_datetimes(self) -> Self:

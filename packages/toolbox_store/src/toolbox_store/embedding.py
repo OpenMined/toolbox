@@ -1,4 +1,3 @@
-import hashlib
 import itertools
 from abc import ABC, abstractmethod
 from functools import cached_property
@@ -129,7 +128,6 @@ class Embedder(ABC):
                     "chunk_start": start,
                     "chunk_end": start + len(chunk_content),
                     "content": chunk_content,
-                    "content_hash": hashlib.sha256(chunk_content.encode()).hexdigest(),
                 }
                 chunks_with_metadata.append(chunk)
 

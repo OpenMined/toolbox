@@ -7,6 +7,7 @@ authors = [{ name = "eelcovdw", email = "eelcovdw@gmail.com" }]
 requires-python = ">=3.12"
 dependencies = [
     "httpx>=0.28.1",
+    "importlib>=1.0.4",
     "numpy>=2.3.2",
     "packaging>=25.0",
     "pydantic>=2.11.7",

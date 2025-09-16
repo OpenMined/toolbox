@@ -99,7 +99,9 @@ class TBDatabase(Generic[T]):
                     metadata JSON,
                     source TEXT,
                     content TEXT,
-                    created_at DATETIME
+                    created_at DATETIME,
+                    updated_at DATETIME,
+                    content_hash TEXT
                 )
             """)
 
@@ -460,6 +462,52 @@ class TBDatabase(Generic[T]):
 
         return results
 
+    def get_docs_without_embeddings(
+        self,
+        limit: int = 10,
+        offset: int = 0,
+    ) -> list[T]:
+        """
+        Retrieve documents that do not have any associated embeddings.
+        """
+
+        # all docs where count chunks is 0
+        cursor = self.conn.execute(
+            f"""
+                SELECT d.* FROM {self.documents_table} d
+                LEFT JOIN {self.chunks_table} c ON d.id = c.document_id
+                WHERE c.document_id IS NULL
+                LIMIT ? OFFSET ?
+            """,
+            (limit, offset),
+        )
+
+        rows = cursor.fetchall()
+        documents = []
+        for row in rows:
+            row_dict = dict(row)
+            if row_dict.get("metadata"):
+                row_dict["metadata"] = json.loads(row_dict["metadata"])
+            documents.append(self.document_class.model_validate(row_dict))
+        return documents
+
+    def stats(self) -> dict[str, Any]:
+        """Get basic stats about the database."""
+        cursor = self.conn.execute(
+            f"SELECT COUNT(*) as count FROM {self.documents_table}"
+        )
+        doc_count = cursor.fetchone()["count"]
+
+        cursor = self.conn.execute(f"SELECT COUNT(*) as count FROM {self.chunks_table}")
+        chunk_count = cursor.fetchone()["count"]
+
+        return {
+            "documents": doc_count,
+            "chunks": chunk_count,
+            "embedding_dim": self.config.embedding_dim,
+            "distance_metric": self.config.distance_metric,
+        }
+
     def close(self):
         if self.conn:
             self.conn.close()
@@ -469,43 +517,3 @@ class TBDatabase(Generic[T]):
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()
-
-
-# if __name__ == "__main__":
-#     data_dir = Path(__file__).parent.parent.parent / "experimental" / "data"
-#     print(data_dir.absolute())
-#     db_path = data_dir / "test.db"
-
-#     db = TBDatabase("test", db_path=db_path, reset=True)
-#     db.create_schema()
-
-#     max_docs = 10
-#     docs_to_insert = []
-#     for doc in data_dir.glob("*.txt"):
-#         if len(docs_to_insert) >= max_docs:
-#             break
-#         content = doc.read_text()
-#         document = TBDocument(
-#             content=content,
-#             metadata={
-#                 "source": str(doc),
-#                 "created_at": datetime.fromtimestamp(
-#                     doc.stat().st_ctime, tz=timezone.utc
-#                 ).isoformat(),
-#                 "updated_at": datetime.fromtimestamp(
-#                     doc.stat().st_mtime, tz=timezone.utc
-#                 ).isoformat(),
-#             },
-#             source=f"file://{doc.as_posix()}",
-#         )
-#         docs_to_insert.append(document)
-#     db.insert_documents(docs_to_insert)
-
-#     all_docs = db.get_all_documents()
-#     print(f"Retrieved {len(all_docs)} documents from the database.")
-#     for k, v in all_docs[0].model_dump().items():
-#         if isinstance(v, str) and len(v) > 100:
-#             v = v[:100] + "..."
-#         elif isinstance(v, dict):
-#             v = json.dumps(v, indent=2)
-#         print(f"{k}: {v}")
