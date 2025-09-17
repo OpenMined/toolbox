@@ -1,0 +1,21 @@
+Introduction to Database Systems
+
+A database is an organized collection of structured information, or data, typically stored electronically in a computer system. Database systems are essential for managing large volumes of data efficiently and reliably.
+
+Modern database management systems (DBMS) provide several key features that make them indispensable for applications. These include data persistence, concurrent access control, transaction management, and query optimization. The ACID properties - Atomicity, Consistency, Isolation, and Durability - ensure reliable processing of database transactions.
+
+Relational databases organize data into tables with rows and columns, using SQL as the standard query language. Each table represents an entity type, with rows representing individual records and columns representing attributes. Primary keys uniquely identify each row, while foreign keys establish relationships between tables.
+
+NoSQL databases emerged to address the limitations of relational databases for certain use cases. Document stores, key-value stores, graph databases, and column-family stores each optimize for different data models and access patterns. These systems often trade consistency for availability and partition tolerance, following the CAP theorem.
+
+Query optimization is crucial for database performance. Modern optimizers use cost-based approaches, analyzing statistics about data distribution to choose efficient execution plans. Indexes, materialized views, and partitioning strategies further enhance query performance for large datasets.
+
+Database normalization is a systematic approach to organizing data in a database to reduce redundancy and improve data integrity. The process involves dividing large tables into smaller ones and defining relationships between them. Normal forms, from first normal form (1NF) through fifth normal form (5NF), provide guidelines for structuring data. While normalization reduces data anomalies and saves storage space, denormalization is sometimes necessary for performance optimization in read-heavy workloads.
+
+Transaction processing ensures data consistency in multi-user environments. Isolation levels - Read Uncommitted, Read Committed, Repeatable Read, and Serializable - offer different trade-offs between consistency and concurrency. Deadlock detection and resolution mechanisms prevent circular waiting conditions. Two-phase commit protocols coordinate distributed transactions across multiple database systems.
+
+Modern distributed databases face unique challenges in maintaining consistency across network partitions. Consensus algorithms like Raft and Paxos enable distributed systems to agree on data values despite failures. Eventual consistency models relax immediate consistency requirements to achieve better availability and partition tolerance. Conflict-free replicated data types (CRDTs) allow concurrent updates without coordination.
+
+Database security encompasses access control, encryption, and auditing. Role-based access control (RBAC) manages user permissions through roles rather than individual assignments. Transparent data encryption protects data at rest, while SSL/TLS secures data in transit. Query auditing tracks database access for compliance and forensic purposes. SQL injection prevention requires parameterized queries and input validation.
+
+The evolution of database systems continues with new paradigms like NewSQL, which combines the scalability of NoSQL with ACID guarantees. Time-series databases optimize for temporal data patterns. Vector databases enable similarity search for machine learning applications. Multi-model databases support multiple data models within a single system, reducing architectural complexity for diverse workloads.
