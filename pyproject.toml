@@ -14,6 +14,7 @@ dependencies = [
     "pdf_mcp",
     "toolbox_events",
     "omni"
+    "toolbox_store",
 ]
 
 [build-system]
@@ -30,6 +31,7 @@ pdf_mcp = { workspace = true }
 obsidian_mcp = { workspace = true }
 toolbox_events = { workspace = true }
 omni = { workspace = true }
+toolbox_store = { workspace = true }
 
 [tool.uv.workspace]
 members = ["packages/*"]
@@ -42,8 +44,10 @@ extend-select = ["I"]
 
 [dependency-groups]
 dev = [
+    "ipykernel>=6.30.1",
     "mike>=2.1.3",
     "mkdocs-material[imaging]>=9.6.18",
+    "pandas>=2.3.2",
     "pre-commit>=4.2.0",
     "pytest>=8.4.1",
     "pytest-xdist>=3.8.0",
