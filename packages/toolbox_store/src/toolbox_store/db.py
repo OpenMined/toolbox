@@ -1,6 +1,4 @@
-import json
 import sqlite3
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Generic, TypeVar, overload
 
@@ -13,18 +11,10 @@ from toolbox_store.models import (
     StoreConfig,
     TBDocument,
     TBDocumentChunk,
+    is_valid_field_identifier,
 )
 
 T = TypeVar("T", bound=TBDocument)
-
-
-def convert_field(value):
-    """Convert Python types to SQLite-compatible types."""
-    if isinstance(value, dict):
-        return json.dumps(value)
-    elif isinstance(value, datetime):
-        return value.isoformat()
-    return value
 
 
 def deserialize_float32(blob: bytes) -> list[float]:
@@ -93,15 +83,24 @@ class TBDatabase(Generic[T]):
 
     def create_schema(self) -> None:
         try:
+            # Build column list
+            columns = [
+                "id TEXT PRIMARY KEY",
+                "metadata JSON",
+                "source TEXT",
+                "content TEXT",
+                "created_at DATETIME",
+                "updated_at DATETIME",
+                "content_hash TEXT",
+            ]
+
+            # Add extra columns from document class
+            for name, type_ in self.document_class.schema_extra_columns():
+                columns.append(f"{name} {type_}")
+
             self.conn.execute(f"""
                 CREATE TABLE IF NOT EXISTS {self.documents_table} (
-                    id TEXT PRIMARY KEY,
-                    metadata JSON,
-                    source TEXT,
-                    content TEXT,
-                    created_at DATETIME,
-                    updated_at DATETIME,
-                    content_hash TEXT
+                    {", ".join(columns)}
                 )
             """)
 
@@ -143,6 +142,16 @@ class TBDatabase(Generic[T]):
                 )
             """)
 
+            # Execute any schema modifications defined by the document class
+            extra_statements = self.document_class.schema_extra(
+                self.documents_table,
+                self.chunks_table,
+                self.embeddings_table,
+                self.fts_table,
+            )
+            for statement in extra_statements:
+                self.conn.execute(statement)
+
             self.conn.commit()
         except Exception:
             self.conn.rollback()
@@ -154,7 +163,7 @@ class TBDatabase(Generic[T]):
 
         try:
             # Get fields from first document to build query
-            first_doc = documents[0].model_dump()
+            first_doc = documents[0].to_sql_dict()
             fields = list(first_doc.keys())
             placeholders = [f":{field}" for field in fields]
 
@@ -166,11 +175,7 @@ class TBDatabase(Generic[T]):
             # Prepare data for bulk insert with named parameters
             data = []
             for doc in documents:
-                doc_dict = doc.model_dump()
-                # Convert field values
-                for key, value in doc_dict.items():
-                    doc_dict[key] = convert_field(value)
-                data.append(doc_dict)
+                data.append(doc.to_sql_dict())
 
             self.conn.executemany(query, data)
             self.conn.commit()
@@ -193,29 +198,25 @@ class TBDatabase(Generic[T]):
                 )
 
         try:
-            # Prepare chunk data for bulk insert
-            chunk_data = [
-                (
-                    emb.document_id,
-                    emb.chunk_idx,
-                    emb.chunk_start,
-                    emb.chunk_end,
-                    emb.content,
-                    emb.content_hash,
-                    convert_field(emb.created_at),
-                )
-                for emb in chunks
-            ]
+            # Prepare chunk data for bulk insert with named parameters
+            chunk_data = []
+            for chunk in chunks:
+                chunk_data.append(chunk.to_sql_dict())
 
-            # Bulk insert chunks
-            self.conn.executemany(
-                f"""
-                INSERT OR REPLACE INTO {self.chunks_table}
-                (document_id, chunk_idx, chunk_start, chunk_end, content, content_hash, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-                """,
-                chunk_data,
-            )
+            # Get fields from first chunk to build query
+            if chunk_data:
+                fields = list(chunk_data[0].keys())
+                placeholders = [f":{field}" for field in fields]
+
+                # Bulk insert chunks with named parameters
+                self.conn.executemany(
+                    f"""
+                    INSERT OR REPLACE INTO {self.chunks_table}
+                    ({", ".join(fields)})
+                    VALUES ({", ".join(placeholders)})
+                    """,
+                    chunk_data,
+                )
 
             # Prepare embedding data for bulk insert (serialize embeddings)
             embedding_data = [
@@ -260,6 +261,8 @@ class TBDatabase(Generic[T]):
         filters: dict[str, Any] | None = None,
         limit: int | None = None,
         offset: int = 0,
+        order_by: str = "id",
+        sort_ascending: bool = True,
     ) -> list[T]:
         """
         Get documents with optional filtering and pagination.
@@ -268,6 +271,8 @@ class TBDatabase(Generic[T]):
             filters: Django-style filters (e.g., {'metadata.author': 'john', 'created_at__gte': '2024-01-01'})
             limit: Maximum number of documents to return
             offset: Number of documents to skip
+            order_by: Field to order results by (default is 'id')
+            sort_ascending: Whether to sort in ascending order (default is True)
         """
 
         # Build base query
@@ -281,24 +286,23 @@ class TBDatabase(Generic[T]):
                 query += f" WHERE {where_clause}"
                 params.update(filter_params)
 
-        # Add ORDER BY for consistent pagination
-        query += " ORDER BY id"
+        if (
+            order_by not in self.document_class.model_fields
+            or not is_valid_field_identifier(order_by)
+        ):
+            raise ValueError(f"Invalid order_by field: {order_by}")
+        direction = "ASC" if sort_ascending else "DESC"
+        query += f" ORDER BY {order_by} {direction}"
 
         # Add LIMIT and OFFSET
         if limit is not None:
-            query += f" LIMIT {limit}"
+            query += f" LIMIT {int(limit)}"
         if offset > 0:
-            query += f" OFFSET {offset}"
+            query += f" OFFSET {int(offset)}"
 
         cursor = self.conn.execute(query, params)
         rows = cursor.fetchall()
-        documents = []
-        for row in rows:
-            row_dict = dict(row)
-            if row_dict.get("metadata"):
-                row_dict["metadata"] = json.loads(row_dict["metadata"])
-            documents.append(self.document_class.model_validate(row_dict))
-        return documents
+        return [self.document_class.from_sql_row(row) for row in rows]
 
     def get_documents_by_id(self, ids: list[str]) -> list[T]:
         if not ids:
@@ -308,13 +312,7 @@ class TBDatabase(Generic[T]):
             f"SELECT * FROM {self.documents_table} WHERE id IN ({placeholders})", ids
         )
         rows = cursor.fetchall()
-        documents = []
-        for row in rows:
-            row_dict = dict(row)
-            if row_dict.get("metadata"):
-                row_dict["metadata"] = json.loads(row_dict["metadata"])
-            documents.append(self.document_class.model_validate(row_dict))
-        return documents
+        return [self.document_class.from_sql_row(row) for row in rows]
 
     def semantic_search(
         self,
@@ -372,26 +370,14 @@ class TBDatabase(Generic[T]):
 
         results = []
         for row in cursor.fetchall():
-            # Deserialize embedding from blob format
-            embedding_blob = row["embedding"]
+            row_dict = dict(row)
+            embedding_blob = row_dict.get("embedding", None)
             if isinstance(embedding_blob, bytes):
-                embedding = deserialize_float32(embedding_blob)
+                row_dict["embedding"] = deserialize_float32(embedding_blob)
             else:
-                embedding = embedding_blob
+                row_dict["embedding"] = None
 
-            # Create RetrievedEmbedding object from Row
-            retrieved = RetrievedChunk(
-                document_id=row["document_id"],
-                chunk_idx=row["chunk_idx"],
-                chunk_start=row["chunk_start"],
-                chunk_end=row["chunk_end"],
-                content=row["content"],
-                content_hash=row["content_hash"],
-                created_at=row["created_at"],
-                embedding=embedding,
-                distance=row["distance"],
-            )
-            results.append(retrieved)
+            results.append(RetrievedChunk.from_sql_row(row_dict))
 
         return results
 
@@ -443,24 +429,8 @@ class TBDatabase(Generic[T]):
             params_dict,
         )
 
-        results = []
-        for row in cursor.fetchall():
-            # Create RetrievedChunk object from Row
-            # Note: we don't have embeddings in keyword search
-            retrieved = RetrievedChunk(
-                document_id=row["document_id"],
-                chunk_idx=row["chunk_idx"],
-                chunk_start=row["chunk_start"],
-                chunk_end=row["chunk_end"],
-                content=row["content"],
-                content_hash=row["content_hash"],
-                created_at=row["created_at"],
-                embedding=None,  # No embedding in keyword search
-                distance=row["distance"],  # This is the BM25 rank
-            )
-            results.append(retrieved)
-
-        return results
+        rows = cursor.fetchall()
+        return [RetrievedChunk.from_sql_row(row) for row in rows]
 
     def get_docs_without_embeddings(
         self,
@@ -483,13 +453,7 @@ class TBDatabase(Generic[T]):
         )
 
         rows = cursor.fetchall()
-        documents = []
-        for row in rows:
-            row_dict = dict(row)
-            if row_dict.get("metadata"):
-                row_dict["metadata"] = json.loads(row_dict["metadata"])
-            documents.append(self.document_class.model_validate(row_dict))
-        return documents
+        return [self.document_class.from_sql_row(row) for row in rows]
 
     def stats(self) -> dict[str, Any]:
         """Get basic stats about the database."""

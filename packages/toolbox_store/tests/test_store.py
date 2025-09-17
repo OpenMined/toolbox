@@ -1,4 +1,7 @@
+from datetime import datetime
+
 from toolbox_store import TBDocument, ToolboxStore
+from toolbox_store.models import StoreConfig
 
 
 def test_insert_documents_and_count(
@@ -84,3 +87,74 @@ def test_query_documents_with_filters(
         tb_store.search_documents().where({"metadata.nonexistent__isnull": True}).get()
     )
     assert len(results_10) == len(sample_docs)
+
+
+def test_custom_doc_cls(tb_config: StoreConfig) -> None:
+    class Message(TBDocument):
+        author: str = "default_value"
+        date_received: datetime
+
+        @classmethod
+        def schema_extra_columns(cls) -> list[tuple[str, str]]:
+            return [
+                ("author", "TEXT"),
+                ("date_received", "DATETIME"),
+            ]
+
+        @classmethod
+        def schema_extra(
+            cls,
+            documents_table: str,
+            *args: str,
+        ) -> list[str]:
+            return [
+                f"CREATE INDEX IF NOT EXISTS idx_{documents_table}_date_received ON {documents_table} (date_received)",
+            ]
+
+    store = ToolboxStore(
+        "messages",
+        db_path=":memory:",
+        config=tb_config,
+        document_class=Message,
+    )
+
+    messages = [
+        Message(
+            id="msg1",
+            content="Hello, this is a test message.",
+            author="Alice",
+            date_received=datetime(2024, 7, 16),
+            source="message",
+        ),
+        Message(
+            id="msg2",
+            content="Another message for testing.",
+            author="Bob",
+            date_received=datetime(2025, 7, 15),
+            source="message",
+        ),
+        Message(
+            id="msg3",
+            content="This message is from Charlie.",
+            author="Charlie",
+            date_received=datetime(2025, 7, 16),
+            source="message",
+        ),
+    ]
+
+    store.insert_docs(messages, create_embeddings=False)
+
+    all_msgs = store.search_documents().where({"author": "Alice"}).get()
+    assert len(all_msgs) == 1
+    assert all_msgs[0].author == "Alice"
+
+    date_filtered = (
+        store.search_documents()
+        .where({"date_received__gte": datetime(2025, 7, 1)})
+        .where({"date_received__lt": datetime(2026, 8, 1)})
+        .order_by("date_received", ascending=True)
+        .get()
+    )
+    assert len(date_filtered) == 2
+    assert date_filtered[0].author == "Bob"
+    assert date_filtered[1].author == "Charlie"
