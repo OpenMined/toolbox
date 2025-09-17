@@ -18,6 +18,9 @@ class DocumentQueryBuilder(Generic[T]):
         self._limit: int | None = None
         self._offset: int = 0
 
+        self._order_by: str = "id"
+        self._sort_ascending: bool = True
+
     def where(self, filters: dict[str, Any]) -> Self:
         """Add filters to the query."""
         if self._filters is None:
@@ -35,10 +38,19 @@ class DocumentQueryBuilder(Generic[T]):
         self._offset = n
         return self
 
+    def order_by(self, field: str, ascending: bool = True) -> Self:
+        self._order_by = field
+        self._sort_ascending = ascending
+        return self
+
     def get(self) -> list[T]:
         """Execute the query and return documents."""
         return self.store.db.get_documents(
-            filters=self._filters, limit=self._limit, offset=self._offset
+            filters=self._filters,
+            limit=self._limit,
+            offset=self._offset,
+            order_by=self._order_by,
+            sort_ascending=self._sort_ascending,
         )
 
 

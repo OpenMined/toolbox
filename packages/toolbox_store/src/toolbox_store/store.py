@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Generic, TypeVar, overload
+from typing import Generic, Self, TypeVar, overload
 
 from toolbox_store.db import TBDatabase
 from toolbox_store.embedding import get_embedder
@@ -72,3 +72,12 @@ class ToolboxStore(Generic[T]):
 
     def search_documents(self) -> DocumentQueryBuilder[T]:
         return DocumentQueryBuilder[T](self, self.document_class)
+
+    def stop(self) -> None:
+        self.db.close()
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.stop()

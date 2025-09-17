@@ -1,5 +1,7 @@
 import hashlib
+import json
 import re
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Literal, Self
@@ -92,6 +94,89 @@ class TBDocument(BaseModel):
 
         return self
 
+    @classmethod
+    def from_sql_row(cls, row: dict[str, Any] | sqlite3.Row) -> Self:
+        """Create a TBDocument instance from a SQL row.
+
+        Args:
+            row: Either a dict or a sqlite3.Row object
+
+        Returns:
+            A validated TBDocument instance
+        """
+        if not isinstance(row, dict):
+            row_dict = dict(row)
+        else:
+            row_dict = row.copy()
+
+        if "metadata" in row_dict and isinstance(row_dict["metadata"], str):
+            row_dict["metadata"] = json.loads(row_dict["metadata"])
+
+        return cls.model_validate(row_dict)
+
+    def to_sql_dict(self) -> dict[str, Any]:
+        """Convert document to a dict suitable for SQL insertion.
+
+        Returns:
+            Dict with all fields converted for SQL storage
+        """
+        doc_dict = self.model_dump()
+
+        for k, v in doc_dict.items():
+            if isinstance(v, dict):
+                doc_dict[k] = json.dumps(v)
+            elif isinstance(v, datetime):
+                doc_dict[k] = v.isoformat()
+
+        return doc_dict
+
+    @classmethod
+    def schema_extra_columns(cls) -> list[tuple[str, str]]:
+        """Return extra columns to add to the documents table.
+
+        Subclasses can override this to add custom columns.
+
+        Returns:
+            List of (column_name, column_type) tuples
+
+        Example:
+            return [
+                ("channel_id", "TEXT"),
+                ("user_id", "TEXT"),
+                ("timestamp", "DATETIME"),
+            ]
+        """
+        return []
+
+    @classmethod
+    def schema_extra(
+        cls,
+        documents_table: str,
+        chunks_table: str,
+        embeddings_table: str,
+        fts_table: str,
+    ) -> list[str]:
+        """Return SQL statements for additional schema modifications.
+
+        Subclasses can override this to add indices, constraints, etc.
+
+        Args:
+            documents_table: Name of the documents table
+            chunks_table: Name of the chunks table
+            embeddings_table: Name of the embeddings table
+            fts_table: Name of the FTS5 table
+
+        Returns:
+            List of SQL statements to execute after base schema creation
+
+        Example:
+            return [
+                f"CREATE INDEX idx_{documents_table}_channel ON {documents_table}(channel_id)",
+                f"CREATE INDEX idx_{documents_table}_user ON {documents_table}(user_id)",
+            ]
+        """
+        return []
+
 
 class TBDocumentChunk(BaseModel):
     document_id: str
@@ -101,7 +186,7 @@ class TBDocumentChunk(BaseModel):
     created_at: datetime = Field(default_factory=_utcnow)
     content: str
     content_hash: str
-    embedding: list[float] | None
+    embedding: list[float] | None = None
 
     @model_validator(mode="before")
     @classmethod
@@ -120,6 +205,40 @@ class TBDocumentChunk(BaseModel):
             if isinstance(value, datetime):
                 setattr(self, field_name, value.astimezone(timezone.utc))
         return self
+
+    @classmethod
+    def from_sql_row(cls, row: dict[str, Any] | sqlite3.Row) -> Self:
+        """Create a TBDocumentChunk instance from a SQL row.
+
+        Args:
+            row: Either a dict or a sqlite3.Row object
+
+        Returns:
+            A validated TBDocumentChunk instance
+        """
+        if not isinstance(row, dict):
+            row_dict = dict(row)
+        else:
+            row_dict = row.copy()
+
+        return cls.model_validate(row_dict)
+
+    def to_sql_dict(self) -> dict[str, Any]:
+        """Convert chunk to a dict suitable for SQL insertion.
+
+        Returns:
+            Dict with all fields converted for SQL storage, excluding embedding
+        """
+        # Exclude embedding since it's stored in a separate table
+        chunk_dict = self.model_dump(exclude={"embedding"})
+
+        for k, v in chunk_dict.items():
+            if isinstance(v, dict):
+                chunk_dict[k] = json.dumps(v)
+            elif isinstance(v, datetime):
+                chunk_dict[k] = v.isoformat()
+
+        return chunk_dict
 
 
 class RetrievedChunk(TBDocumentChunk):
