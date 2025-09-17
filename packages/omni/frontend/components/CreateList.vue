@@ -418,7 +418,7 @@ export default {
           ragFilter: {
             query: "",
             model: "",
-            threshold: 0.7,
+            threshold: 0.6,
           },
         };
       }
@@ -574,7 +574,7 @@ export default {
               to: globalFilters.endDate,
             },
             ragQuery: sourceFilters[source.id]?.ragFilter?.query || "",
-            threshold: sourceFilters[source.id]?.ragFilter?.threshold || 0.7,
+            threshold: sourceFilters[source.id]?.ragFilter?.threshold || 0.6,
           },
         })),
         itemCount: addedSources.value.reduce((sum, source) => {

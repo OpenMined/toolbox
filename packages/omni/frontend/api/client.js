@@ -53,10 +53,10 @@ class APIClient {
     });
   }
 
-  async askQuestion(listId, question) {
+  async askQuestion(listId, question, context = []) {
     return this.request(`/chats/${listId}/ask`, {
       method: "POST",
-      body: JSON.stringify({ question }),
+      body: JSON.stringify({ question, context }),
     });
   }
 }

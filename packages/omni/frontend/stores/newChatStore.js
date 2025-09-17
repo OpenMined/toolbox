@@ -129,10 +129,23 @@ export const useNewChatStore = defineStore("newChat", {
 
         this.currentQuestion = "";
 
+        // Get smart list items as context
+        const { useSmartListsStore } = await import("./smartListsStore.js");
+        const smartListsStore = useSmartListsStore();
+        const listItems = smartListsStore.currentListItems || [];
+
+        // Convert items to strings for context
+        const context = listItems.map((item) =>
+          typeof item === "string"
+            ? item
+            : item.content || JSON.stringify(item),
+        );
+
         // Get AI response
         const response = await apiClient.askQuestion(
           this.currentListId,
           question,
+          context,
         );
 
         // Add assistant response to the same chat

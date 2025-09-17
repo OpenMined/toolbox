@@ -20,21 +20,37 @@
         </div>
 
         <!-- Tweet text -->
-        <p class="text-gray-900 mb-3 leading-relaxed">{{ item.content }}</p>
+        <div class="text-gray-900 mb-3 leading-relaxed">
+          <p>{{ displayContent }}</p>
+          <button
+            v-if="isTruncated && !showFullContent"
+            @click="showFullContent = true"
+            class="text-blue-500 hover:text-blue-600 text-sm mt-1 font-medium"
+          >
+            Show more
+          </button>
+        </div>
 
         <!-- Engagement metrics -->
         <div class="flex items-center space-x-6 text-sm text-gray-500">
           <!-- Twitter logo -->
           <div class="flex items-center">
-            <svg
-              class="w-4 h-4 text-blue-500"
-              fill="currentColor"
-              viewBox="0 0 24 24"
+            <a
+              :href="getTweetUrl()"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-blue-600 transition-colors"
             >
-              <path
-                d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
-              />
-            </svg>
+              <svg
+                class="w-4 h-4 text-blue-500 hover:text-blue-600 cursor-pointer"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
+                />
+              </svg>
+            </a>
           </div>
 
           <div class="flex items-center space-x-1">
@@ -77,6 +93,8 @@
 </template>
 
 <script>
+import { ref, computed } from "vue";
+
 export default {
   name: "TweetItem",
   props: {
@@ -84,6 +102,30 @@ export default {
       type: Object,
       required: true,
     },
+  },
+  setup(props) {
+    const showFullContent = ref(false);
+    const TRUNCATE_LENGTH = 280;
+
+    const isTruncated = computed(() => {
+      return props.item.content && props.item.content.length > TRUNCATE_LENGTH;
+    });
+
+    const displayContent = computed(() => {
+      if (!props.item.content) return "";
+
+      if (isTruncated.value && !showFullContent.value) {
+        return props.item.content.substring(0, TRUNCATE_LENGTH) + "...";
+      }
+
+      return props.item.content;
+    });
+
+    return {
+      showFullContent,
+      isTruncated,
+      displayContent,
+    };
   },
   methods: {
     getAuthorAvatarUrl(author) {
@@ -99,6 +141,25 @@ export default {
       // Fallback to pravatar with a seed based on the author name
       const seed = this.item.author.handle.replace("@", "");
       event.target.src = `https://i.pravatar.cc/128?u=${seed}`;
+    },
+    getTweetUrl() {
+      // Generate Twitter URL based on handle and tweet ID
+      const handle = this.item.author.handle.replace("@", "");
+
+      // Check if this is a real tweet ID (long numeric string) or mock ID
+      const tweetId = this.item.id;
+
+      // If it's a mock ID (starts with "mock_" or is a small number), return a placeholder
+      if (
+        String(tweetId).startsWith("mock_") ||
+        (typeof tweetId === "number" && tweetId < 1000)
+      ) {
+        // For mock data, return a generic Twitter profile URL instead
+        return `https://twitter.com/${handle}`;
+      }
+
+      // For real tweet IDs, return the actual tweet URL
+      return `https://twitter.com/${handle}/status/${tweetId}`;
     },
   },
 };

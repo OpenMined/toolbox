@@ -5,8 +5,8 @@
 kill-dev:
     #!/bin/bash
     pkill -f "npm run dev" || true
-    pkill -f "python.*main.py" || true
-    pkill -f "uvicorn.*main:app" || true
+    pkill -f "python.*app.py" || true
+    pkill -f "uvicorn.*app:app" || true
 
 
 # Install dependencies only
@@ -21,7 +21,7 @@ dev:
     just kill-dev
     trap 'just kill-dev' EXIT
     echo "Starting backend server..."
-    cd omni && python main.py &
+    cd omni && python app.py &
     BACKEND_PID=$!
     echo "Backend started with PID: $BACKEND_PID"
     echo "Starting frontend server..."

@@ -155,26 +155,72 @@ export const useSmartListsStore = defineStore("smartLists", {
       }
     },
 
-    async generateSummary(listId) {
-      if (!listId) return null;
+    async generateSummary(listId, forceRefresh = false) {
+      if (!listId) return { summary: null, status: "error" };
 
       try {
-        // Check if we already have a cached summary
-        if (this.summariesCache[listId]) {
-          return this.summariesCache[listId];
+        // Check if we already have a cached completed summary (unless forced refresh)
+        const cached = this.summariesCache[listId];
+        if (!forceRefresh && cached && cached.status === "completed") {
+          return cached;
         }
 
         // Fetch summary from API
-        const summary = await apiClient.request(
+        const result = await apiClient.request(
           `/smart-lists/${listId}/summary`,
         );
 
-        this.summariesCache[listId] = summary;
-        return summary;
+        // Handle both old string format and new object format
+        const summaryData =
+          typeof result === "string"
+            ? { summary: result, status: "completed" }
+            : result;
+
+        // Cache the result
+        this.summariesCache[listId] = summaryData;
+        return summaryData;
       } catch (error) {
         console.error(`Failed to generate summary for list ${listId}:`, error);
-        return null;
+        return { summary: null, status: "error" };
       }
+    },
+
+    async pollSummaryStatus(listId, onUpdate) {
+      if (!listId) return;
+
+      const maxPolls = 30; // Max 30 polls (5 minutes with 10s intervals)
+      let pollCount = 0;
+
+      const poll = async () => {
+        if (pollCount >= maxPolls) {
+          console.warn(`Summary generation timeout for list ${listId}`);
+          return;
+        }
+
+        try {
+          // Force refresh to get latest status from server
+          const result = await this.generateSummary(listId, true);
+
+          // Call the update callback
+          if (onUpdate) {
+            onUpdate(result);
+          }
+
+          // Continue polling if still generating
+          if (result.status === "generating") {
+            pollCount++;
+            setTimeout(poll, 5000); // Poll every 5 seconds
+          }
+        } catch (error) {
+          console.error("Error polling summary status:", error);
+          if (onUpdate) {
+            onUpdate({ summary: null, status: "error" });
+          }
+        }
+      };
+
+      // Start polling
+      poll();
     },
 
     // Method to refresh computed items (trigger backend recomputation)

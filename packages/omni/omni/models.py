@@ -1,4 +1,4 @@
-from typing import Dict, List
+from typing import Dict, List, Optional, Union
 
 from pydantic import BaseModel
 
@@ -24,6 +24,7 @@ class SmartListFilter(BaseModel):
     dateRange: Dict[str, str]
     ragQuery: str
     threshold: float
+    authors: List[str] = []
 
 
 class ListSource(BaseModel):
@@ -45,13 +46,16 @@ class SmartListCreate(BaseModel):
 
 
 class TweetItem(BaseModel):
-    id: int
+    id: Union[
+        str, int
+    ]  # Allow both string (for real tweet IDs) and int (for mock data)
     type: str
     content: str
     author: Dict
     likes: int
     reactions: int
     timestamp: str
+    similarity_score: Optional[float] = None
 
 
 class Message(BaseModel):
@@ -68,3 +72,13 @@ class Chat(BaseModel):
 
 class QuestionRequest(BaseModel):
     question: str
+    context: list[str]
+
+    def format_for_anthropic(self):
+        return f"Question: {self.question}\nContext: {self.context}"
+
+
+class SummaryResponse(BaseModel):
+    summary: str
+    status: str
+    model: Optional[str] = None

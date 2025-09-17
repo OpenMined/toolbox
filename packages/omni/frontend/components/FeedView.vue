@@ -20,7 +20,13 @@
           </div>
         </div>
         <div class="text-sm text-blue-800 leading-relaxed">
-          <div v-if="smartListsStore.currentListSummary">
+          <div
+            v-if="
+              smartListsStore.currentListSummary &&
+              (typeof smartListsStore.currentListSummary === 'string' ||
+                smartListsStore.currentListSummary.status === 'completed')
+            "
+          >
             <div
               v-for="(bullet, index) in getSummaryBullets(
                 smartListsStore.currentListSummary,
@@ -30,6 +36,24 @@
               @click="handleBulletClick(bullet, index)"
               v-html="formatBulletWithReferences(bullet)"
             ></div>
+          </div>
+          <div
+            v-else-if="
+              smartListsStore.currentListSummary &&
+              smartListsStore.currentListSummary.status === 'generating'
+            "
+            class="text-blue-600 italic"
+          >
+            Generating summary...
+          </div>
+          <div
+            v-else-if="
+              smartListsStore.currentListSummary &&
+              smartListsStore.currentListSummary.status === 'error'
+            "
+            class="text-red-600 italic"
+          >
+            Failed to generate summary
           </div>
           <div v-else class="text-blue-600 italic">Generating summary...</div>
         </div>
@@ -64,9 +88,20 @@ export default {
     // Generate summary when list changes
     watch(
       () => smartListsStore.currentListId,
-      (newListId) => {
+      async (newListId) => {
         if (newListId && !smartListsStore.summariesCache[newListId]) {
-          smartListsStore.generateSummary(newListId);
+          try {
+            const result = await smartListsStore.generateSummary(newListId);
+
+            // If it's generating, start polling
+            if (result.status === "generating") {
+              smartListsStore.pollSummaryStatus(newListId, (updatedResult) => {
+                // The store will automatically update the cache, which will trigger reactivity
+              });
+            }
+          } catch (error) {
+            console.error("Failed to generate summary:", error);
+          }
         }
       },
       { immediate: true },
@@ -96,9 +131,17 @@ export default {
       return `${fromFormatted} - ${toFormatted}`;
     };
 
-    const getSummaryBullets = (summary) => {
-      if (!summary) return [];
-      return summary.split("\n").filter((line) => line.trim().startsWith("•"));
+    const getSummaryBullets = (summaryData) => {
+      if (!summaryData) return [];
+
+      // Handle both old string format and new object format
+      const summaryText =
+        typeof summaryData === "string" ? summaryData : summaryData.summary;
+
+      if (!summaryText) return [];
+      return summaryText
+        .split("\n")
+        .filter((line) => line.trim().startsWith("•"));
     };
 
     const handleBulletClick = (bullet, index) => {

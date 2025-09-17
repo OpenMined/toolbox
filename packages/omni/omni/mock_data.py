@@ -97,9 +97,9 @@ def get_mock_smart_lists():
                 {
                     "dataSourceId": "twitter",
                     "filters": {
-                        "dateRange": {"from": "2024-11-15", "to": "2024-12-28"},
+                        "dateRange": {"from": "2025-07-01", "to": "2025-12-31"},
                         "ragQuery": "coding aesthetics vibes music",
-                        "threshold": 0.7,
+                        "threshold": 0.6,
                     },
                 }
             ],
@@ -113,9 +113,9 @@ def get_mock_smart_lists():
                 {
                     "dataSourceId": "twitter",
                     "filters": {
-                        "dateRange": {"from": "2024-10-01", "to": "2024-12-15"},
+                        "dateRange": {"from": "2025-07-01", "to": "2025-12-31"},
                         "ragQuery": "LLM releases GPT Claude models",
-                        "threshold": 0.8,
+                        "threshold": 0.6,
                     },
                 }
             ],
@@ -129,9 +129,21 @@ def get_mock_smart_lists():
                 {
                     "dataSourceId": "twitter",
                     "filters": {
-                        "dateRange": {"from": "2024-09-20", "to": "2024-12-10"},
-                        "ragQuery": "RAG retrieval augmented generation vector search",
-                        "threshold": 0.75,
+                        "dateRange": {"from": "2025-07-01", "to": "2025-10-01"},
+                        "ragQuery": "RAG retrieval augmented generation",
+                        "threshold": 0.4,
+                        "authors": [
+                            "@CrazyJvm",
+                            "@seb_ruder",
+                            "@Devendr06654102",
+                            "@weaviate_io",
+                            "@PSH_Lewis",
+                            "@douwekiela",
+                            "@steipete",
+                            "@jeremyphoward",
+                            "@bobvanluijt",
+                            "@rohanpaul_ai",
+                        ],
                     },
                 }
             ],
@@ -145,9 +157,9 @@ def get_mock_smart_lists():
                 {
                     "dataSourceId": "twitter",
                     "filters": {
-                        "dateRange": {"from": "2024-08-05", "to": "2024-12-20"},
+                        "dateRange": {"from": "2025-07-01", "to": "2025-12-31"},
                         "ragQuery": "AGI research breakthrough capabilities reasoning",
-                        "threshold": 0.8,
+                        "threshold": 0.5,
                     },
                 }
             ],

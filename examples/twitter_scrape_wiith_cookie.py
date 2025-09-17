@@ -1,6 +1,7 @@
 import asyncio
 import json
 from http.cookiejar import Cookie
+from pathlib import Path
 
 import browser_cookie3
 
@@ -43,10 +44,18 @@ async def on_request(request):
         if response is not None:
             try:
                 json_data = await response.json()
-                with open("home_latest_timeline.json", "w") as f:
+                from datetime import datetime
+
+                dt_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+                filename = f"home_latest_timeline_{dt_str}.json"
+                output_path = Path(".").parent / "data" / filename
+                output_path.parent.mkdir(parents=True, exist_ok=True)
+                with open(output_path, "w") as f:
                     json.dump(json_data, f)
+                print(f"Saved JSON to {filename}")
             except Exception as e:
                 print(f"Failed to get JSON from response: {e}")
+
         print("API call to HomeLatestTimeline")
 
 
@@ -59,7 +68,7 @@ async def playwright_login_with_cookies():
         cookies.append(cookie_to_playwright_cookie(c))
 
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=False)
         context = await browser.new_context()
         # Set cookies before navigating
         await context.add_cookies(cookies)
@@ -92,7 +101,7 @@ async def playwright_login_with_cookies():
         # for span in spans:
         #     text = await span.text_content()
         #     print(text)
-        await asyncio.sleep(1000)
+        await asyncio.sleep(10000)
         await browser.close()
 
 
