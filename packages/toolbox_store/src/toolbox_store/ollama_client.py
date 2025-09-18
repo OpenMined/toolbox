@@ -36,10 +36,13 @@ class OllamaEmbeddingClient:
         return response.json()
 
     def model_exists(self, model: str) -> bool:
-        model_info = self.show_model(model)
-        if "error" in model_info:
+        try:
+            model_info = self.show_model(model)
+            if "error" in model_info:
+                return False
+            return True
+        except Exception:
             return False
-        return True
 
     def show_model(self, model: str) -> dict[str, any]:
         """Get information about a specific model."""

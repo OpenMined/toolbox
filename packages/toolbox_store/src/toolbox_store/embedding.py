@@ -101,7 +101,10 @@ class Embedder(ABC):
         batch_size: int | None = None,
     ) -> list[list[float]]:
         return self.embed(
-            texts, batch_size=batch_size, prompt_type="document", show_progress=True
+            texts,
+            batch_size=batch_size,
+            prompt_type="document",
+            show_progress=True,
         )
 
     def embed_query(
