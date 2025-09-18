@@ -1,0 +1,18 @@
+[project]
+name = "omni"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Koen van der Veen", email = "koenlennartvanderveen@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.104.1",
+    "uvicorn[standard]>=0.24.0"
+]
+
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"

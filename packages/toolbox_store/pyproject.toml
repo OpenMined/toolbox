@@ -13,7 +13,7 @@ dependencies = [
     "pydantic>=2.11.7",
     "pydantic-settings>=2.10.1",
     "semantic-text-splitter>=0.28.0",
-    "sqlite-vec==0.1.7a2",
+    "sqlite-vec==0.1.7a2"
 ]
 
 [build-system]

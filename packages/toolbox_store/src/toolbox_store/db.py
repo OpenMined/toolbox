@@ -7,12 +7,11 @@ import sqlite_vec
 
 from toolbox_store.filters import build_where_clause
 from toolbox_store.models import (
-    RetrievedChunk,
     StoreConfig,
     TBDocument,
-    TBDocumentChunk,
     is_valid_field_identifier,
 )
+from toolbox_store.retrieved_chunks import RetrievedChunk, TBDocumentChunk
 
 T = TypeVar("T", bound=TBDocument)
 
