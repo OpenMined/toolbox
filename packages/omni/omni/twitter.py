@@ -151,8 +151,11 @@ def query_twitter_data(list_source):
         # Convert TweetItem objects to dictionaries for API response
         return [tweet_item.dict() for tweet_item in tweet_items]
 
-    except Exception as e:
-        print(f"Error querying Twitter data: {e}")
+    except Exception:
+        import traceback
+
+        traceback.print_exc()
+        # print(f"Error querying Twitter data: {e}")
         return []
 
 
