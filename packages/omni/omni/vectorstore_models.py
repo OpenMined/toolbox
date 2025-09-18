@@ -321,6 +321,3 @@ class Tweet(TBDocument):
             )
 
         return cls.model_validate(row_dict)
-
-
-Tweet.model_rebuild()
