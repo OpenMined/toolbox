@@ -6,9 +6,14 @@ from pathlib import Path
 import numpy as np
 import sqlite_vec
 from sqlite_vec import serialize_float32
+from toolbox_store import ToolboxStore
+from toolbox_store.models import StoreConfig
+
+from .vectorstore_models import Tweet
 
 HOME = Path.home()
-TWITTER_MCP_DB_PATH = HOME / "twitter-mcp" / "db.sqlite"
+TWITTER_MCP_DB_PATH = HOME / ".twitter-mcp" / "db.sqlite"
+TWITTER_VECTORSTORE_DB_PATH = HOME / ".twitter-mcp" / "tweet_toolbox_store.db"
 TWITTER_MCP_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 EMBEDDINGS_TABLE = "tweet_embeddings_vec"
@@ -17,6 +22,18 @@ EMBEDDINGS_LEN = 768
 
 def deserialize_float32(blob: bytes) -> list[float]:
     return np.frombuffer(blob, dtype=np.float32).tolist()
+
+
+def get_tweet_store() -> ToolboxStore:
+    """Get ToolboxStore instance for tweets"""
+    config = StoreConfig()
+    store_path = TWITTER_VECTORSTORE_DB_PATH
+    return ToolboxStore(
+        collection="tweets",
+        db_path=str(store_path),
+        config=config,
+        document_class=Tweet,
+    )
 
 
 def _get_twitter_connection(path: Path = TWITTER_MCP_DB_PATH):

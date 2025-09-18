@@ -13,8 +13,8 @@ dependencies = [
     "obsidian_mcp",
     "pdf_mcp",
     "toolbox_events",
-    "omni"
-    "toolbox_store",
+    "omni",
+    "toolbox_store"
 ]
 
 [build-system]

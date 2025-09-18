@@ -6,14 +6,12 @@ from datetime import datetime
 
 import requests
 
-from omni.db import (
+from omni.settings import settings
+from omni.vectorstore_queries import (
     get_cached_summary,
-    get_tweets_by_authors_and_timeframe,
-    get_twitter_connection,
-    search_tweets_by_vector,
+    search_tweets,
     upsert_summary,
 )
-from omni.settings import settings
 
 TWITTER_DB_AVAILABLE = True
 
@@ -120,99 +118,39 @@ def query_twitter_data(list_source):
         return []
 
     filters = list_source["filters"]
-    authors = [
-        author.lstrip("@") for author in filters.get("authors", [])
-    ]  # Remove @ prefix
+    authors = (
+        [author.lstrip("@") for author in filters.get("authors", [])]
+        if filters.get("authors")
+        else None
+    )  # Remove @ prefix
 
     # Parse date range
-    start_date = datetime.fromisoformat(filters["dateRange"]["from"])
-    end_date = datetime.fromisoformat(filters["dateRange"]["to"])
+    start_date = datetime.fromisoformat(filters["dateRange"]["from"] + "T00:00:00Z")
+    end_date = datetime.fromisoformat(filters["dateRange"]["to"] + "T23:59:59Z")
 
-    # Get embedding for RAG query (only if query is provided and not empty)
-    query_embedding = None
+    # Get RAG query text (only if query is provided and not empty)
+    query_text = None
     if filters.get("ragQuery") and filters["ragQuery"].strip():
-        query_embedding = get_ollama_embedding(filters["ragQuery"])
-        if not query_embedding:
-            print(f"Failed to get embedding for query: {filters['ragQuery']}")
+        query_text = filters["ragQuery"]
 
     # If no authors and no RAG query, return empty (nothing to search for)
-    if not authors and not query_embedding:
+    if not authors and not query_text:
         return []
 
     try:
-        with get_twitter_connection() as conn:
-            if authors:
-                # Search within specific authors
-                tweets = get_tweets_by_authors_and_timeframe(
-                    conn,
-                    author_screen_names=authors,
-                    start_date=start_date,
-                    end_date=end_date,
-                    query_embedding=query_embedding,
-                    similarity_threshold=filters.get("threshold", 0.4)
-                    if query_embedding
-                    else 0.0,
-                    limit=50,
-                )
-            elif query_embedding:
-                # Search across all tweets using semantic search only
-                tweets = search_tweets_by_vector(
-                    conn,
-                    query_embedding=query_embedding,
-                    similarity_threshold=filters.get("threshold", 0.4),
-                    limit=50,
-                )
-                # Filter by date range manually since search_tweets_by_vector doesn't do this
-                tweets = [
-                    tweet
-                    for tweet in tweets
-                    if start_date.isoformat()
-                    <= tweet["created_at"]
-                    <= end_date.isoformat()
-                ]
-            else:
-                tweets = []
+        # Use the unified search function
+        tweet_items = search_tweets(
+            query_text=query_text,
+            author_screen_names=authors,
+            start_date=start_date,
+            end_date=end_date,
+            similarity_threshold=filters.get("threshold", 0.4),
+            limit=20,  # Limit to 20 for display
+        )
 
-            # Convert to TweetItem format
-            tweet_items = []
-            for i, tweet in enumerate(tweets[:20]):  # Limit to first 20 for display
-                # Calculate similarity score from distance (if available)
-                similarity_score = None
-                if "distance" in tweet.keys() and tweet["distance"] is not None:
-                    # Convert distance to similarity (distance ranges from 0-2, similarity 0-1)
-                    similarity_score = round(1.0 - tweet["distance"], 3)
+        # Convert TweetItem objects to dictionaries for API response
+        return [tweet_item.dict() for tweet_item in tweet_items]
 
-                tweet_item = {
-                    "id": str(tweet["id"])
-                    if "id" in tweet.keys()
-                    else f"mock_{i + 1}",  # Convert tweet ID to string to preserve precision
-                    "type": "tweet",
-                    "content": tweet["text"] if tweet["text"] else "",
-                    "author": {
-                        "name": tweet["author_name"]
-                        if "author_name" in tweet.keys()
-                        else "Unknown",
-                        "handle": f"@{tweet['screen_name']}"
-                        if "screen_name" in tweet.keys()
-                        else "@unknown",
-                        "avatarUrl": tweet["avatar_url"]
-                        if "avatar_url" in tweet.keys() and tweet["avatar_url"]
-                        else "https://via.placeholder.com/400x400?text=T",
-                    },
-                    "likes": tweet["favorite_count"]
-                    if "favorite_count" in tweet.keys()
-                    else 0,
-                    "reactions": tweet["retweet_count"]
-                    if "retweet_count" in tweet.keys()
-                    else 0,
-                    "timestamp": tweet["created_at"][:10]
-                    if "created_at" in tweet.keys() and tweet["created_at"]
-                    else "",
-                    "similarity_score": similarity_score,
-                }
-                tweet_items.append(tweet_item)
-
-            return tweet_items
     except Exception as e:
         print(f"Error querying Twitter data: {e}")
         return []
@@ -236,22 +174,17 @@ def generate_summary_async(list_id, list_source, filters_hash):
     """Generate summary in background thread"""
     try:
         # Mark as generating
-        with get_twitter_connection() as conn:
-            upsert_summary(conn, list_id, filters_hash, "", "generating")
+        upsert_summary(list_id, filters_hash, "", "generating")
 
         # Generate the actual summary
         summary, model = _generate_smart_list_summary_internal(list_source)
 
         # Save completed summary
-        with get_twitter_connection() as conn:
-            upsert_summary(conn, list_id, filters_hash, summary, "completed", model)
+        upsert_summary(list_id, filters_hash, summary, "completed", model)
 
     except Exception as e:
         print(f"Error in async summary generation: {e}")
-        with get_twitter_connection() as conn:
-            upsert_summary(
-                conn, list_id, filters_hash, "Error generating summary", "error"
-            )
+        upsert_summary(list_id, filters_hash, "Error generating summary", "error")
 
 
 def _generate_smart_list_summary_internal(list_source):
@@ -271,38 +204,34 @@ def _generate_smart_list_summary_internal(list_source):
     start_date = datetime.fromisoformat(filters["dateRange"]["from"])
     end_date = datetime.fromisoformat(filters["dateRange"]["to"])
 
-    # Get embedding for RAG query (only if query is provided and not empty)
-    query_embedding = None
+    # Get RAG query text (only if query is provided and not empty)
+    query_text = None
     if filters.get("ragQuery") and filters["ragQuery"].strip():
-        query_embedding = get_ollama_embedding(filters["ragQuery"])
+        query_text = filters["ragQuery"]
 
     try:
-        with get_twitter_connection() as conn:
-            tweets = get_tweets_by_authors_and_timeframe(
-                conn,
-                author_screen_names=authors,
-                start_date=start_date,
-                end_date=end_date,
-                query_embedding=query_embedding,
-                similarity_threshold=filters.get("threshold", 0.4)
-                if query_embedding
-                else 0.0,
-                limit=50,
-            )
+        tweet_items = search_tweets(
+            query_text=query_text,
+            author_screen_names=authors,
+            start_date=start_date,
+            end_date=end_date,
+            similarity_threshold=filters.get("threshold", 0.4) if query_text else 0.0,
+            limit=50,
+        )
 
-            if not tweets:
-                return "No tweets found matching the criteria.", None
+        if not tweet_items:
+            return "No tweets found matching the criteria.", None
 
-            # Combine tweet texts for summary
-            tweets_text = "\n\n".join(
-                [
-                    f"@{tweet['screen_name']}: {tweet['text']}"
-                    for tweet in tweets[:20]  # Limit to first 20 for summary
-                    if tweet["text"]
-                ]
-            )
+        # Combine tweet texts for summary
+        tweets_text = "\n\n".join(
+            [
+                f"{tweet_item.author['handle']}: {tweet_item.content}"
+                for tweet_item in tweet_items[:20]  # Limit to first 20 for summary
+                if tweet_item.content
+            ]
+        )
 
-            return generate_summary(tweets_text)
+        return generate_summary(tweets_text)
 
     except Exception as e:
         print(f"Error generating smart list summary: {e}")
@@ -320,25 +249,24 @@ def get_or_generate_smart_list_summary(list_id, list_source):
 
     filters_hash = generate_filters_hash(list_source)
 
-    with get_twitter_connection() as conn:
-        cached = get_cached_summary(conn, list_id, filters_hash)
+    cached = get_cached_summary(list_id, filters_hash)
 
-        if cached:
-            summary, status, model = cached
+    if cached:
+        summary, status, model = cached
 
-            # If we have a cached result but no model info, update it with intended model for generating status
-            if status == "generating" and model is None:
-                intended_model = get_intended_model()
-                return {"summary": summary, "status": status, "model": intended_model}
+        # If we have a cached result but no model info, update it with intended model for generating status
+        if status == "generating" and model is None:
+            intended_model = get_intended_model()
+            return {"summary": summary, "status": status, "model": intended_model}
 
-            return {"summary": summary, "status": status, "model": model}
+        return {"summary": summary, "status": status, "model": model}
 
-        # No cached summary, start async generation
-        intended_model = get_intended_model()
-        thread = threading.Thread(
-            target=generate_summary_async, args=(list_id, list_source, filters_hash)
-        )
-        thread.daemon = True
-        thread.start()
+    # No cached summary, start async generation
+    intended_model = get_intended_model()
+    thread = threading.Thread(
+        target=generate_summary_async, args=(list_id, list_source, filters_hash)
+    )
+    thread.daemon = True
+    thread.start()
 
-        return {"summary": "", "status": "generating", "model": intended_model}
+    return {"summary": "", "status": "generating", "model": intended_model}

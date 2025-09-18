@@ -56,6 +56,8 @@ class TweetItem(BaseModel):
     reactions: int
     timestamp: str
     similarity_score: Optional[float] = None
+    tweet_type: str = "original"  # "original", "repost", "quote", "reply"
+    interaction_context: Dict = {}
 
 
 class Message(BaseModel):

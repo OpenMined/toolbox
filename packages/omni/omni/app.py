@@ -129,7 +129,8 @@ async def get_smart_list_summary(list_id: int):
 async def clear_summary_cache(list_id: int):
     """Clear cached summary for testing purposes"""
     from omni.mock_data import get_mock_smart_lists
-    from omni.twitter import generate_filters_hash, get_twitter_connection
+    from omni.twitter import generate_filters_hash
+    from omni.vectorstore_queries import clear_summary_cache as clear_cache
 
     smart_lists = get_mock_smart_lists()
     smart_list = next((sl for sl in smart_lists if sl["id"] == list_id), None)
@@ -140,22 +141,7 @@ async def clear_summary_cache(list_id: int):
     for list_source in smart_list["listSources"]:
         if list_source["dataSourceId"] == "twitter":
             filters_hash = generate_filters_hash(list_source)
-
-            try:
-                with get_twitter_connection() as conn:
-                    cursor = conn.cursor()
-                    cursor.execute(
-                        "DELETE FROM smart_list_summaries WHERE list_id = ? AND filters_hash = ?",
-                        (list_id, filters_hash),
-                    )
-                    conn.commit()
-                    deleted = cursor.rowcount
-                    return {
-                        "message": f"Cleared cache for list {list_id}",
-                        "deleted_rows": deleted,
-                    }
-            except Exception as e:
-                return {"message": f"Error clearing cache: {str(e)}"}
+            return clear_cache(list_id, filters_hash)
 
     return {"message": "No Twitter sources found for this list"}
 

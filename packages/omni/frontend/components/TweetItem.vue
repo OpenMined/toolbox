@@ -1,20 +1,35 @@
 <template>
   <div class="p-4 hover:bg-gray-50 transition-colors">
+    <!-- Repost indicator -->
+    <div
+      v-if="item.tweet_type === 'repost'"
+      class="flex items-center space-x-2 mb-2 text-gray-500 text-sm"
+    >
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <path
+          d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+        />
+      </svg>
+      <span>{{ item.author.name }} reposted</span>
+    </div>
+
     <div class="flex space-x-3">
-      <!-- Author profile image -->
+      <!-- Author profile image - show original author for reposts -->
       <img
-        :src="getAuthorAvatarUrl(item.author)"
-        :alt="`${item.author.name} avatar`"
+        :src="getDisplayAuthorAvatar()"
+        :alt="`${getDisplayAuthorName()} avatar`"
         class="w-10 h-10 rounded-full flex-shrink-0"
         @error="onImageError"
       />
 
       <!-- Tweet content -->
       <div class="flex-1 min-w-0">
-        <!-- Author info -->
+        <!-- Author info - show original author for reposts -->
         <div class="flex items-center space-x-2 mb-2">
-          <span class="font-medium text-gray-900">{{ item.author.name }}</span>
-          <span class="text-gray-500">{{ item.author.handle }}</span>
+          <span class="font-medium text-gray-900">{{
+            getDisplayAuthorName()
+          }}</span>
+          <span class="text-gray-500">{{ getDisplayAuthorHandle() }}</span>
           <span class="text-gray-500">·</span>
           <span class="text-gray-500 text-sm">{{ item.timestamp }}</span>
         </div>
@@ -29,6 +44,39 @@
           >
             Show more
           </button>
+        </div>
+
+        <!-- Quoted tweet display -->
+        <div
+          v-if="
+            item.tweet_type === 'quote' &&
+            item.interaction_context?.quoted_tweet
+          "
+          class="border border-gray-200 rounded-lg p-3 mb-3 bg-gray-50"
+        >
+          <div class="flex items-center space-x-2 mb-2">
+            <img
+              :src="getQuotedAuthorAvatar()"
+              :alt="`${
+                item.interaction_context.quoted_tweet.author?.name || 'Unknown'
+              } avatar`"
+              class="w-6 h-6 rounded-full"
+            />
+            <span class="font-medium text-gray-900 text-sm">
+              {{
+                item.interaction_context.quoted_tweet.author?.name || "Unknown"
+              }}
+            </span>
+            <span class="text-gray-500 text-sm">
+              @{{
+                item.interaction_context.quoted_tweet.author?.screen_name ||
+                "unknown"
+              }}
+            </span>
+          </div>
+          <p class="text-gray-900 text-sm">
+            {{ item.interaction_context.quoted_tweet.content }}
+          </p>
         </div>
 
         <!-- Engagement metrics -->
@@ -121,22 +169,76 @@ export default {
       return props.item.content;
     });
 
-    return {
-      showFullContent,
-      isTruncated,
-      displayContent,
+    const getDisplayAuthorName = () => {
+      // For reposts, show original author name
+      if (
+        props.item.tweet_type === "repost" &&
+        props.item.interaction_context?.original_author
+      ) {
+        return props.item.interaction_context.original_author.name || "Unknown";
+      }
+      return props.item.author.name;
     };
-  },
-  methods: {
-    getAuthorAvatarUrl(author) {
-      // Use the real avatar URL from mock data if available, otherwise use pravatar fallback with unique seed
+
+    const getDisplayAuthorHandle = () => {
+      // For reposts, show original author handle
+      if (
+        props.item.tweet_type === "repost" &&
+        props.item.interaction_context?.original_author
+      ) {
+        return `@${
+          props.item.interaction_context.original_author.screen_name ||
+          "unknown"
+        }`;
+      }
+      return props.item.author.handle;
+    };
+
+    const getAuthorAvatarUrl = (author) => {
+      // Use the real avatar URL from data if available, otherwise use pravatar fallback with unique seed
       if (author.avatarUrl) {
         return author.avatarUrl;
       }
       // Use the handle as a seed to get consistent but unique avatars
       const seed = author.handle.replace("@", "");
       return `https://i.pravatar.cc/128?u=${seed}`;
-    },
+    };
+
+    const getDisplayAuthorAvatar = () => {
+      // For reposts, show original author avatar
+      if (
+        props.item.tweet_type === "repost" &&
+        props.item.interaction_context?.original_author
+      ) {
+        return (
+          props.item.interaction_context.original_author.avatar_url ||
+          `https://i.pravatar.cc/128?u=${props.item.interaction_context.original_author.screen_name}`
+        );
+      }
+      return getAuthorAvatarUrl(props.item.author);
+    };
+
+    const getQuotedAuthorAvatar = () => {
+      const quotedAuthor = props.item.interaction_context?.quoted_tweet?.author;
+      if (quotedAuthor?.avatar_url) {
+        return quotedAuthor.avatar_url;
+      }
+      const seed = quotedAuthor?.screen_name || "unknown";
+      return `https://i.pravatar.cc/128?u=${seed}`;
+    };
+
+    return {
+      showFullContent,
+      isTruncated,
+      displayContent,
+      getDisplayAuthorName,
+      getDisplayAuthorHandle,
+      getDisplayAuthorAvatar,
+      getQuotedAuthorAvatar,
+      getAuthorAvatarUrl,
+    };
+  },
+  methods: {
     onImageError(event) {
       // Fallback to pravatar with a seed based on the author name
       const seed = this.item.author.handle.replace("@", "");

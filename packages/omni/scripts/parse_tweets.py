@@ -1,190 +1,98 @@
 #!/usr/bin/env python3
 """
 Script to parse all tweet JSON files from ../../data/ directory
-and create a simple JSON with format: {tweet_id: {author: author_name, content: full_text}}
+and store them using ToolboxStore
 """
 
 import json
+import os
+import sys
 from pathlib import Path
 
+# Add the parent directory to the path so we can import from omni
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 
-def extract_tweets_from_file(file_path):
-    """Extract tweets from a single JSON file."""
-    tweets = {}
-
-    try:
-        with open(file_path, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        # Navigate the Twitter API response structure
-        if (
-            "data" in data
-            and "home" in data["data"]
-            and "home_timeline_urt" in data["data"]["home"]
-        ):
-            instructions = data["data"]["home"]["home_timeline_urt"].get(
-                "instructions", []
-            )
-
-            for instruction in instructions:
-                if instruction.get("type") == "TimelineAddEntries":
-                    entries = instruction.get("entries", [])
-
-                    for entry in entries:
-                        # Handle conversation entries
-                        if (
-                            "content" in entry
-                            and entry["content"].get("entryType")
-                            == "TimelineTimelineModule"
-                        ):
-                            items = entry["content"].get("items", [])
-
-                            for item in items:
-                                if "item" in item and "itemContent" in item["item"]:
-                                    item_content = item["item"]["itemContent"]
-
-                                    if item_content.get("itemType") == "TimelineTweet":
-                                        tweet_results = item_content.get(
-                                            "tweet_results", {}
-                                        )
-
-                                        if "result" in tweet_results:
-                                            result = tweet_results["result"]
-
-                                            # Extract tweet data
-                                            tweet_id = result.get("rest_id")
-                                            if not tweet_id:
-                                                continue
-
-                                            # Get author info
-                                            author = "Unknown"
-                                            if (
-                                                "core" in result
-                                                and "user_results" in result["core"]
-                                            ):
-                                                user_result = result["core"][
-                                                    "user_results"
-                                                ].get("result", {})
-                                                if "core" in user_result:
-                                                    author = user_result["core"].get(
-                                                        "screen_name", "Unknown"
-                                                    )
-
-                                            # Get tweet content
-                                            content = ""
-                                            if "legacy" in result:
-                                                content = result["legacy"].get(
-                                                    "full_text", ""
-                                                )
-                                            elif "note_tweet" in result:
-                                                # Handle long tweets
-                                                note_results = result["note_tweet"].get(
-                                                    "note_tweet_results", {}
-                                                )
-                                                if "result" in note_results:
-                                                    content = note_results[
-                                                        "result"
-                                                    ].get("text", "")
-
-                                            if tweet_id and content:
-                                                tweets[tweet_id] = {
-                                                    "author": author,
-                                                    "content": content,
-                                                }
-
-                        # Handle direct tweet entries
-                        elif (
-                            "content" in entry
-                            and entry["content"].get("entryType")
-                            == "TimelineTimelineItem"
-                        ):
-                            item_content = entry["content"].get("itemContent", {})
-
-                            if item_content.get("itemType") == "TimelineTweet":
-                                tweet_results = item_content.get("tweet_results", {})
-
-                                if "result" in tweet_results:
-                                    result = tweet_results["result"]
-
-                                    # Extract tweet data
-                                    tweet_id = result.get("rest_id")
-                                    if not tweet_id:
-                                        continue
-
-                                    # Get author info
-                                    author = "Unknown"
-                                    if (
-                                        "core" in result
-                                        and "user_results" in result["core"]
-                                    ):
-                                        user_result = result["core"][
-                                            "user_results"
-                                        ].get("result", {})
-                                        if "core" in user_result:
-                                            author = user_result["core"].get(
-                                                "screen_name", "Unknown"
-                                            )
-
-                                    # Get tweet content
-                                    content = ""
-                                    if "legacy" in result:
-                                        content = result["legacy"].get("full_text", "")
-                                    elif "note_tweet" in result:
-                                        # Handle long tweets
-                                        note_results = result["note_tweet"].get(
-                                            "note_tweet_results", {}
-                                        )
-                                        if "result" in note_results:
-                                            content = note_results["result"].get(
-                                                "text", ""
-                                            )
-
-                                    if tweet_id and content:
-                                        tweets[tweet_id] = {
-                                            "author": author,
-                                            "content": content,
-                                        }
-
-    except Exception as e:
-        print(f"Error processing {file_path}: {e}")
-
-    return tweets
+from omni.db import get_tweet_store
+from omni.vectorstore_models import Tweet
 
 
 def main():
-    """Main function to process all JSON files and combine tweets."""
+    """Main function to process all JSON files and store tweets using ToolboxStore."""
     data_dir = Path("../../data/")
 
     if not data_dir.exists():
         print(f"Data directory {data_dir} does not exist!")
         return
 
-    # Find all JSON files in the data directory
     json_files = list(data_dir.glob("*.json"))
-
     if not json_files:
         print(f"No JSON files found in {data_dir}")
         return
 
     print(f"Found {len(json_files)} JSON files to process...")
 
-    # Combine all tweets
-    all_tweets = {}
+    store = get_tweet_store()
+    print(f"Initialized ToolboxStore at {store.db.db_path}")
+
+    all_tweets = []
+    seen_tweet_ids = set()
 
     for json_file in json_files:
         print(f"Processing {json_file.name}...")
-        tweets = extract_tweets_from_file(json_file)
-        all_tweets.update(tweets)
-        print(f"  Found {len(tweets)} tweets")
+
+        with open(json_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+        file_tweet_count = 0
+
+        # Navigate through the JSON structure and find all tweet_results
+        instructions = (
+            data.get("data", {})
+            .get("home", {})
+            .get("home_timeline_urt", {})
+            .get("instructions", [])
+        )
+
+        for instruction in instructions:
+            if instruction.get("type") != "TimelineAddEntries":
+                continue
+
+            entries = instruction.get("entries", [])
+
+            for entry in entries:
+                content = entry.get("content", {})
+                # Handle conversation entries (TimelineTimelineModule)
+                if content.get("entryType") == "TimelineTimelineModule":
+                    items = content.get("items", [])
+                    for item in items:
+                        item_content = item.get("item", {}).get("itemContent", {})
+                        if item_content.get("itemType") == "TimelineTweet":
+                            tweet_results = item_content.get("tweet_results", {})
+                            tweet = Tweet.from_instruction_entry(tweet_results)
+                            if tweet and tweet.tweet_id not in seen_tweet_ids:
+                                seen_tweet_ids.add(tweet.tweet_id)
+                                all_tweets.append(tweet)
+                                file_tweet_count += 1
+
+                # Handle direct tweet entries (TimelineTimelineItem)
+                elif content.get("entryType") == "TimelineTimelineItem":
+                    item_content = content.get("itemContent", {})
+                    if item_content.get("itemType") == "TimelineTweet":
+                        tweet_results = item_content.get("tweet_results", {})
+                        tweet = Tweet.from_instruction_entry(tweet_results)
+                        if tweet and tweet.tweet_id not in seen_tweet_ids:
+                            seen_tweet_ids.add(tweet.tweet_id)
+                            all_tweets.append(tweet)
+                            file_tweet_count += 1
+
+        print(f"  Found {file_tweet_count} tweets")
 
     print(f"\nTotal unique tweets extracted: {len(all_tweets)}")
 
-    # Write the combined tweets to output file
-    output_file = "combined_tweets.json"
-    with open(output_file, "w", encoding="utf-8") as f:
-        json.dump(all_tweets, f, indent=2, ensure_ascii=False)
-
-    print(f"Combined tweets saved to {output_file}")
+    if all_tweets:
+        print("Inserting tweets into ToolboxStore...")
+        store.insert_docs(all_tweets, create_embeddings=False)
+        print(f"Successfully inserted {len(all_tweets)} tweets into ToolboxStore")
 
 
 if __name__ == "__main__":
