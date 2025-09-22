@@ -9,8 +9,17 @@ authors = [
 requires-python = ">=3.12"
 dependencies = [
     "fastapi>=0.104.1",
-    "uvicorn[standard]>=0.24.0"
+    "uvicorn[standard]>=0.24.0",
+    "pydantic_settings",
+    "requests",
+    "numpy>=2.3.3",
+    "sqlite-vec>=0.1.6",
+    "toolbox_store",
+    "tqdm>=4.67.1",
 ]
+
+[tool.uv.sources]
+toolbox_store = { git = "https://github.com/OpenMined/toolbox.git", subdirectory = "packages/toolbox_store", rev = "broad-listening" }
 
 
 [build-system]
