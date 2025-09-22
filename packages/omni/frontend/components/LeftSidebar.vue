@@ -84,7 +84,7 @@
         </button>
       </div>
       <div class="space-y-1">
-        <div
+        <a
           v-for="list in smartListsStore.smartLists"
           :key="list.id"
           class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
@@ -96,7 +96,7 @@
         >
           <span class="text-sm text-gray-700">{{ list.name }}</span>
           <span class="text-xs text-gray-400">{{ list.itemCount }}</span>
-        </div>
+        </a>
       </div>
     </div>
 

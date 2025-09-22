@@ -26,17 +26,23 @@
       <div class="flex-1 min-w-0">
         <!-- Author info - show original author for reposts -->
         <div class="flex items-center space-x-2 mb-2">
-          <span class="font-medium text-gray-900">{{
-            getDisplayAuthorName()
-          }}</span>
-          <span class="text-gray-500">{{ getDisplayAuthorHandle() }}</span>
+          <a
+            @click="openAuthorProfile"
+            class="font-medium text-gray-900 hover:text-blue-600 cursor-pointer transition-colors"
+            >{{ getDisplayAuthorName() }}</a
+          >
+          <a
+            @click="openAuthorProfile"
+            class="text-gray-500 hover:text-blue-600 cursor-pointer transition-colors"
+            >{{ getDisplayAuthorHandle() }}</a
+          >
           <span class="text-gray-500">·</span>
           <span class="text-gray-500 text-sm">{{ item.timestamp }}</span>
         </div>
 
         <!-- Tweet text -->
         <div class="text-gray-900 mb-3 leading-relaxed">
-          <p>{{ displayContent }}</p>
+          <p v-html="displayContentWithoutMedia"></p>
           <button
             v-if="isTruncated && !showFullContent"
             @click="showFullContent = true"
@@ -46,13 +52,17 @@
           </button>
         </div>
 
+        <!-- Tweet media (images, videos, GIFs) -->
+        <TweetMedia :media-data="item.media" :tweet-url="getTweetUrl()" />
+
         <!-- Quoted tweet display -->
         <div
           v-if="
             item.tweet_type === 'quote' &&
             item.interaction_context?.quoted_tweet
           "
-          class="border border-gray-200 rounded-lg p-3 mb-3 bg-gray-50"
+          class="border border-gray-200 rounded-lg p-3 mb-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+          @click="openQuotedTweet"
         >
           <div class="flex items-center space-x-2 mb-2">
             <img
@@ -62,21 +72,28 @@
               } avatar`"
               class="w-6 h-6 rounded-full"
             />
-            <span class="font-medium text-gray-900 text-sm">
+            <a
+              @click="openQuotedAuthorProfile"
+              class="font-medium text-gray-900 text-sm hover:text-blue-600 cursor-pointer transition-colors"
+            >
               {{
                 item.interaction_context.quoted_tweet.author?.name || "Unknown"
               }}
-            </span>
-            <span class="text-gray-500 text-sm">
+            </a>
+            <a
+              @click="openQuotedAuthorProfile"
+              class="text-gray-500 text-sm hover:text-blue-600 cursor-pointer transition-colors"
+            >
               @{{
                 item.interaction_context.quoted_tweet.author?.screen_name ||
                 "unknown"
               }}
-            </span>
+            </a>
           </div>
-          <p class="text-gray-900 text-sm">
-            {{ item.interaction_context.quoted_tweet.content }}
-          </p>
+          <p
+            class="text-gray-900 text-sm"
+            v-html="item.interaction_context.quoted_tweet.content"
+          ></p>
         </div>
 
         <!-- Engagement metrics -->
@@ -142,9 +159,13 @@
 
 <script>
 import { ref, computed } from "vue";
+import TweetMedia from "./TweetMedia.vue";
 
 export default {
   name: "TweetItem",
+  components: {
+    TweetMedia,
+  },
   props: {
     item: {
       type: Object,
@@ -162,11 +183,31 @@ export default {
     const displayContent = computed(() => {
       if (!props.item.content) return "";
 
+      let content = props.item.content;
+
       if (isTruncated.value && !showFullContent.value) {
-        return props.item.content.substring(0, TRUNCATE_LENGTH) + "...";
+        content = content.substring(0, TRUNCATE_LENGTH) + "...";
       }
 
-      return props.item.content;
+      // Convert newlines to HTML breaks
+      return content.replace(/\n/g, "<br>");
+    });
+
+    const displayContentWithoutMedia = computed(() => {
+      if (!props.item.content) return "";
+
+      let content = props.item.content;
+
+      // Remove t.co media links from the displayed text
+      const tcoPattern = /https:\/\/t\.co\/\w+/g;
+      content = content.replace(tcoPattern, "").trim();
+
+      if (isTruncated.value && !showFullContent.value) {
+        content = content.substring(0, TRUNCATE_LENGTH) + "...";
+      }
+
+      // Convert newlines to HTML breaks
+      return content.replace(/\n/g, "<br>");
     });
 
     const getDisplayAuthorName = () => {
@@ -231,6 +272,7 @@ export default {
       showFullContent,
       isTruncated,
       displayContent,
+      displayContentWithoutMedia,
       getDisplayAuthorName,
       getDisplayAuthorHandle,
       getDisplayAuthorAvatar,
@@ -262,6 +304,52 @@ export default {
 
       // For real tweet IDs, return the actual tweet URL
       return `https://twitter.com/${handle}/status/${tweetId}`;
+    },
+    openAuthorProfile() {
+      // Get the display author (original author for reposts)
+      let handle;
+      if (
+        this.item.tweet_type === "repost" &&
+        this.item.interaction_context?.original_author
+      ) {
+        handle = this.item.interaction_context.original_author.screen_name;
+      } else {
+        handle = this.item.author.handle.replace("@", "");
+      }
+
+      window.open(
+        `https://twitter.com/${handle}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    },
+    openQuotedTweet(event) {
+      // Prevent the quoted tweet container click from bubbling up
+      event.stopPropagation();
+
+      const quotedTweet = this.item.interaction_context?.quoted_tweet;
+      if (quotedTweet && quotedTweet.id && quotedTweet.author?.screen_name) {
+        const handle = quotedTweet.author.screen_name;
+        const tweetId = quotedTweet.id;
+        window.open(
+          `https://twitter.com/${handle}/status/${tweetId}`,
+          "_blank",
+          "noopener,noreferrer",
+        );
+      }
+    },
+    openQuotedAuthorProfile(event) {
+      // Prevent bubbling to the quoted tweet container
+      event.stopPropagation();
+
+      const quotedAuthor = this.item.interaction_context?.quoted_tweet?.author;
+      if (quotedAuthor?.screen_name) {
+        window.open(
+          `https://twitter.com/${quotedAuthor.screen_name}`,
+          "_blank",
+          "noopener,noreferrer",
+        );
+      }
     },
   },
 };

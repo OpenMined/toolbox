@@ -8,4 +8,7 @@ export default defineConfig({
       "@": "/frontend",
     },
   },
+  server: {
+    port: 8005,
+  },
 });

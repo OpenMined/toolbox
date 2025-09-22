@@ -34,6 +34,15 @@ def main():
     store = get_tweet_store()
     print(f"Initialized ToolboxStore at {store.db.db_path}")
 
+    # Drop tweets table to recreate with new schema
+    store.db.conn.execute("DROP TABLE IF EXISTS tweets_documents")
+    store.db.conn.commit()
+    print("Dropped existing tweets table")
+
+    # Force schema creation
+    store.db.create_schema()
+    print("Recreated tables with new schema")
+
     all_tweets = []
     seen_tweet_ids = set()
 

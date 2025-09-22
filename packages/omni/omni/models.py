@@ -58,6 +58,7 @@ class TweetItem(BaseModel):
     similarity_score: Optional[float] = None
     tweet_type: str = "original"  # "original", "repost", "quote", "reply"
     interaction_context: Dict = {}
+    media: Optional[str] = None  # JSON string containing media data
 
 
 class Message(BaseModel):

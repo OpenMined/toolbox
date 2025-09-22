@@ -42,6 +42,7 @@ def search_tweets(
             similarity_score=similarity_score,
             tweet_type=tweet.tweet_type,
             interaction_context=tweet.interaction_context,
+            media=tweet.media,  # Add media data from database
         )
 
     try:
@@ -53,7 +54,7 @@ def search_tweets(
             .get()
         )
         print("INITIAL DOCUMENTS", len(documents))
-        if query_text.strip():
+        if query_text and query_text.strip():
             res_documents = (
                 store.search_chunks()
                 .where({"id__in": [doc.id for doc in documents]})

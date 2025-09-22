@@ -7,7 +7,6 @@ from omni.mock_data import (
     get_mock_chats,
     get_mock_data_collections,
     get_mock_data_sources,
-    get_mock_smart_list_items,
     get_mock_smart_lists,
     get_mock_summary,
 )
@@ -33,7 +32,7 @@ app = FastAPI(title="Omni API", description="Backend API for Omni application")
 # Enable CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite dev server
+    allow_origins=["http://localhost:8005"],  # Vite dev server
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -90,7 +89,7 @@ async def get_smart_list_items(list_id: int):
             return items
 
     # Fallback to mock data
-    items = get_mock_smart_list_items(list_id)
+    # items = get_mock_smart_list_items(list_id)
     if not items:
         raise HTTPException(status_code=404, detail="Smart list not found")
     return items

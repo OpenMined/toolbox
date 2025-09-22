@@ -13,8 +13,6 @@ from omni.vectorstore_queries import (
     upsert_summary,
 )
 
-TWITTER_DB_AVAILABLE = True
-
 
 def get_ollama_completion(prompt, model="llama3.2:1b"):
     """Get completion from Ollama API"""
@@ -114,8 +112,6 @@ def get_ollama_embedding(text, model="nomic-embed-text:latest"):
 
 def query_twitter_data(list_source):
     """Query Twitter data based on list source filters"""
-    if not TWITTER_DB_AVAILABLE:
-        return []
 
     filters = list_source["filters"]
     authors = (
@@ -192,8 +188,6 @@ def generate_summary_async(list_id, list_source, filters_hash):
 
 def _generate_smart_list_summary_internal(list_source):
     """Internal function to generate summary (used by both sync and async)"""
-    if not TWITTER_DB_AVAILABLE:
-        return "Database not available for summary generation.", None
 
     filters = list_source["filters"]
     authors = [
@@ -243,12 +237,6 @@ def _generate_smart_list_summary_internal(list_source):
 
 def get_or_generate_smart_list_summary(list_id, list_source):
     """Get cached summary or generate new one (async if needed)"""
-    if not TWITTER_DB_AVAILABLE:
-        return {
-            "summary": "Database not available for summary generation.",
-            "status": "error",
-            "model": None,
-        }
 
     filters_hash = generate_filters_hash(list_source)
 

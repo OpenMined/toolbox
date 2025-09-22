@@ -1,6 +1,7 @@
 packages/notes_mcp/data/*
 .claude/settings.local.json
-*/.DS_Store
+**/.DS_Store
+.DS_Store
 
 data/*
 

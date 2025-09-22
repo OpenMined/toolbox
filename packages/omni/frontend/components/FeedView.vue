@@ -28,14 +28,20 @@
             "
           >
             <div
-              v-for="(bullet, index) in getSummaryBullets(
-                smartListsStore.currentListSummary,
-              )"
+              v-for="(bullet, index) in getDisplayedBullets()"
               :key="index"
               class="mb-1 cursor-pointer hover:text-blue-900 hover:bg-blue-100 px-1 py-0.5 rounded transition-colors"
               @click="handleBulletClick(bullet, index)"
               v-html="formatBulletWithReferences(bullet)"
             ></div>
+            <div v-if="shouldShowReadMore()" class="mt-3">
+              <button
+                @click="toggleExpanded"
+                class="text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100 px-2 py-1 rounded-md transition-colors font-medium"
+              >
+                {{ isExpanded ? "Read less" : "Read more" }}
+              </button>
+            </div>
           </div>
           <div
             v-else-if="
@@ -73,7 +79,7 @@
 </template>
 
 <script>
-import { onMounted, watch } from "vue";
+import { onMounted, watch, ref } from "vue";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import TweetItem from "./TweetItem.vue";
 
@@ -84,6 +90,8 @@ export default {
   },
   setup() {
     const smartListsStore = useSmartListsStore();
+    const isExpanded = ref(false);
+    const maxBulletsCollapsed = 3;
 
     // Generate summary when list changes
     watch(
@@ -154,13 +162,34 @@ export default {
       const referencePattern = /(\[[\d,\s]+\])$/;
       const match = bullet.match(referencePattern);
 
+      let text = match ? bullet.replace(referencePattern, "") : bullet;
+
+      // Format markdown bold text
+      text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
+
       if (match) {
-        const text = bullet.replace(referencePattern, "");
         const references = match[1];
         return `${text} <span class="text-xs text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded-md ml-1 font-mono">${references}</span>`;
       }
 
-      return bullet;
+      return text;
+    };
+
+    const getDisplayedBullets = () => {
+      const allBullets = getSummaryBullets(smartListsStore.currentListSummary);
+      if (isExpanded.value || allBullets.length <= maxBulletsCollapsed) {
+        return allBullets;
+      }
+      return allBullets.slice(0, maxBulletsCollapsed);
+    };
+
+    const shouldShowReadMore = () => {
+      const allBullets = getSummaryBullets(smartListsStore.currentListSummary);
+      return allBullets.length > maxBulletsCollapsed;
+    };
+
+    const toggleExpanded = () => {
+      isExpanded.value = !isExpanded.value;
     };
 
     return {
@@ -170,6 +199,10 @@ export default {
       getSummaryBullets,
       handleBulletClick,
       formatBulletWithReferences,
+      getDisplayedBullets,
+      shouldShowReadMore,
+      toggleExpanded,
+      isExpanded,
     };
   },
 };

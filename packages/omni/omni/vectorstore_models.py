@@ -35,6 +35,7 @@ class Tweet(TBDocument):
     # Additional content
     note_tweet_text: str | None = None
     media_urls: str | None = None
+    media: str | None = None  # JSON field for complete media information
     urls: str | None = None
     hashtags: str | None = None
     user_mentions: str | None = None
@@ -74,6 +75,7 @@ class Tweet(TBDocument):
             ("bookmarked", "BOOLEAN"),
             ("note_tweet_text", "TEXT"),
             ("media_urls", "TEXT"),
+            ("media", "TEXT"),  # JSON
             ("urls", "TEXT"),
             ("hashtags", "TEXT"),
             ("user_mentions", "TEXT"),
@@ -281,6 +283,17 @@ class Tweet(TBDocument):
                 "user_id": in_reply_to_user_id,
             }
 
+        # Extract media information - keep it simple, just store the complete media array as JSON string
+        media_data = None
+        if (
+            legacy
+            and "extended_entities" in legacy
+            and "media" in legacy["extended_entities"]
+        ):
+            media_data = json.dumps(legacy["extended_entities"]["media"])
+        elif legacy and "entities" in legacy and "media" in legacy["entities"]:
+            media_data = json.dumps(legacy["entities"]["media"])
+
         return cls(
             id=tweet_id,
             tweet_id=tweet_id,
@@ -294,6 +307,7 @@ class Tweet(TBDocument):
             lang=legacy.get("lang"),
             retweet_count=legacy.get("retweet_count", 0),
             favorite_count=legacy.get("favorite_count", 0),
+            media=media_data,
             tweet_type=tweet_type,
             interaction_context=interaction_context,
         )
@@ -312,6 +326,9 @@ class Tweet(TBDocument):
 
         if "author" in row_dict and isinstance(row_dict["author"], str):
             row_dict["author"] = json.loads(row_dict["author"])
+
+        # Keep media as JSON string for frontend consumption
+        # Don't parse media field - leave it as JSON string
 
         if "interaction_context" in row_dict and isinstance(
             row_dict["interaction_context"], str
