@@ -122,6 +122,20 @@ async def get_followed_smart_lists(user_email: str = "dev@example.com"):
     return followed_lists
 
 
+@app.get("/smart-lists/not_following", response_model=List[SmartList])
+async def get_not_following_smart_lists(user_email: str = "dev@example.com"):
+    """Get smart lists that the user is not following"""
+    with get_omni_connection() as conn:
+        followed_list_ids = get_followed_list_ids(conn, user_email)
+
+    all_lists = get_mock_smart_lists()
+    not_following_lists = [
+        list_item for list_item in all_lists if list_item["id"] not in followed_list_ids
+    ]
+
+    return not_following_lists
+
+
 @app.post("/smart-lists/{list_id}/follow")
 async def follow_smart_list(list_id: int, user_email: str = "dev@example.com"):
     """Follow a smart list"""

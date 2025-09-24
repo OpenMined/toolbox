@@ -8,7 +8,7 @@
         </div>
         <h1 class="text-4xl font-light text-gray-900 mb-4">Welcome to Omni</h1>
         <p class="text-lg text-gray-600 font-light">
-          Topic based insights from your data
+          Follow topics from multiple platforms
         </p>
       </div>
 
@@ -16,61 +16,155 @@
       <div class="space-y-20">
         <!-- Lists Overview -->
         <div>
-          <div class="flex items-center justify-between mb-8">
+          <div class="mb-8">
             <h2 class="text-2xl font-light text-gray-900">Your Lists</h2>
-            <button
-              @click="createNewList"
-              class="text-blue-600 hover:text-blue-700 font-medium transition-colors"
-            >
-              Create list
-            </button>
           </div>
 
+          <!-- Your Followed Lists -->
           <div
             v-if="smartListsStore.smartLists.length > 0"
-            class="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+            class="space-y-2 max-w-2xl mx-auto"
           >
             <div
               v-for="list in smartListsStore.smartLists"
               :key="list.id"
-              @click="openList(list.id)"
-              class="p-6 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200"
+              class="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
             >
-              <h3 class="font-medium text-gray-900 mb-2">{{ list.name }}</h3>
-              <p class="text-sm text-gray-600">{{ list.itemCount }} items</p>
+              <div
+                class="flex-1 min-w-0 cursor-pointer"
+                @click="openList(list.id)"
+              >
+                <h4 class="font-medium text-gray-900 text-sm mb-1">
+                  {{ list.name }}
+                </h4>
+                <div class="flex flex-wrap gap-1 mb-1">
+                  <span
+                    v-for="author in getAuthorsFromList(list)"
+                    :key="author"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                  >
+                    {{ author }}
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500">{{ list.itemCount }} items</p>
+              </div>
+              <div class="ml-3 flex-shrink-0">
+                <button
+                  @click.stop="unfollowList(list.id)"
+                  class="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
+                >
+                  Unfollow
+                </button>
+              </div>
             </div>
           </div>
 
-          <div v-else class="text-center py-12">
+          <!-- Empty State for Your Lists -->
+          <div
+            v-else
+            class="text-center py-4 bg-gray-50 rounded-lg border border-gray-200"
+          >
+            <p class="text-gray-600 text-sm">
+              You haven't followed any lists yet
+            </p>
+          </div>
+        </div>
+
+        <!-- Available Lists to Explore -->
+        <div v-if="availableListsToFollow.length > 0">
+          <div class="mb-8">
+            <h2 class="text-2xl font-light text-gray-900">Community Lists</h2>
+            <p class="text-gray-600 mt-2">
+              Discover and follow existing smart lists
+            </p>
+          </div>
+
+          <div class="space-y-2 max-w-2xl mx-auto">
             <div
-              class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center"
+              v-for="list in availableListsToFollow"
+              :key="list.id"
+              class="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
             >
-              <svg
-                class="w-8 h-8 text-gray-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-                ></path>
-              </svg>
+              <div class="flex-1 min-w-0">
+                <h4 class="font-medium text-gray-900 text-sm mb-1">
+                  {{ list.name }}
+                </h4>
+                <div class="flex flex-wrap gap-1 mb-1">
+                  <span
+                    v-for="author in getAuthorsFromList(list)"
+                    :key="author"
+                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                  >
+                    {{ author }}
+                  </span>
+                </div>
+                <p class="text-xs text-gray-500">{{ list.itemCount }} items</p>
+              </div>
+              <div class="ml-3 flex-shrink-0">
+                <button
+                  @click="followAndOpenList(list.id)"
+                  class="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
+                >
+                  Follow
+                </button>
+              </div>
             </div>
-            <p class="text-gray-600 mb-4">No lists created yet</p>
+          </div>
+
+          <div class="flex flex-col sm:flex-row gap-3 justify-center pt-6">
+            <button
+              @click="discoverLists"
+              class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+            >
+              Discover All Lists
+            </button>
             <button
               @click="createNewList"
-              class="text-blue-600 hover:text-blue-700 font-medium"
+              class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             >
-              Create your first list
+              Create Your Own
             </button>
           </div>
         </div>
 
+        <!-- Fallback if no lists exist at all -->
+        <div
+          v-if="allLists.length === 0"
+          class="text-center py-16 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200"
+        >
+          <div
+            class="w-16 h-16 mx-auto mb-6 bg-blue-50 rounded-full flex items-center justify-center"
+          >
+            <svg
+              class="w-8 h-8 text-blue-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+              ></path>
+            </svg>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">
+            No smart lists available
+          </h3>
+          <p class="text-gray-600 mb-6 max-w-sm mx-auto">
+            Be the first to create a smart list
+          </p>
+          <button
+            @click="createNewList"
+            class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+          >
+            Create Your First List
+          </button>
+        </div>
+
         <!-- Data Sources Overview -->
-        <div>
+        <!-- <div>
           <div class="flex items-center justify-between mb-8">
             <h2 class="text-2xl font-light text-gray-900">Data Sources</h2>
             <button
@@ -168,14 +262,14 @@
               Connect your first data source
             </button>
           </div>
-        </div>
+        </div> -->
 
         <!-- Getting Started -->
-        <div class="border-t border-gray-100 pt-20">
+        <!-- <div class="border-t border-gray-100 pt-20">
           <h2 class="text-2xl font-light text-gray-900 mb-8 text-center">
             Getting Started
           </h2>
-          <div class="grid gap-8 md:grid-cols-3">
+          <div class="grid gap-8 md:grid-cols-2 max-w-2xl mx-auto">
             <div class="text-center">
               <div
                 class="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center"
@@ -193,9 +287,9 @@
               <div
                 class="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center"
               >
-                <span class="text-lg font-medium text-blue-600">2</span>
+                <span class="text-lg font-medium text-blue-600">1</span>
               </div>
-              <h3 class="font-medium text-gray-900 mb-2">Create Lists</h3>
+              <h3 class="font-medium text-gray-900 mb-2">Follow existing Smart lists or Create your own</h3>
               <p class="text-sm text-gray-600">
                 Organize content with custom filters and criteria
               </p>
@@ -204,7 +298,7 @@
               <div
                 class="w-12 h-12 mx-auto mb-4 bg-blue-100 rounded-full flex items-center justify-center"
               >
-                <span class="text-lg font-medium text-blue-600">3</span>
+                <span class="text-lg font-medium text-blue-600">2</span>
               </div>
               <h3 class="font-medium text-gray-900 mb-2">Explore & Chat</h3>
               <p class="text-sm text-gray-600">
@@ -212,17 +306,19 @@
               </p>
             </div>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { computed } from "vue";
+import { computed, ref, onMounted } from "vue";
 import { useDataSourcesStore } from "../stores/dataSourcesStore";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import { useNewChatStore } from "../stores/newChatStore";
+import { useUserStore } from "../stores/userStore";
+import { apiClient } from "../api/client.js";
 
 export default {
   name: "WelcomePage",
@@ -230,14 +326,84 @@ export default {
     const dataSourcesStore = useDataSourcesStore();
     const smartListsStore = useSmartListsStore();
     const chatStore = useNewChatStore();
+    const userStore = useUserStore();
+
+    const allLists = ref([]);
 
     // Get connected data sources
     const connectedSources = computed(() => {
       return dataSourcesStore.connectedDataSources;
     });
 
+    // Get lists that are available to follow (not already followed)
+    const availableListsToFollow = computed(() => {
+      const followedListIds = smartListsStore.smartLists.map((list) => list.id);
+      return allLists.value.filter(
+        (list) => !followedListIds.includes(list.id),
+      );
+    });
+
+    const fetchAllLists = async () => {
+      try {
+        allLists.value = await apiClient.getSmartLists();
+      } catch (error) {
+        console.error("Failed to fetch all lists:", error);
+      }
+    };
+
+    const getAuthorsFromList = (list) => {
+      if (!list.listSources || !list.listSources.length) return [];
+
+      // Get authors from first data source
+      const firstSource = list.listSources[0];
+      if (firstSource.filters && firstSource.filters.authors) {
+        return firstSource.filters.authors.slice(0, 3); // Show max 3 authors
+      }
+      return [];
+    };
+
+    const followAndOpenList = async (listId) => {
+      try {
+        const userEmail = userStore.userEmail || "dev@example.com";
+        await apiClient.followSmartList(listId, userEmail);
+
+        // Refresh the sidebar lists
+        await smartListsStore.fetchSmartLists();
+
+        // Open the list
+        dataSourcesStore.closeDashboard();
+        await smartListsStore.setCurrentList(listId);
+        chatStore.closeChatPanel();
+        await chatStore.updateConversationsForList(listId);
+      } catch (error) {
+        console.error("Failed to follow and open list:", error);
+      }
+    };
+
+    const unfollowList = async (listId) => {
+      try {
+        const userEmail = userStore.userEmail || "dev@example.com";
+        await apiClient.unfollowSmartList(listId, userEmail);
+
+        // If we're currently viewing the unfollowed list, go to welcome page
+        if (smartListsStore.currentListId === listId) {
+          smartListsStore.currentListId = null;
+          dataSourcesStore.closeDashboard();
+        }
+
+        // Refresh the sidebar lists
+        await smartListsStore.fetchSmartLists();
+      } catch (error) {
+        console.error("Failed to unfollow list:", error);
+      }
+    };
+
     const createNewList = () => {
       dataSourcesStore.setDashboardView("CreateList");
+    };
+
+    const discoverLists = () => {
+      dataSourcesStore.setDashboardView("DiscoverListsPanel");
     };
 
     const manageConnectors = () => {
@@ -251,13 +417,24 @@ export default {
       await chatStore.updateConversationsForList(listId);
     };
 
+    onMounted(async () => {
+      // Fetch all lists when component mounts
+      await fetchAllLists();
+    });
+
     return {
       dataSourcesStore,
       smartListsStore,
       connectedSources,
+      allLists,
+      availableListsToFollow,
       createNewList,
+      discoverLists,
       manageConnectors,
       openList,
+      getAuthorsFromList,
+      followAndOpenList,
+      unfollowList,
     };
   },
 };

@@ -42,6 +42,28 @@ class APIClient {
     return this.request(`/smart-lists/followed?user_email=${userEmail}`);
   }
 
+  async getNotFollowingSmartLists(userEmail = "dev@example.com") {
+    return this.request(`/smart-lists/not_following?user_email=${userEmail}`);
+  }
+
+  async followSmartList(listId, userEmail = "dev@example.com") {
+    return this.request(
+      `/smart-lists/${listId}/follow?user_email=${userEmail}`,
+      {
+        method: "POST",
+      },
+    );
+  }
+
+  async unfollowSmartList(listId, userEmail = "dev@example.com") {
+    return this.request(
+      `/smart-lists/${listId}/follow?user_email=${userEmail}`,
+      {
+        method: "DELETE",
+      },
+    );
+  }
+
   async getSmartListItems(listId) {
     return this.request(`/smart-lists/${listId}/items`);
   }

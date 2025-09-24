@@ -78,6 +78,7 @@ import CreateList from "./components/CreateList.vue";
 import ConnectorManager from "./components/ConnectorManager.vue";
 import WelcomePage from "./components/WelcomePage.vue";
 import LoginModal from "./components/LoginModal.vue";
+import DiscoverListsPanel from "./components/DiscoverListsPanel.vue";
 
 export default {
   name: "App",
@@ -94,6 +95,7 @@ export default {
     ConnectorManager,
     WelcomePage,
     LoginModal,
+    DiscoverListsPanel,
   },
   setup() {
     const chatStore = useNewChatStore();
