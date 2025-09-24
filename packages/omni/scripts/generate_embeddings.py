@@ -21,7 +21,7 @@ def main():
     store = get_tweet_store()
     print(f"Connected to ToolboxStore at {store.db.db_path}")
 
-    batch_size = 100
+    batch_size = 1000
     total_processed = 0
 
     # First, get total count of docs without embeddings for progress bar

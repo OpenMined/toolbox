@@ -70,6 +70,11 @@ class ChunkQueryBuilder(Generic[T]):
         self._semantic_weight: float = 1.0
         self._keyword_weight: float = 1.0
 
+        self._rerank_query: str | None = None
+        self._rerank_model_name: str | None = None
+        self._rerank_model_type: str | None = None
+        self._rerank_model_kwargs: dict[str, Any] | None = None
+
     def semantic(self, query: str | list[float]) -> Self:
         self._semantic_query = query
         return self
@@ -118,6 +123,27 @@ class ChunkQueryBuilder(Generic[T]):
             self._keyword_weight = keyword_weight
         else:
             raise ValueError(f"Unsupported hybrid method: {method}")
+        return self
+
+    def rerank(
+        self,
+        rerank_query: str | None = None,
+        model_name: str = "answerdotai/answerai-colbert-small-v1",
+        model_type: str = "colbert",
+        **model_kwargs: Any,
+    ) -> Self:
+        """Rerank the final chunks using a specified reranker model."""
+        if rerank_query is None:
+            if not isinstance(self._semantic_query, str):
+                raise ValueError(
+                    "Rerank query must be provided if semantic query is not a string."
+                )
+            rerank_query = self._semantic_query
+
+        self._rerank_query = rerank_query
+        self._rerank_model_name = model_name
+        self._rerank_model_type = model_type
+        self._rerank_model_kwargs = model_kwargs
         return self
 
     def _execute_semantic_search(
@@ -188,21 +214,34 @@ class ChunkQueryBuilder(Generic[T]):
 
             # Apply final limit and offset
             end = offset + limit
-            return combined[offset:end]
+            chunks = combined[offset:end]
 
         # Single search mode
-        if self._semantic_query:
-            return self._execute_semantic_search(
+        elif self._semantic_query:
+            chunks = self._execute_semantic_search(
                 self._semantic_query, limit=self._chunk_limit, offset=self._chunk_offset
             )
 
-        if self._keyword_query:
-            return self._execute_keyword_search(
+        elif self._keyword_query:
+            chunks = self._execute_keyword_search(
                 self._keyword_query, limit=self._chunk_limit, offset=self._chunk_offset
             )
 
-        # Should never reach here given the initial check
-        return []
+        else:
+            chunks = []
+
+        if self._rerank_query is not None and len(chunks) > 0:
+            from toolbox_store.reranking import rerank_chunks
+
+            chunks = rerank_chunks(
+                chunks,
+                query=self._rerank_query,
+                model_name=self._rerank_model_name,
+                model_type=self._rerank_model_type,
+                **(self._rerank_model_kwargs or {}),
+            )
+
+        return chunks
 
     def get_documents(self) -> list[T]:
         chunks = self.get()
