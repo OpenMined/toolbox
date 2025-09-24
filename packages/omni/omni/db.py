@@ -23,11 +23,11 @@ def deserialize_float32(blob: bytes) -> list[float]:
     return np.frombuffer(blob, dtype=np.float32).tolist()
 
 
-def get_tweet_store() -> ToolboxStore:
+def get_tweet_store() -> ToolboxStore[Tweet]:
     """Get ToolboxStore instance for tweets"""
     config = StoreConfig()
     store_path = TWITTER_VECTORSTORE_DB_PATH
-    return ToolboxStore(
+    return ToolboxStore[Tweet](
         collection="tweets",
         db_path=str(store_path),
         config=config,

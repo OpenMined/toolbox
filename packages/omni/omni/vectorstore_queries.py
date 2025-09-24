@@ -60,12 +60,13 @@ def search_tweets(
                 .where({"id__in": [doc.id for doc in documents]})
                 .semantic(query_text)
                 .chunk_limit(limit * 10)
+                .rerank()
                 .get_documents()
             )
             documents = []
             for doc in res_documents:
-                distance = min(chunk.distance for chunk in doc.chunks)
-                if (1 - distance) >= similarity_threshold:
+                max_doc_score = max(chunk.score for chunk in doc.chunks)
+                if max_doc_score >= similarity_threshold:
                     documents.append(doc)
             print("got documents", len(documents))
 

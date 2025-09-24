@@ -246,16 +246,16 @@ class ChunkQueryBuilder(Generic[T]):
     def get_documents(self) -> list[T]:
         chunks = self.get()
         chunks_by_doc_id = {}
-        min_distance_by_doc_id = {}
+        max_score_by_doc_id = {}
 
-        # Group chunks by document and track minimum distance
+        # Group chunks by document and track maximum score
         for chunk in chunks:
             if chunk.document_id not in chunks_by_doc_id:
                 chunks_by_doc_id[chunk.document_id] = []
-                min_distance_by_doc_id[chunk.document_id] = chunk.distance
+                max_score_by_doc_id[chunk.document_id] = chunk.score
             chunks_by_doc_id[chunk.document_id].append(chunk)
-            min_distance_by_doc_id[chunk.document_id] = min(
-                min_distance_by_doc_id[chunk.document_id], chunk.distance
+            max_score_by_doc_id[chunk.document_id] = max(
+                max_score_by_doc_id[chunk.document_id], chunk.score
             )
 
         # Get documents from database
@@ -266,8 +266,10 @@ class ChunkQueryBuilder(Generic[T]):
         for doc in documents:
             doc.chunks = chunks_by_doc_id.get(doc.id, [])
 
-        # Sort documents by minimum chunk distance
-        documents.sort(key=lambda doc: min_distance_by_doc_id.get(doc.id, float("inf")))
+        # Sort documents by maximum chunk score (descending)
+        documents.sort(
+            key=lambda doc: max_score_by_doc_id.get(doc.id, float("-inf")), reverse=True
+        )
 
         return documents
 
@@ -302,7 +304,7 @@ def combine_rrf(
         )
 
     # Calculate RRF scores
-    rrf_scores = {}
+    rrf_scores: dict[tuple[str, int], float] = {}
 
     # Add weighted scores from each result set
     for weight, results in zip(weights, result_sets):
@@ -311,7 +313,7 @@ def combine_rrf(
             rrf_scores[key] = rrf_scores.get(key, 0) + weight * (1 / (k + rank))
 
     # Build a map of keys to chunks (first occurrence wins)
-    chunk_map = {}
+    chunk_map: dict[tuple[str, int], RetrievedChunk] = {}
     for results in result_sets:
         for chunk in results:
             key = (chunk.document_id, chunk.chunk_idx)
@@ -325,7 +327,7 @@ def combine_rrf(
     for key, score in sorted_keys:
         chunk = chunk_map[key]
         # Store RRF score as negative distance (so higher score = lower distance)
-        chunk.distance = -score
+        chunk.score = score
         results.append(chunk)
 
     return results
