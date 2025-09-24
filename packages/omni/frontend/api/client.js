@@ -38,6 +38,10 @@ class APIClient {
     return this.request("/smart-lists");
   }
 
+  async getFollowedSmartLists(userEmail = "dev@example.com") {
+    return this.request(`/smart-lists/followed?user_email=${userEmail}`);
+  }
+
   async getSmartListItems(listId) {
     return this.request(`/smart-lists/${listId}/items`);
   }
@@ -58,6 +62,17 @@ class APIClient {
       method: "POST",
       body: JSON.stringify({ question, context }),
     });
+  }
+
+  async registerUser(userData) {
+    return this.request("/users/register", {
+      method: "POST",
+      body: JSON.stringify(userData),
+    });
+  }
+
+  async getUser(email) {
+    return this.request(`/users/${email}`);
   }
 }
 

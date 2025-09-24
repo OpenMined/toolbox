@@ -11,9 +11,9 @@ from toolbox_store.models import StoreConfig
 from .vectorstore_models import Tweet
 
 HOME = Path.home()
-TWITTER_MCP_DB_PATH = HOME / ".twitter-mcp" / "db.sqlite"
+OMNI_DB_PATH = HOME / ".twitter-mcp" / "db.sqlite"
 TWITTER_VECTORSTORE_DB_PATH = HOME / ".twitter-mcp" / "tweet_toolbox_store.db"
-TWITTER_MCP_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+OMNI_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
 
 EMBEDDINGS_TABLE = "tweet_embeddings_vec"
 EMBEDDINGS_LEN = 768
@@ -35,7 +35,7 @@ def get_tweet_store() -> ToolboxStore:
     )
 
 
-def _get_twitter_connection(path: Path = TWITTER_MCP_DB_PATH):
+def _get_omni_connection(path: Path = OMNI_DB_PATH):
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
 
@@ -47,8 +47,8 @@ def _get_twitter_connection(path: Path = TWITTER_MCP_DB_PATH):
 
 
 @contextmanager
-def get_twitter_connection(path: Path = TWITTER_MCP_DB_PATH):
-    conn = _get_twitter_connection(path)
+def get_omni_connection(path: Path = OMNI_DB_PATH):
+    conn = _get_omni_connection(path)
     try:
         yield conn
     finally:
@@ -57,66 +57,6 @@ def get_twitter_connection(path: Path = TWITTER_MCP_DB_PATH):
 
 def create_tables(conn):
     cursor = conn.cursor()
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS authors (
-        id TEXT PRIMARY KEY,
-        username TEXT NOT NULL,
-        screen_name TEXT NOT NULL,
-        name TEXT NOT NULL,
-        description TEXT,
-        avatar_url TEXT,
-        banner_url TEXT,
-        followers_count INTEGER,
-        following_count INTEGER,
-        statuses_count INTEGER,
-        verified BOOLEAN,
-        blue_verified BOOLEAN,
-        location TEXT,
-        created_at TEXT
-    )
-    """)
-
-    cursor.execute("""
-    CREATE TABLE IF NOT EXISTS tweets (
-        id TEXT PRIMARY KEY,
-        author_id TEXT NOT NULL,
-        text TEXT NOT NULL,
-        created_at TEXT NOT NULL,
-        conversation_id TEXT,
-        in_reply_to_user_id TEXT,
-        in_reply_to_status_id TEXT,
-        lang TEXT,
-        retweet_count INTEGER DEFAULT 0,
-        favorite_count INTEGER DEFAULT 0,
-        reply_count INTEGER DEFAULT 0,
-        quote_count INTEGER DEFAULT 0,
-        bookmark_count INTEGER DEFAULT 0,
-        view_count INTEGER DEFAULT 0,
-        is_quote_status BOOLEAN DEFAULT FALSE,
-        possibly_sensitive BOOLEAN DEFAULT FALSE,
-        retweeted BOOLEAN DEFAULT FALSE,
-        favorited BOOLEAN DEFAULT FALSE,
-        bookmarked BOOLEAN DEFAULT FALSE,
-        note_tweet_text TEXT,
-        media_urls TEXT,
-        urls TEXT,
-        hashtags TEXT,
-        user_mentions TEXT,
-        source TEXT,
-        FOREIGN KEY (author_id) REFERENCES authors(id)
-    )
-    """)
-
-    cursor.execute(
-        f"""
-            create virtual table if not exists {EMBEDDINGS_TABLE} using vec0(
-                sample_embedding float[{EMBEDDINGS_LEN}] distance_metric=cosine,
-                tweet_text text,
-                tweet_id text,
-            );
-        """
-    )
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS smart_list_summaries (
@@ -128,6 +68,22 @@ def create_tables(conn):
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
         PRIMARY KEY (list_id, filters_hash)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS followed_lists (
+        user_email TEXT NOT NULL,
+        list_id INTEGER NOT NULL,
+        PRIMARY KEY (user_email, list_id)
+    )
+    """)
+
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        created_at TEXT NOT NULL
     )
     """)
 
@@ -310,15 +266,15 @@ def create_tables(conn):
 #     return cursor.fetchone()[0]
 
 
-def get_cached_summary(conn, list_id, filters_hash):
-    """Get cached summary if available"""
-    cursor = conn.cursor()
-    cursor.execute(
-        "SELECT summary, status, model FROM smart_list_summaries WHERE list_id = ? AND filters_hash = ?",
-        (list_id, filters_hash),
-    )
-    result = cursor.fetchone()
-    return result if result else None
+# def get_cached_summary(conn, list_id, filters_hash):
+#     """Get cached summary if available"""
+#     cursor = conn.cursor()
+#     cursor.execute(
+#         "SELECT summary, status, model FROM smart_list_summaries WHERE list_id = ? AND filters_hash = ?",
+#         (list_id, filters_hash),
+#     )
+#     result = cursor.fetchone()
+#     return result if result else None
 
 
 def upsert_summary(
@@ -336,3 +292,81 @@ def upsert_summary(
         (list_id, filters_hash, summary, status, model, now, now),
     )
     conn.commit()
+
+
+def follow_list(conn, user_email: str, list_id: int):
+    """Follow a smart list for a user"""
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO followed_lists (user_email, list_id)
+        VALUES (?, ?)
+        """,
+        (user_email, list_id),
+    )
+    conn.commit()
+
+
+def unfollow_list(conn, user_email: str, list_id: int):
+    """Unfollow a smart list for a user"""
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        DELETE FROM followed_lists
+        WHERE user_email = ? AND list_id = ?
+        """,
+        (user_email, list_id),
+    )
+    conn.commit()
+
+
+def get_followed_list_ids(conn, user_email: str):
+    """Get list of followed list IDs for a user"""
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT list_id FROM followed_lists WHERE user_email = ?",
+        (user_email,),
+    )
+    return [row[0] for row in cursor.fetchall()]
+
+
+def is_list_followed(conn, user_email: str, list_id: int):
+    """Check if a user is following a specific list"""
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT 1 FROM followed_lists WHERE user_email = ? AND list_id = ?",
+        (user_email, list_id),
+    )
+    return cursor.fetchone() is not None
+
+
+def create_user(conn, email: str):
+    """Create a new user or return existing user"""
+    cursor = conn.cursor()
+    now = datetime.now().isoformat()
+
+    cursor.execute(
+        """
+        INSERT OR IGNORE INTO users (email, created_at)
+        VALUES (?, ?)
+        """,
+        (email, now),
+    )
+    conn.commit()
+
+    # Return the user
+    cursor.execute("SELECT id, email, created_at FROM users WHERE email = ?", (email,))
+    return cursor.fetchone()
+
+
+def get_user_by_email(conn, email: str):
+    """Get user by email"""
+    cursor = conn.cursor()
+    cursor.execute("SELECT id, email, created_at FROM users WHERE email = ?", (email,))
+    return cursor.fetchone()
+
+
+def initialize_dev_user():
+    """Initialize the dev@example.com user for development"""
+    with get_omni_connection() as conn:
+        return create_user(conn, "dev@example.com")

@@ -1,42 +1,61 @@
 <template>
   <div class="flex h-screen bg-gray-50">
-    <!-- Left Sidebar -->
-    <div class="w-64 bg-white border-r border-gray-200">
-      <LeftSidebar />
-    </div>
-
-    <!-- Main Content Area -->
-    <div class="flex-1 flex" v-if="!dataSourcesStore.showDashboard">
-      <!-- Welcome Page (default) -->
-      <div v-if="!smartListsStore.currentListId" class="flex-1">
-        <WelcomePage />
-      </div>
-
-      <!-- List View -->
-      <div v-else class="flex-1 flex">
-        <!-- Middle Panel -->
+    <!-- Loading State -->
+    <div
+      v-if="userStore.loading && !userStore.isLoggedIn"
+      class="flex-1 flex items-center justify-center"
+    >
+      <div class="text-center">
         <div
-          class="flex flex-col"
-          :class="chatStore.isChatPanelOpen ? 'flex-1' : 'flex-1'"
-        >
-          <MiddlePanel />
-        </div>
-
-        <!-- Right Panel (Chat) - Only show when chat panel is open -->
-        <div
-          v-if="chatStore.isChatPanelOpen"
-          class="flex-1 bg-white border-l border-gray-200"
-          :class="{ highlighted: chatStore.isHighlighted }"
-        >
-          <RightPanel />
-        </div>
+          class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"
+        ></div>
+        <p class="mt-4 text-gray-600">Loading...</p>
       </div>
     </div>
 
-    <!-- Dashboard View -->
-    <div class="flex-1 flex flex-col" v-else>
-      <component :is="dataSourcesStore.currentDashboard" />
-    </div>
+    <!-- Main App Content (only show when authenticated) -->
+    <template v-else-if="userStore.isLoggedIn">
+      <!-- Left Sidebar -->
+      <div class="w-64 bg-white border-r border-gray-200">
+        <LeftSidebar />
+      </div>
+
+      <!-- Main Content Area -->
+      <div class="flex-1 flex" v-if="!dataSourcesStore.showDashboard">
+        <!-- Welcome Page (default) -->
+        <div v-if="!smartListsStore.currentListId" class="flex-1">
+          <WelcomePage />
+        </div>
+
+        <!-- List View -->
+        <div v-else class="flex-1 flex">
+          <!-- Middle Panel -->
+          <div
+            class="flex flex-col"
+            :class="chatStore.isChatPanelOpen ? 'flex-1' : 'flex-1'"
+          >
+            <MiddlePanel />
+          </div>
+
+          <!-- Right Panel (Chat) - Only show when chat panel is open -->
+          <div
+            v-if="chatStore.isChatPanelOpen"
+            class="flex-1 bg-white border-l border-gray-200"
+            :class="{ highlighted: chatStore.isHighlighted }"
+          >
+            <RightPanel />
+          </div>
+        </div>
+      </div>
+
+      <!-- Dashboard View -->
+      <div class="flex-1 flex flex-col" v-else>
+        <component :is="dataSourcesStore.currentDashboard" />
+      </div>
+    </template>
+
+    <!-- Login Modal -->
+    <LoginModal />
   </div>
 </template>
 
@@ -46,6 +65,7 @@ import { useNewChatStore } from "./stores/newChatStore";
 import { useDataSourcesStore } from "./stores/dataSourcesStore";
 import { useSmartListsStore } from "./stores/smartListsStore";
 import { useDataCollectionsStore } from "./stores/dataCollectionsStore";
+import { useUserStore } from "./stores/userStore";
 import LeftSidebar from "./components/LeftSidebar.vue";
 import MiddlePanel from "./components/MiddlePanel.vue";
 import RightPanel from "./components/RightPanel.vue";
@@ -57,6 +77,7 @@ import AddList from "./components/AddList.vue";
 import CreateList from "./components/CreateList.vue";
 import ConnectorManager from "./components/ConnectorManager.vue";
 import WelcomePage from "./components/WelcomePage.vue";
+import LoginModal from "./components/LoginModal.vue";
 
 export default {
   name: "App",
@@ -72,27 +93,34 @@ export default {
     CreateList,
     ConnectorManager,
     WelcomePage,
+    LoginModal,
   },
   setup() {
     const chatStore = useNewChatStore();
     const dataSourcesStore = useDataSourcesStore();
     const smartListsStore = useSmartListsStore();
     const dataCollectionsStore = useDataCollectionsStore();
+    const userStore = useUserStore();
 
     onMounted(async () => {
-      // Initialize all stores by fetching data
-      try {
-        await Promise.all([
-          dataSourcesStore.fetchDataSources(),
-          dataCollectionsStore.fetchCollections(),
-          smartListsStore.fetchSmartLists(),
-        ]);
+      // Initialize authentication first
+      await userStore.initializeAuth();
 
-        chatStore.initializeDefaultConversations();
-        // Start with no list selected to show welcome page
-        smartListsStore.currentListId = null;
-      } catch (error) {
-        console.error("Failed to initialize app stores:", error);
+      // Only initialize other stores if user is authenticated
+      if (userStore.isLoggedIn) {
+        try {
+          await Promise.all([
+            dataSourcesStore.fetchDataSources(),
+            dataCollectionsStore.fetchCollections(),
+            smartListsStore.fetchSmartLists(),
+          ]);
+
+          chatStore.initializeDefaultConversations();
+          // Start with no list selected to show welcome page
+          smartListsStore.currentListId = null;
+        } catch (error) {
+          console.error("Failed to initialize app stores:", error);
+        }
       }
     });
 
@@ -101,6 +129,7 @@ export default {
       dataSourcesStore,
       smartListsStore,
       dataCollectionsStore,
+      userStore,
     };
   },
 };

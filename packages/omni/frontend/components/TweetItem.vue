@@ -38,6 +38,13 @@
           >
           <span class="text-gray-500">·</span>
           <span class="text-gray-500 text-sm">{{ item.timestamp }}</span>
+          <span v-if="item.similarity_score" class="text-gray-500">·</span>
+          <span
+            v-if="item.similarity_score"
+            class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full"
+          >
+            {{ Math.round(item.similarity_score * 100) }}% match
+          </span>
         </div>
 
         <!-- Tweet text -->

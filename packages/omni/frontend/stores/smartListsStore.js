@@ -50,10 +50,15 @@ export const useSmartListsStore = defineStore("smartLists", {
       this.error = null;
 
       try {
-        this.smartLists = await apiClient.getSmartLists();
+        // Get current user email from user store
+        const { useUserStore } = await import("./userStore.js");
+        const userStore = useUserStore();
+        const userEmail = userStore.userEmail || "dev@example.com";
+
+        this.smartLists = await apiClient.getFollowedSmartLists(userEmail);
       } catch (error) {
         this.error = error.message;
-        console.error("Failed to fetch smart lists:", error);
+        console.error("Failed to fetch followed smart lists:", error);
       } finally {
         this.loading = false;
       }

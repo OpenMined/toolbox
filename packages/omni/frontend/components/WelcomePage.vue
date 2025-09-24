@@ -8,7 +8,7 @@
         </div>
         <h1 class="text-4xl font-light text-gray-900 mb-4">Welcome to Omni</h1>
         <p class="text-lg text-gray-600 font-light">
-          Broad listening to the web and your private data
+          Topic based insights from your data
         </p>
       </div>
 

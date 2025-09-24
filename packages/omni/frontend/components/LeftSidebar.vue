@@ -21,7 +21,7 @@
     </div>
 
     <!-- Data Connections Section -->
-    <div class="mb-6">
+    <!-- <div class="mb-6">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-medium text-gray-900">Data Connections</h3>
         <button
@@ -70,7 +70,7 @@
           </span>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Lists Section -->
     <div class="flex-1">
@@ -131,7 +131,7 @@ export default {
     const chatStore = useNewChatStore();
 
     // Mock user account data - this would come from an auth store in a real app
-    const userAccount = { email: "user@example.com" };
+    const userAccount = { email: "dev@example.com" };
 
     const getUserAvatarUrl = () => {
       const username = userAccount.email.split("@")[0];

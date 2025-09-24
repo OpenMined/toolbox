@@ -85,3 +85,18 @@ class SummaryResponse(BaseModel):
     summary: str
     status: str
     model: Optional[str] = None
+
+
+class UserCreate(BaseModel):
+    email: str
+
+
+class User(BaseModel):
+    id: int
+    email: str
+    created_at: str
+
+    @classmethod
+    def from_sql_row(cls, row):
+        """Create User instance from SQLite row"""
+        return cls(id=row[0], email=row[1], created_at=row[2])
