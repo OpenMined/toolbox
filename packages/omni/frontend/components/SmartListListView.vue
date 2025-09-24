@@ -6,20 +6,33 @@
       class="p-4 bg-white rounded-lg border border-gray-200 hover:border-gray-300 transition-colors"
     >
       <div class="flex items-center justify-between">
-        <div class="flex-1 min-w-0">
-          <h3 class="text-sm font-medium text-gray-900 truncate">
-            {{ list.name }}
-          </h3>
-          <div class="mt-1 flex flex-wrap gap-1">
-            <span
-              v-for="author in getAuthorsFromList(list)"
-              :key="author"
-              class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
-            >
-              {{ author }}
-            </span>
+        <div class="flex items-center space-x-3 flex-1 min-w-0">
+          <img
+            :src="`https://ui-avatars.com/api/?name=${encodeURIComponent(
+              list.name,
+            )}&size=40&background=random&color=fff`"
+            :alt="list.name"
+            class="w-10 h-10 rounded-full flex-shrink-0"
+          />
+          <div
+            class="flex-1 min-w-0"
+            :class="{ 'cursor-pointer': clickable }"
+            @click="clickable ? handleClick(list.id) : null"
+          >
+            <h3 class="text-sm font-medium text-gray-900 truncate">
+              {{ list.name }}
+            </h3>
+            <div class="mt-1 flex flex-wrap gap-1">
+              <span
+                v-for="author in getAuthorsFromList(list)"
+                :key="author"
+                class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"
+              >
+                {{ author }}
+              </span>
+            </div>
+            <p class="mt-1 text-xs text-gray-500">{{ list.itemCount }} items</p>
           </div>
-          <p class="mt-1 text-xs text-gray-500">{{ list.itemCount }} items</p>
         </div>
 
         <div class="ml-4 flex-shrink-0">
@@ -27,7 +40,7 @@
             v-if="showFollowButton"
             @click="handleFollow(list.id)"
             :disabled="loading"
-            class="inline-flex items-center px-3 py-1.5 border border-blue-300 text-xs font-medium rounded-md text-blue-700 bg-white hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+            class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-blue-600 bg-blue-50 hover:bg-blue-100 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 transition-colors"
           >
             <span v-if="!loading">Follow</span>
             <svg
@@ -57,7 +70,7 @@
             v-if="showUnfollowButton"
             @click="handleUnfollow(list.id)"
             :disabled="loading"
-            class="inline-flex items-center px-3 py-1.5 border border-red-300 text-xs font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50"
+            class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 transition-colors"
           >
             <span v-if="!loading">Unfollow</span>
             <svg
@@ -106,8 +119,12 @@ export default {
       type: Boolean,
       default: false,
     },
+    clickable: {
+      type: Boolean,
+      default: false,
+    },
   },
-  emits: ["follow", "unfollow"],
+  emits: ["follow", "unfollow", "click"],
   setup(props, { emit }) {
     const loading = ref(false);
 
@@ -140,11 +157,16 @@ export default {
       }
     };
 
+    const handleClick = (listId) => {
+      emit("click", listId);
+    };
+
     return {
       loading,
       getAuthorsFromList,
       handleFollow,
       handleUnfollow,
+      handleClick,
     };
   },
 };

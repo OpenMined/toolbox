@@ -21,42 +21,14 @@
           </div>
 
           <!-- Your Followed Lists -->
-          <div
-            v-if="smartListsStore.smartLists.length > 0"
-            class="space-y-2 max-w-2xl mx-auto"
-          >
-            <div
-              v-for="list in smartListsStore.smartLists"
-              :key="list.id"
-              class="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
-            >
-              <div
-                class="flex-1 min-w-0 cursor-pointer"
-                @click="openList(list.id)"
-              >
-                <h4 class="font-medium text-gray-900 text-sm mb-1">
-                  {{ list.name }}
-                </h4>
-                <div class="flex flex-wrap gap-1 mb-1">
-                  <span
-                    v-for="author in getAuthorsFromList(list)"
-                    :key="author"
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                  >
-                    {{ author }}
-                  </span>
-                </div>
-                <p class="text-xs text-gray-500">{{ list.itemCount }} items</p>
-              </div>
-              <div class="ml-3 flex-shrink-0">
-                <button
-                  @click.stop="unfollowList(list.id)"
-                  class="px-3 py-1 text-sm font-medium text-red-600 hover:text-red-700 hover:bg-red-50 rounded transition-colors"
-                >
-                  Unfollow
-                </button>
-              </div>
-            </div>
+          <div v-if="smartListsStore.smartLists.length > 0" class="max-w-2xl">
+            <SmartListListView
+              :lists="smartListsStore.smartLists"
+              :show-unfollow-button="true"
+              :clickable="true"
+              @unfollow="unfollowList"
+              @click="openList"
+            />
           </div>
 
           <!-- Empty State for Your Lists -->
@@ -79,36 +51,12 @@
             </p>
           </div>
 
-          <div class="space-y-2 max-w-2xl mx-auto">
-            <div
-              v-for="list in availableListsToFollow"
-              :key="list.id"
-              class="flex items-center justify-between p-3 border border-gray-200 rounded-md hover:border-gray-300 hover:bg-gray-50 transition-all duration-200"
-            >
-              <div class="flex-1 min-w-0">
-                <h4 class="font-medium text-gray-900 text-sm mb-1">
-                  {{ list.name }}
-                </h4>
-                <div class="flex flex-wrap gap-1 mb-1">
-                  <span
-                    v-for="author in getAuthorsFromList(list)"
-                    :key="author"
-                    class="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
-                  >
-                    {{ author }}
-                  </span>
-                </div>
-                <p class="text-xs text-gray-500">{{ list.itemCount }} items</p>
-              </div>
-              <div class="ml-3 flex-shrink-0">
-                <button
-                  @click="followAndOpenList(list.id)"
-                  class="px-3 py-1 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded transition-colors"
-                >
-                  Follow
-                </button>
-              </div>
-            </div>
+          <div class="max-w-2xl">
+            <SmartListListView
+              :lists="availableListsToFollow"
+              :show-follow-button="true"
+              @follow="followAndOpenList"
+            />
           </div>
 
           <div class="flex flex-col sm:flex-row gap-3 justify-center pt-6">
@@ -319,9 +267,13 @@ import { useSmartListsStore } from "../stores/smartListsStore";
 import { useNewChatStore } from "../stores/newChatStore";
 import { useUserStore } from "../stores/userStore";
 import { apiClient } from "../api/client.js";
+import SmartListListView from "./SmartListListView.vue";
 
 export default {
   name: "WelcomePage",
+  components: {
+    SmartListListView,
+  },
   setup() {
     const dataSourcesStore = useDataSourcesStore();
     const smartListsStore = useSmartListsStore();
@@ -349,17 +301,6 @@ export default {
       } catch (error) {
         console.error("Failed to fetch all lists:", error);
       }
-    };
-
-    const getAuthorsFromList = (list) => {
-      if (!list.listSources || !list.listSources.length) return [];
-
-      // Get authors from first data source
-      const firstSource = list.listSources[0];
-      if (firstSource.filters && firstSource.filters.authors) {
-        return firstSource.filters.authors.slice(0, 3); // Show max 3 authors
-      }
-      return [];
     };
 
     const followAndOpenList = async (listId) => {
@@ -432,7 +373,6 @@ export default {
       discoverLists,
       manageConnectors,
       openList,
-      getAuthorsFromList,
       followAndOpenList,
       unfollowList,
     };
