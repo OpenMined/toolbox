@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 authors = [
-    { name = "Koen van der Veen", email = "koenlennartvanderveen@gmail.com" }
+    { name = "Koen van der Veen", email = "koenlennartvanderveen@gmail.com" },
 ]
 requires-python = ">=3.12"
 dependencies = [
@@ -16,10 +16,8 @@ dependencies = [
     "sqlite-vec>=0.1.6",
     "toolbox_store",
     "tqdm>=4.67.1",
+    "apscheduler>=3.11.0",
 ]
-
-[tool.uv.sources]
-toolbox_store = { git = "https://github.com/OpenMined/toolbox.git", subdirectory = "packages/toolbox_store", rev = "broad-listening" }
 
 
 [build-system]
