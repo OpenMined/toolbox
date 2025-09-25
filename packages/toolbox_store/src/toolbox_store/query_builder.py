@@ -17,6 +17,7 @@ class DocumentQueryBuilder(Generic[T]):
         self._filters: dict[str, Any] | None = None
         self._limit: int | None = None
         self._offset: int = 0
+        self._score_threshold: float | None = None
 
         self._order_by: str = "id"
         self._sort_ascending: bool = True
@@ -75,8 +76,11 @@ class ChunkQueryBuilder(Generic[T]):
         self._rerank_model_type: str | None = None
         self._rerank_model_kwargs: dict[str, Any] | None = None
 
-    def semantic(self, query: str | list[float]) -> Self:
+    def semantic(
+        self, query: str | list[float], score_threshold: float | None = None
+    ) -> Self:
         self._semantic_query = query
+        self._score_threshold = score_threshold
         return self
 
     def keyword(self, query: str) -> Self:
@@ -167,6 +171,8 @@ class ChunkQueryBuilder(Generic[T]):
             query_args["offset"] = offset
         if self._filters is not None:
             query_args["filters"] = self._filters
+        if self._score_threshold is not None:
+            query_args["score_threshold"] = self._score_threshold
 
         return self.store.db.semantic_search(**query_args)
 
@@ -326,7 +332,6 @@ def combine_rrf(
     results = []
     for key, score in sorted_keys:
         chunk = chunk_map[key]
-        # Store RRF score as negative distance (so higher score = lower distance)
         chunk.score = score
         results.append(chunk)
 

@@ -320,17 +320,24 @@ class TBDatabase(Generic[T]):
         filters: dict[str, Any] | None = None,
         limit: int = 10,
         offset: int = 0,
+        score_threshold: float | None = None,
     ) -> list[RetrievedChunk]:
         """
         Perform semantic search using a query embedding.
         Returns list of RetrievedEmbedding objects with distance scores.
         """
 
+        if score_threshold is not None:
+            distance_threshold = 1 - score_threshold
+        else:
+            distance_threshold = None
+
         params_dict = {
             "query_embedding": sqlite_vec.serialize_float32(query_embedding),
             "limit": limit,
             "offset": offset,
             "total_limit": limit + offset,
+            "distance_threshold": distance_threshold,
         }
 
         if filters:
@@ -345,8 +352,13 @@ class TBDatabase(Generic[T]):
         else:
             where_clause, where_params = "", None
 
+        # Add distance threshold filter if provided (applied in outer query due to sqlite-vec constraints)
+        distance_filter = ""
+        if distance_threshold is not None:
+            distance_filter = "WHERE distance <= :distance_threshold"
+
         # Single query joining embeddings with chunks to get all needed data
-        # Note: sqlite-vec requires LIMIT in the virtual table query, we apply OFFSET in outer query
+        # Note: sqlite-vec requires LIMIT in the virtual table query, we apply OFFSET and distance filter in outer query
         cursor = self.conn.execute(
             f"""
             SELECT
@@ -362,6 +374,7 @@ class TBDatabase(Generic[T]):
             INNER JOIN {self.chunks_table} c
                 ON e.document_id = c.document_id
                 AND e.chunk_idx = c.chunk_idx
+            {distance_filter}
             ORDER BY distance
             LIMIT :limit OFFSET :offset
             """,
