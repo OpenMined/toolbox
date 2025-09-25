@@ -8,21 +8,27 @@ from omni.vectorstore_queries import (
 def query_twitter_data(list_source):
     """Query Twitter data based on list source filters"""
 
-    filters = list_source["filters"]
+    filters = list_source.filters
     authors = (
-        [author.lstrip("@") for author in filters.get("authors", [])]
-        if filters.get("authors")
-        else None
+        [author.lstrip("@") for author in filters.authors] if filters.authors else None
     )  # Remove @ prefix
 
     # Parse date range
-    start_date = datetime.fromisoformat(filters["dateRange"]["from"] + "T00:00:00Z")
-    end_date = datetime.fromisoformat(filters["dateRange"]["to"] + "T23:59:59Z")
+    from_date = filters.dateRange["from"]
+    to_date = filters.dateRange["to"]
+    if from_date:
+        start_date = datetime.fromisoformat(from_date + "T00:00:00Z")
+    else:
+        start_date = None
+    if to_date:
+        end_date = datetime.fromisoformat(to_date + "T23:59:59Z")
+    else:
+        end_date = None
 
     # Get RAG query text (only if query is provided and not empty)
     query_text = None
-    if filters.get("ragQuery") and filters["ragQuery"].strip():
-        query_text = filters["ragQuery"]
+    if filters.ragQuery and filters.ragQuery.strip():
+        query_text = filters.ragQuery
 
     # If no authors and no RAG query, return empty (nothing to search for)
     if not authors and not query_text:
@@ -35,7 +41,7 @@ def query_twitter_data(list_source):
             author_screen_names=authors,
             start_date=start_date,
             end_date=end_date,
-            similarity_threshold=filters.get("threshold", 0.4),
+            similarity_threshold=filters.threshold,
             limit=20,  # Limit to 20 for display
         )
 

@@ -46,14 +46,21 @@ def search_tweets(
         )
 
     try:
-        documents = (
-            store.search_documents()
-            .where({"author.screen_name__in": author_screen_names})
-            .where({"created_at__gte": start_date})
-            .where({"created_at__lt": end_date})
-            .get()
-        )
+        print(author_screen_names)
+        print(start_date)
+        print(end_date)
+        print(similarity_threshold)
+        print(limit)
+        query = store.search_documents()
+        if author_screen_names:
+            query = query.where({"author.screen_name__in": author_screen_names})
+        if start_date:
+            query = query.where({"created_at__gte": start_date})
+        if end_date:
+            query = query.where({"created_at__lt": end_date})
+        documents = query.get()
         print("INITIAL DOCUMENTS", len(documents))
+
         if query_text and query_text.strip():
             res_documents = (
                 store.search_chunks()

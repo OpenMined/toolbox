@@ -96,14 +96,12 @@ export const useSmartListsStore = defineStore("smartLists", {
 
     async createSmartList(listData) {
       try {
-        const newList = await apiClient.createSmartList(listData);
-        this.smartLists.push(newList);
+        const result = await apiClient.createSmartList(listData);
 
-        // Initialize empty cache for the new list
-        this.computedItemsCache[newList.id] = [];
-        this.summariesCache[newList.id] = null;
+        // Refresh the followed smart lists to get the newly created list
+        await this.fetchSmartLists();
 
-        return newList.id;
+        return result.list_id;
       } catch (error) {
         console.error("Failed to create smart list:", error);
         throw error;

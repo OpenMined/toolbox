@@ -8,6 +8,7 @@ import sqlite_vec
 from toolbox_store import ToolboxStore
 from toolbox_store.models import StoreConfig
 
+from .models import SmartListAPIResult, SmartListCreate, SmartListDB
 from .vectorstore_models import Tweet
 
 HOME = Path.home()
@@ -58,6 +59,49 @@ def get_omni_connection(path: Path = OMNI_DB_PATH):
 def create_tables(conn):
     cursor = conn.cursor()
 
+    # Smart lists main table
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS smart_lists (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        item_count INTEGER DEFAULT 0,
+        created_at TEXT NOT NULL
+    )
+    """)
+
+    # List sources - each smart list can have multiple data sources
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS list_sources (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        list_id INTEGER NOT NULL,
+        data_source_id TEXT NOT NULL,
+        FOREIGN KEY (list_id) REFERENCES smart_lists (id) ON DELETE CASCADE
+    )
+    """)
+
+    # List filters - filters for each list source
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS list_filters (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        list_source_id INTEGER NOT NULL,
+        date_range_from TEXT,
+        date_range_to TEXT,
+        rag_query TEXT,
+        threshold REAL DEFAULT 0.6,
+        FOREIGN KEY (list_source_id) REFERENCES list_sources (id) ON DELETE CASCADE
+    )
+    """)
+
+    # Authors for each list source
+    cursor.execute("""
+    CREATE TABLE IF NOT EXISTS datasource_authors (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        list_source_id INTEGER NOT NULL,
+        author TEXT NOT NULL,
+        FOREIGN KEY (list_source_id) REFERENCES list_sources (id) ON DELETE CASCADE
+    )
+    """)
+
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS smart_list_summaries (
         list_id INTEGER NOT NULL,
@@ -67,7 +111,8 @@ def create_tables(conn):
         model TEXT,
         created_at TEXT NOT NULL,
         updated_at TEXT NOT NULL,
-        PRIMARY KEY (list_id, filters_hash)
+        PRIMARY KEY (list_id, filters_hash),
+        FOREIGN KEY (list_id) REFERENCES smart_lists (id) ON DELETE CASCADE
     )
     """)
 
@@ -75,7 +120,8 @@ def create_tables(conn):
     CREATE TABLE IF NOT EXISTS followed_lists (
         user_email TEXT NOT NULL,
         list_id INTEGER NOT NULL,
-        PRIMARY KEY (user_email, list_id)
+        PRIMARY KEY (user_email, list_id),
+        FOREIGN KEY (list_id) REFERENCES smart_lists (id) ON DELETE CASCADE
     )
     """)
 
@@ -370,3 +416,201 @@ def initialize_dev_user():
     """Initialize the dev@example.com user for development"""
     with get_omni_connection() as conn:
         return create_user(conn, "dev@example.com")
+
+
+def insert_smart_list(conn, name: str, item_count: int = 0):
+    """Insert a new smart list and return its ID"""
+    cursor = conn.cursor()
+    now = datetime.now().isoformat()
+
+    cursor.execute(
+        """
+        INSERT INTO smart_lists (name, item_count, created_at)
+        VALUES (?, ?, ?)
+    """,
+        (name, item_count, now),
+    )
+
+    list_id = cursor.lastrowid
+    conn.commit()
+    return list_id
+
+
+def insert_list_source(conn, list_id: int, data_source_id: str):
+    """Insert a list source and return its ID"""
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO list_sources (list_id, data_source_id)
+        VALUES (?, ?)
+    """,
+        (list_id, data_source_id),
+    )
+
+    source_id = cursor.lastrowid
+    conn.commit()
+    return source_id
+
+
+def insert_list_filters(
+    conn,
+    list_source_id: int,
+    date_range_from: str = None,
+    date_range_to: str = None,
+    rag_query: str = None,
+    threshold: float = 0.6,
+):
+    """Insert filters for a list source"""
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO list_filters (list_source_id, date_range_from, date_range_to, rag_query, threshold)
+        VALUES (?, ?, ?, ?, ?)
+    """,
+        (list_source_id, date_range_from, date_range_to, rag_query, threshold),
+    )
+
+    conn.commit()
+
+
+def insert_datasource_author(conn, list_source_id: int, author: str):
+    """Insert an author for a list source"""
+    cursor = conn.cursor()
+
+    cursor.execute(
+        """
+        INSERT INTO datasource_authors (list_source_id, author)
+        VALUES (?, ?)
+    """,
+        (list_source_id, author),
+    )
+
+    conn.commit()
+
+
+def get_smart_list_api_result_by_id(conn, list_id: int) -> SmartListAPIResult:
+    """Get a smart list by its ID"""
+    smart_lists = get_all_smart_lists_api_result(conn)
+    return next((sl for sl in smart_lists if sl.id == list_id), None)
+
+
+def get_all_smart_lists_api_result(conn) -> list["SmartListAPIResult"]:
+    """Get all smart lists with their sources, filters, and authors using a single query"""
+
+    cursor = conn.cursor()
+
+    # Single query to get all smart lists with their related data
+    cursor.execute("""
+        SELECT
+            sl.id, sl.name, sl.item_count, sl.created_at,
+            ls.id as source_id, ls.data_source_id,
+            lf.date_range_from, lf.date_range_to, lf.rag_query, lf.threshold,
+            da.author
+        FROM smart_lists sl
+        LEFT JOIN list_sources ls ON sl.id = ls.list_id
+        LEFT JOIN list_filters lf ON ls.id = lf.list_source_id
+        LEFT JOIN datasource_authors da ON ls.id = da.list_source_id
+        ORDER BY sl.id, ls.id, da.id
+    """)
+
+    rows = cursor.fetchall()
+
+    # Group results by smart list
+    lists_data = {}
+
+    for row in rows:
+        list_id = row["id"]
+
+        if list_id not in lists_data:
+            # Create SmartListDB model
+            smart_list = SmartListDB.from_sql_row(row)
+            lists_data[list_id] = {"smart_list": smart_list, "sources_data": []}
+
+        # Add source data if it exists
+        if row["source_id"]:
+            lists_data[list_id]["sources_data"].append(row)
+
+    # Convert to SmartListAPIResult models
+    result = []
+    for data in lists_data.values():
+        api_result = SmartListAPIResult.from_db_data(
+            data["smart_list"], data["sources_data"]
+        )
+        result.append(api_result)
+
+    return result
+
+
+def create_smart_list_from_request(
+    conn, list_data: SmartListCreate, user_email: str
+) -> int:
+    """Create a smart list from SmartListCreate request and auto-follow it. Returns the list ID."""
+
+    # Insert the smart list
+    list_id = insert_smart_list(conn, list_data.name, 0)
+
+    # Insert sources and their filters/authors
+    for list_source in list_data.listSources:
+        source_id = insert_list_source(conn, list_id, list_source.dataSourceId)
+
+        filters = list_source.filters
+        insert_list_filters(
+            conn,
+            source_id,
+            filters.dateRange.get("from"),
+            filters.dateRange.get("to"),
+            filters.ragQuery,
+            filters.threshold,
+        )
+
+        # Insert authors
+        for author in filters.authors:
+            insert_datasource_author(conn, source_id, author)
+
+    # Auto-follow the created list
+    follow_list(conn, user_email, list_id)
+
+    return list_id
+
+
+def initialize_mock_smart_lists():
+    """Insert mock smart lists data into the database"""
+    from .mock_data import get_mock_smart_lists
+
+    with get_omni_connection() as conn:
+        # Check if we already have smart lists
+        cursor = conn.cursor()
+        cursor.execute("SELECT COUNT(*) FROM smart_lists")
+        count = cursor.fetchone()[0]
+
+        if count > 0:
+            return  # Already initialized
+
+        mock_lists = get_mock_smart_lists()
+
+        for mock_list in mock_lists:
+            # Insert the smart list
+            list_id = insert_smart_list(conn, mock_list["name"], mock_list["itemCount"])
+
+            # Insert sources and their filters/authors
+            for list_source in mock_list["listSources"]:
+                source_id = insert_list_source(
+                    conn, list_id, list_source["dataSourceId"]
+                )
+
+                filters = list_source["filters"]
+                insert_list_filters(
+                    conn,
+                    source_id,
+                    filters["dateRange"].get("from"),
+                    filters["dateRange"].get("to"),
+                    filters.get("ragQuery"),
+                    filters.get("threshold", 0.6),
+                )
+
+                # Insert authors if they exist
+                if "authors" in filters:
+                    for author in filters["authors"]:
+                        insert_datasource_author(conn, source_id, author)

@@ -4,12 +4,16 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from omni.db import (
+    create_smart_list_from_request,
     create_user,
     follow_list,
+    get_all_smart_lists_api_result,
     get_followed_list_ids,
     get_omni_connection,
+    get_smart_list_api_result_by_id,
     get_user_by_email,
     initialize_dev_user,
+    initialize_mock_smart_lists,
     unfollow_list,
 )
 from omni.mock_data import (
@@ -24,7 +28,7 @@ from omni.models import (
     DataCollection,
     DataSource,
     QuestionRequest,
-    SmartList,
+    SmartListAPIResult,
     SmartListCreate,
     SummaryResponse,
     TweetItem,
@@ -60,8 +64,12 @@ async def startup_event():
         # Initialize the dev user for development
         initialize_dev_user()
         print("✅ Dev user initialized successfully")
+
+        # Initialize mock smart lists data
+        initialize_mock_smart_lists()
+        print("✅ Mock smart lists initialized successfully")
     except Exception as e:
-        print(f"⚠️ Failed to initialize dev user: {e}")
+        print(f"⚠️ Failed to initialize startup data: {e}")
 
 
 # Routes
@@ -102,35 +110,36 @@ async def get_data_collections():
     return get_mock_data_collections()
 
 
-@app.get("/smart-lists", response_model=List[SmartList])
-async def get_all_smart_lists():
+@app.get("/smart-lists", response_model=List[SmartListAPIResult])
+async def get_all_smart_lists_api_result_endpoint():
     """Get all available smart lists"""
-    return get_mock_smart_lists()
+    with get_omni_connection() as conn:
+        return get_all_smart_lists_api_result(conn)
 
 
-@app.get("/smart-lists/followed", response_model=List[SmartList])
+@app.get("/smart-lists/followed", response_model=List[SmartListAPIResult])
 async def get_followed_smart_lists(user_email: str = "dev@example.com"):
     """Get smart lists that the user is following"""
     with get_omni_connection() as conn:
         followed_list_ids = get_followed_list_ids(conn, user_email)
+        all_lists = get_all_smart_lists_api_result(conn)
 
-    all_lists = get_mock_smart_lists()
     followed_lists = [
-        list_item for list_item in all_lists if list_item["id"] in followed_list_ids
+        list_item for list_item in all_lists if list_item.id in followed_list_ids
     ]
 
     return followed_lists
 
 
-@app.get("/smart-lists/not_following", response_model=List[SmartList])
+@app.get("/smart-lists/not_following", response_model=List[SmartListAPIResult])
 async def get_not_following_smart_lists(user_email: str = "dev@example.com"):
     """Get smart lists that the user is not following"""
     with get_omni_connection() as conn:
         followed_list_ids = get_followed_list_ids(conn, user_email)
+        all_lists = get_all_smart_lists_api_result(conn)
 
-    all_lists = get_mock_smart_lists()
     not_following_lists = [
-        list_item for list_item in all_lists if list_item["id"] not in followed_list_ids
+        list_item for list_item in all_lists if list_item.id not in followed_list_ids
     ]
 
     return not_following_lists
@@ -152,55 +161,51 @@ async def unfollow_smart_list(list_id: int, user_email: str = "dev@example.com")
     return {"message": f"Successfully unfollowed list {list_id}"}
 
 
-@app.post("/smart-lists", response_model=SmartList)
-async def create_smart_list(list_data: SmartListCreate):
-    new_list = {
-        "id": int(str(int(1000000000000))[:10]),  # Generate timestamp-based ID
-        "name": list_data.name,
-        "listSources": [source.dict() for source in list_data.listSources],
-        "computedItems": [],
-        "itemCount": 0,
+@app.post("/smart-lists")
+async def create_smart_list(
+    list_data: SmartListCreate, user_email: str = "dev@example.com"
+):
+    """Create a new smart list and auto-follow it"""
+    with get_omni_connection() as conn:
+        list_id = create_smart_list_from_request(conn, list_data, user_email)
+
+    return {
+        "message": f"Successfully created and followed list {list_id}",
+        "list_id": list_id,
     }
-    return new_list
 
 
 @app.get("/smart-lists/{list_id}/items", response_model=List[TweetItem])
 async def get_smart_list_items(list_id: int):
     # Get smart list configuration
-    smart_lists = get_mock_smart_lists()
-    smart_list = next((sl for sl in smart_lists if sl["id"] == list_id), None)
+    with get_omni_connection() as conn:
+        smart_list = get_smart_list_api_result_by_id(conn, list_id)
 
-    if not smart_list:
-        raise HTTPException(status_code=404, detail="Smart list not found")
+        if not smart_list:
+            raise HTTPException(status_code=404, detail="Smart list not found")
 
-    # Check if this list has Twitter sources with real data
-    for list_source in smart_list["listSources"]:
-        if list_source["dataSourceId"] == "twitter":
-            # Use real Twitter data
-            items = query_twitter_data(list_source)
-            return items
+        # Check if this list has Twitter sources with real data
+        for list_source in smart_list.listSources:
+            if list_source.dataSourceId == "twitter":
+                # Use real Twitter data
+                items = query_twitter_data(list_source)
+                return items
 
-    # Fallback to mock data
-    # items = get_mock_smart_list_items(list_id)
-    if not items:
-        raise HTTPException(status_code=404, detail="Smart list not found")
-    return items
+        return []
 
 
 @app.get("/smart-lists/{list_id}/summary", response_model=SummaryResponse)
 async def get_smart_list_summary(list_id: int):
     # Get smart list configuration
-    smart_lists = get_mock_smart_lists()
-    smart_list = next((sl for sl in smart_lists if sl["id"] == list_id), None)
+    with get_omni_connection() as conn:
+        smart_list = get_smart_list_api_result_by_id(conn, list_id)
 
     if not smart_list:
         raise HTTPException(status_code=404, detail="Smart list not found")
 
     # Check if this list has Twitter sources for dynamic summary
-    for list_source in smart_list["listSources"]:
-        if list_source["dataSourceId"] == "twitter" and list_source["filters"].get(
-            "authors"
-        ):
+    for list_source in smart_list.listSources:
+        if list_source.dataSourceId == "twitter":
             # Get cached or generate dynamic summary from tweets
             result = get_or_generate_smart_list_summary(list_id, list_source)
             return result

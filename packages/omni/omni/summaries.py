@@ -128,7 +128,15 @@ def get_intended_model():
 
 def generate_filters_hash(list_source):
     """Generate a hash for the list source filters for caching"""
-    filters_str = json.dumps(list_source, sort_keys=True)
+    # Convert Pydantic model to dict if necessary
+    if hasattr(list_source, "model_dump"):
+        list_source_dict = list_source.model_dump()
+    elif hasattr(list_source, "dict"):
+        list_source_dict = list_source.dict()
+    else:
+        list_source_dict = list_source
+
+    filters_str = json.dumps(list_source_dict, sort_keys=True)
     return hashlib.md5(filters_str.encode()).hexdigest()
 
 
@@ -153,7 +161,15 @@ def generate_summary_async(list_id, list_source, filters_hash):
 def _generate_smart_list_summary_internal(list_source):
     """Internal function to generate summary (used by both sync and async)"""
 
-    filters = list_source["filters"]
+    # Convert Pydantic model to dict if necessary
+    if hasattr(list_source, "model_dump"):
+        list_source_dict = list_source.model_dump()
+    elif hasattr(list_source, "dict"):
+        list_source_dict = list_source.dict()
+    else:
+        list_source_dict = list_source
+
+    filters = list_source_dict["filters"]
     authors = [
         author.lstrip("@") for author in filters.get("authors", [])
     ]  # Remove @ prefix
