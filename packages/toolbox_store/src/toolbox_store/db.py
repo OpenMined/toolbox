@@ -7,11 +7,12 @@ import sqlite_vec
 
 from toolbox_store.filters import build_where_clause
 from toolbox_store.models import (
+    RetrievedChunk,
     StoreConfig,
     TBDocument,
+    TBDocumentChunk,
     is_valid_field_identifier,
 )
-from toolbox_store.retrieved_chunks import RetrievedChunk, TBDocumentChunk
 
 T = TypeVar("T", bound=TBDocument)
 
@@ -319,17 +320,24 @@ class TBDatabase(Generic[T]):
         filters: dict[str, Any] | None = None,
         limit: int = 10,
         offset: int = 0,
+        score_threshold: float | None = None,
     ) -> list[RetrievedChunk]:
         """
         Perform semantic search using a query embedding.
         Returns list of RetrievedEmbedding objects with distance scores.
         """
 
+        if score_threshold is not None:
+            distance_threshold = 1 - score_threshold
+        else:
+            distance_threshold = None
+
         params_dict = {
             "query_embedding": sqlite_vec.serialize_float32(query_embedding),
             "limit": limit,
             "offset": offset,
             "total_limit": limit + offset,
+            "distance_threshold": distance_threshold,
         }
 
         if filters:
@@ -344,8 +352,13 @@ class TBDatabase(Generic[T]):
         else:
             where_clause, where_params = "", None
 
+        # Add distance threshold filter if provided (applied in outer query due to sqlite-vec constraints)
+        distance_filter = ""
+        if distance_threshold is not None:
+            distance_filter = "WHERE distance <= :distance_threshold"
+
         # Single query joining embeddings with chunks to get all needed data
-        # Note: sqlite-vec requires LIMIT in the virtual table query, we apply OFFSET in outer query
+        # Note: sqlite-vec requires LIMIT in the virtual table query, we apply OFFSET and distance filter in outer query
         cursor = self.conn.execute(
             f"""
             SELECT
@@ -361,6 +374,7 @@ class TBDatabase(Generic[T]):
             INNER JOIN {self.chunks_table} c
                 ON e.document_id = c.document_id
                 AND e.chunk_idx = c.chunk_idx
+            {distance_filter}
             ORDER BY distance
             LIMIT :limit OFFSET :offset
             """,
@@ -375,6 +389,11 @@ class TBDatabase(Generic[T]):
                 row_dict["embedding"] = deserialize_float32(embedding_blob)
             else:
                 row_dict["embedding"] = None
+
+            # Convert distance to score
+            distance = row_dict.get("distance", None)
+            if distance is not None:
+                row_dict["score"] = 1 - distance
 
             results.append(RetrievedChunk.from_sql_row(row_dict))
 
@@ -428,7 +447,19 @@ class TBDatabase(Generic[T]):
             params_dict,
         )
 
-        rows = cursor.fetchall()
+        rows = []
+        for row in cursor.fetchall():
+            row_dict = dict(row)
+            embedding_blob = row_dict.get("embedding", None)
+            if isinstance(embedding_blob, bytes):
+                row_dict["embedding"] = deserialize_float32(embedding_blob)
+            else:
+                row_dict["embedding"] = None
+
+            # Convert distance to score
+            distance = row_dict.get("distance", None)
+            if distance is not None:
+                row_dict["score"] = 1 - distance
         return [RetrievedChunk.from_sql_row(row) for row in rows]
 
     def get_docs_without_embeddings(
