@@ -343,11 +343,11 @@ if __name__ == "__main__":
     # Example: follow specific users once
     handles_to_follow = [
         "@ch402",  # already followed
-        "AnthropicAI",  # not followed
+        "sama",  # not followed
         "sebruder12345",  # non-existent user
     ]
     scraper.add_scrape_timeline_job(scrape_timeline_duration=30)
-    # scraper.add_follow_users_job(handles=handles_to_follow, scrape_timeline_duration=0)
+    scraper.add_follow_users_job(handles=handles_to_follow, scrape_timeline_duration=0)
 
     time.sleep(300)
     scraper.stop()
