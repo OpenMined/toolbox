@@ -1,4 +1,3 @@
-import hashlib
 import json
 import re
 import sqlite3
@@ -10,7 +9,9 @@ from uuid import uuid4
 from pydantic import BaseModel, Field, JsonValue, model_validator
 from pydantic_settings import BaseSettings
 
-KEY_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
+from toolbox_store.utils import _utcnow, hash_content
+
+VALID_FIELD_PATTERN = re.compile(r"^[a-zA-Z0-9_-]+$")
 TOOLBOX_DIR = Path.home() / ".toolbox"
 DEFAULT_CACHE_PATH = TOOLBOX_DIR / "vector_cache.db"
 
@@ -22,15 +23,7 @@ def is_valid_field_identifier(key: str) -> bool:
     """
     if not key or len(key) > 255 or all(c in "-_" for c in key):
         return False
-    return bool(KEY_PATTERN.match(key))
-
-
-def _utcnow():
-    return datetime.now(tz=timezone.utc)
-
-
-def hash_content(content: str) -> str:
-    return hashlib.sha256(content.encode("utf-8")).hexdigest()
+    return bool(VALID_FIELD_PATTERN.match(key))
 
 
 class StoreConfig(BaseSettings):
@@ -43,6 +36,83 @@ class StoreConfig(BaseSettings):
     distance_metric: Literal["cosine", "l1", "l2"] = "cosine"
 
 
+class TBDocumentChunk(BaseModel):
+    document_id: str
+    chunk_idx: int
+    chunk_start: int
+    chunk_end: int
+    created_at: datetime = Field(default_factory=_utcnow)
+    content: str
+    content_hash: str
+    embedding: list[float] | None = None
+
+    @model_validator(mode="before")
+    @classmethod
+    def set_hash_if_not_present(cls, data: Any) -> Any:
+        if isinstance(data, dict):
+            if "content" not in data:
+                return data
+            if "content_hash" not in data:
+                data["content_hash"] = hash_content(data["content"])
+        return data
+
+    @model_validator(mode="after")
+    def ensure_utc_for_all_datetimes(self) -> Self:
+        for field_name in type(self).model_fields:
+            value = getattr(self, field_name)
+            if isinstance(value, datetime):
+                setattr(self, field_name, value.astimezone(timezone.utc))
+        return self
+
+    @classmethod
+    def from_sql_row(
+        cls, row: dict[str, Any] | sqlite3.Row, extra: dict[str, Any] | None = None
+    ) -> Self:
+        """Create a TBDocumentChunk instance from a SQL row.
+
+        Args:
+            row: Either a dict or a sqlite3.Row object
+            extra: Additional data to include in the model
+
+        Returns:
+            A validated TBDocumentChunk instance
+        """
+        if not isinstance(row, dict):
+            row_dict = dict(row)
+        else:
+            row_dict = row.copy()
+
+        if extra is not None:
+            row_dict.update(extra)
+
+        return cls.model_validate(row_dict)
+
+    def to_sql_dict(self) -> dict[str, Any]:
+        """Convert chunk to a dict suitable for SQL insertion.
+
+        Returns:
+            Dict with all fields converted for SQL storage, excluding embedding
+        """
+        # Exclude embedding since it's stored in a separate table
+        chunk_dict = self.model_dump(exclude={"embedding"})
+
+        for k, v in chunk_dict.items():
+            if isinstance(v, dict):
+                chunk_dict[k] = json.dumps(v)
+            elif isinstance(v, datetime):
+                chunk_dict[k] = v.isoformat()
+
+        return chunk_dict
+
+
+class RetrievedChunk(TBDocumentChunk):
+    score: float
+
+    @property
+    def distance(self) -> float:
+        return 1 - self.score
+
+
 class TBDocument(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid4()))
     content: str
@@ -52,7 +122,7 @@ class TBDocument(BaseModel):
     updated_at: datetime = Field(default_factory=_utcnow)
     content_hash: str
 
-    chunks: list["RetrievedChunk"] = Field(default_factory=list, exclude=True)
+    chunks: list[RetrievedChunk] = Field(default_factory=list, exclude=True)
 
     @model_validator(mode="before")
     @classmethod
@@ -95,11 +165,14 @@ class TBDocument(BaseModel):
         return self
 
     @classmethod
-    def from_sql_row(cls, row: dict[str, Any] | sqlite3.Row) -> Self:
+    def from_sql_row(
+        cls, row: dict[str, Any] | sqlite3.Row, extra: dict[str, Any] | None = None
+    ) -> Self:
         """Create a TBDocument instance from a SQL row.
 
         Args:
             row: Either a dict or a sqlite3.Row object
+            extra: Additional data to include in the model
 
         Returns:
             A validated TBDocument instance
@@ -111,6 +184,9 @@ class TBDocument(BaseModel):
 
         if "metadata" in row_dict and isinstance(row_dict["metadata"], str):
             row_dict["metadata"] = json.loads(row_dict["metadata"])
+
+        if extra is not None:
+            row_dict.update(extra)
 
         return cls.model_validate(row_dict)
 
@@ -176,70 +252,3 @@ class TBDocument(BaseModel):
             ]
         """
         return []
-
-
-class TBDocumentChunk(BaseModel):
-    document_id: str
-    chunk_idx: int
-    chunk_start: int
-    chunk_end: int
-    created_at: datetime = Field(default_factory=_utcnow)
-    content: str
-    content_hash: str
-    embedding: list[float] | None = None
-
-    @model_validator(mode="before")
-    @classmethod
-    def set_hash_if_not_present(cls, data: Any) -> Any:
-        if isinstance(data, dict):
-            if "content" not in data:
-                return data
-            if "content_hash" not in data:
-                data["content_hash"] = hash_content(data["content"])
-        return data
-
-    @model_validator(mode="after")
-    def ensure_utc_for_all_datetimes(self) -> Self:
-        for field_name in type(self).model_fields:
-            value = getattr(self, field_name)
-            if isinstance(value, datetime):
-                setattr(self, field_name, value.astimezone(timezone.utc))
-        return self
-
-    @classmethod
-    def from_sql_row(cls, row: dict[str, Any] | sqlite3.Row) -> Self:
-        """Create a TBDocumentChunk instance from a SQL row.
-
-        Args:
-            row: Either a dict or a sqlite3.Row object
-
-        Returns:
-            A validated TBDocumentChunk instance
-        """
-        if not isinstance(row, dict):
-            row_dict = dict(row)
-        else:
-            row_dict = row.copy()
-
-        return cls.model_validate(row_dict)
-
-    def to_sql_dict(self) -> dict[str, Any]:
-        """Convert chunk to a dict suitable for SQL insertion.
-
-        Returns:
-            Dict with all fields converted for SQL storage, excluding embedding
-        """
-        # Exclude embedding since it's stored in a separate table
-        chunk_dict = self.model_dump(exclude={"embedding"})
-
-        for k, v in chunk_dict.items():
-            if isinstance(v, dict):
-                chunk_dict[k] = json.dumps(v)
-            elif isinstance(v, datetime):
-                chunk_dict[k] = v.isoformat()
-
-        return chunk_dict
-
-
-class RetrievedChunk(TBDocumentChunk):
-    distance: float
