@@ -15,7 +15,7 @@ dependencies = [
     "rerankers[transformers]>=0.10.0",
     "semantic-text-splitter>=0.28.0",
     "sqlite-vec==0.1.7a2",
-    "torch>=2.8",
+    "torch==2.2.2",
     "transformers>=4.56",
 ]
 
