@@ -5,9 +5,8 @@ from functools import cached_property
 from semantic_text_splitter import TextSplitter
 from tqdm import tqdm
 
-from toolbox_store.models import StoreConfig, TBDocument
+from toolbox_store.models import StoreConfig, TBDocument, TBDocumentChunk
 from toolbox_store.ollama_client import OllamaEmbeddingClient
-from toolbox_store.retrieved_chunks import TBDocumentChunk
 
 # embeddinggemma has instruct prompts for different tasks
 # Source: https://ai.google.dev/gemma/docs/embeddinggemma/inference-embeddinggemma-with-sentence-transformers

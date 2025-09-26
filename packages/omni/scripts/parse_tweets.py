@@ -18,8 +18,8 @@ from omni.vectorstore_models import Tweet
 
 def main():
     """Main function to process all JSON files and store tweets using ToolboxStore."""
-
-    data_dir = Path().home() / "workspace" / "toolbox" / "data"
+    data_dir = Path("../../data/")
+    print(f"Looking for JSON files in {data_dir.resolve()}")
 
     if not data_dir.exists():
         print(f"Data directory {data_dir} does not exist!")

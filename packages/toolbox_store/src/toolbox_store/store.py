@@ -3,9 +3,8 @@ from typing import Generic, Self, TypeVar, overload
 
 from toolbox_store.db import TBDatabase
 from toolbox_store.embedding import get_embedder
-from toolbox_store.models import StoreConfig, TBDocument
+from toolbox_store.models import StoreConfig, TBDocument, TBDocumentChunk
 from toolbox_store.query_builder import ChunkQueryBuilder, DocumentQueryBuilder
-from toolbox_store.retrieved_chunks import TBDocumentChunk
 
 T = TypeVar("T", bound=TBDocument)
 
