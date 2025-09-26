@@ -18,9 +18,6 @@ dependencies = [
     "tqdm>=4.67.1",
 ]
 
-[tool.uv.sources]
-toolbox_store = { git = "https://github.com/OpenMined/toolbox.git", subdirectory = "packages/toolbox_store", rev = "broad-listening" }
-
 
 [build-system]
 requires = ["hatchling"]
