@@ -31,43 +31,80 @@
       <div class="w-full max-w-2xl flex flex-col">
         <!-- Content -->
         <div class="flex-1 overflow-auto px-6 py-6 space-y-8">
-          <!-- Discover New Lists Section -->
+          <!-- Your Lists Section (Lists you're following) -->
           <div>
             <div class="flex items-center justify-between mb-4">
-              <h2 class="text-base font-medium text-gray-900">
-                Discover New Lists
-              </h2>
+              <h2 class="text-base font-medium text-gray-900">Your Lists</h2>
               <span class="text-sm text-gray-500"
-                >{{ notFollowingLists.length }} available</span
+                >{{ yourLists.length }} lists</span
               >
             </div>
 
-            <div v-if="loadingNotFollowing" class="text-center py-8">
+            <div v-if="loadingMyLists" class="text-center py-8">
               <div
                 class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
               ></div>
-              <p class="mt-2 text-sm text-gray-500">Loading lists...</p>
+              <p class="mt-2 text-sm text-gray-500">Loading your lists...</p>
             </div>
 
-            <div
-              v-else-if="displayedNotFollowingLists.length === 0"
-              class="text-center py-8"
-            >
+            <div v-else-if="yourLists.length === 0" class="text-center py-8">
               <p class="text-sm text-gray-500">
-                You're following all available lists!
+                You haven't created or followed any lists yet.
               </p>
             </div>
 
             <div v-else>
               <SmartListListView
-                :lists="displayedNotFollowingLists"
+                :lists="yourLists"
+                :show-unfollow-button="true"
+                :show-delete-button="true"
+                :show-your-lists="true"
+                :followed-list-ids="followedListIds"
+                @unfollow="handleUnfollowList"
+                @delete="handleDeleteList"
+              />
+            </div>
+          </div>
+
+          <!-- Community Lists Section (Unfollowed community lists) -->
+          <div>
+            <div class="flex items-center justify-between mb-4">
+              <h2 class="text-base font-medium text-gray-900">
+                Community Lists
+              </h2>
+              <span class="text-sm text-gray-500"
+                >{{ displayedCommunityLists.length }} available</span
+              >
+            </div>
+
+            <div v-if="loadingCommunityLists" class="text-center py-8">
+              <div
+                class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
+              ></div>
+              <p class="mt-2 text-sm text-gray-500">
+                Loading community lists...
+              </p>
+            </div>
+
+            <div
+              v-else-if="displayedCommunityLists.length === 0"
+              class="text-center py-8"
+            >
+              <p class="text-sm text-gray-500">
+                No unfollowed community lists available.
+              </p>
+            </div>
+
+            <div v-else>
+              <SmartListListView
+                :lists="displayedCommunityLists"
                 :show-follow-button="true"
                 @follow="handleFollowList"
               />
 
-              <div v-if="canShowMoreNotFollowing" class="mt-4 text-center">
+              <div v-if="canShowMoreCommunityLists" class="mt-4 text-center">
                 <button
-                  @click="showMoreNotFollowing"
+                  @click="showMoreCommunityLists"
                   :disabled="loadingMore"
                   class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                 >
@@ -97,40 +134,6 @@
                   </span>
                 </button>
               </div>
-            </div>
-          </div>
-
-          <!-- Your Lists Section -->
-          <div>
-            <div class="flex items-center justify-between mb-4">
-              <h2 class="text-base font-medium text-gray-900">Your Lists</h2>
-              <span class="text-sm text-gray-500"
-                >{{ followedLists.length }} followed</span
-              >
-            </div>
-
-            <div v-if="loadingFollowed" class="text-center py-8">
-              <div
-                class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"
-              ></div>
-              <p class="mt-2 text-sm text-gray-500">Loading your lists...</p>
-            </div>
-
-            <div
-              v-else-if="followedLists.length === 0"
-              class="text-center py-8"
-            >
-              <p class="text-sm text-gray-500">
-                You haven't followed any lists yet.
-              </p>
-            </div>
-
-            <div v-else>
-              <SmartListListView
-                :lists="followedLists"
-                :show-unfollow-button="true"
-                @unfollow="handleUnfollowList"
-              />
             </div>
           </div>
 
@@ -181,48 +184,113 @@ export default {
     const smartListsStore = useSmartListsStore();
     const userStore = useUserStore();
 
-    const notFollowingLists = ref([]);
-    const followedLists = ref([]);
-    const loadingNotFollowing = ref(false);
-    const loadingFollowed = ref(false);
+    const allLists = ref([]);
+    const myOwnedLists = ref([]); // Lists I own (both followed and unfollowed)
+    const followedListIds = ref([]); // IDs of lists I'm following
+    const loadingAllLists = ref(false);
+    const loadingMyOwnedLists = ref(false);
+    const loadingFollowedIds = ref(false);
     const loadingMore = ref(false);
     const displayLimit = ref(5);
 
-    const displayedNotFollowingLists = computed(() => {
-      return notFollowingLists.value.slice(0, displayLimit.value);
+    // "Your Lists" = owned lists + followed community lists
+    const yourLists = computed(() => {
+      const currentUserEmail = userStore.userEmail || "dev@example.com";
+
+      // Get all owned lists
+      const ownedLists = myOwnedLists.value;
+
+      // Get followed community lists (lists owned by others that you're following)
+      const followedCommunityLists = allLists.value.filter(
+        (list) =>
+          list.owner_email !== currentUserEmail &&
+          followedListIds.value.includes(list.id),
+      );
+      // 1. Owned lists that are followed
+      const ownedFollowedLists = ownedLists.filter((list) =>
+        followedListIds.value.includes(list.id),
+      );
+      // 2. Followed community lists (already computed above)
+      // 3. Owned lists that are not followed
+      const ownedUnfollowedLists = ownedLists.filter(
+        (list) => !followedListIds.value.includes(list.id),
+      );
+
+      return [
+        ...ownedFollowedLists,
+        ...followedCommunityLists,
+        ...ownedUnfollowedLists,
+      ];
+
+      // return [...ownedLists, ...followedCommunityLists];
     });
 
-    const canShowMoreNotFollowing = computed(() => {
-      return notFollowingLists.value.length > displayLimit.value;
+    const communityLists = computed(() => {
+      // Community lists are unfollowed lists not created by current user
+      const currentUserEmail = userStore.userEmail || "dev@example.com";
+
+      return allLists.value.filter(
+        (list) =>
+          list.owner_email !== currentUserEmail &&
+          !followedListIds.value.includes(list.id),
+      );
     });
 
-    const fetchNotFollowingLists = async () => {
-      loadingNotFollowing.value = true;
+    const displayedCommunityLists = computed(() => {
+      return communityLists.value.slice(0, displayLimit.value);
+    });
+
+    const canShowMoreCommunityLists = computed(() => {
+      return communityLists.value.length > displayLimit.value;
+    });
+
+    const loadingCommunityLists = computed(() => {
+      return loadingAllLists.value || loadingFollowedIds.value;
+    });
+
+    const loadingMyLists = computed(() => {
+      return loadingMyOwnedLists.value || loadingFollowedIds.value;
+    });
+
+    const fetchAllLists = async () => {
+      loadingAllLists.value = true;
       try {
         const userEmail = userStore.userEmail || "dev@example.com";
-        notFollowingLists.value = await apiClient.getNotFollowingSmartLists(
-          userEmail,
-        );
+        allLists.value = await apiClient.getSmartLists(userEmail);
       } catch (error) {
-        console.error("Failed to fetch not following lists:", error);
+        console.error("Failed to fetch all lists:", error);
       } finally {
-        loadingNotFollowing.value = false;
+        loadingAllLists.value = false;
       }
     };
 
-    const fetchFollowedLists = async () => {
-      loadingFollowed.value = true;
+    const fetchMyOwnedLists = async () => {
+      loadingMyOwnedLists.value = true;
       try {
         const userEmail = userStore.userEmail || "dev@example.com";
-        followedLists.value = await apiClient.getFollowedSmartLists(userEmail);
+        const lists = await apiClient.getMySmartLists(userEmail);
+        myOwnedLists.value = lists;
       } catch (error) {
-        console.error("Failed to fetch followed lists:", error);
+        console.error("Failed to fetch my owned lists:", error);
       } finally {
-        loadingFollowed.value = false;
+        loadingMyOwnedLists.value = false;
       }
     };
 
-    const showMoreNotFollowing = () => {
+    const fetchFollowedListIds = async () => {
+      loadingFollowedIds.value = true;
+      try {
+        const userEmail = userStore.userEmail || "dev@example.com";
+        const followedLists = await apiClient.getFollowedSmartLists(userEmail);
+        followedListIds.value = followedLists.map((list) => list.id);
+      } catch (error) {
+        console.error("Failed to fetch followed list IDs:", error);
+      } finally {
+        loadingFollowedIds.value = false;
+      }
+    };
+
+    const showMoreCommunityLists = () => {
       loadingMore.value = true;
       setTimeout(() => {
         displayLimit.value += 10;
@@ -235,13 +303,9 @@ export default {
         const userEmail = userStore.userEmail || "dev@example.com";
         await apiClient.followSmartList(listId, userEmail);
 
-        // Move list from not following to followed
-        const listIndex = notFollowingLists.value.findIndex(
-          (list) => list.id === listId,
-        );
-        if (listIndex !== -1) {
-          const followedList = notFollowingLists.value.splice(listIndex, 1)[0];
-          followedLists.value.push(followedList);
+        // Add to followed list IDs
+        if (!followedListIds.value.includes(listId)) {
+          followedListIds.value.push(listId);
         }
 
         // Refresh the sidebar lists
@@ -256,19 +320,48 @@ export default {
         const userEmail = userStore.userEmail || "dev@example.com";
         await apiClient.unfollowSmartList(listId, userEmail);
 
-        // Move list from followed to not following
-        const listIndex = followedLists.value.findIndex(
-          (list) => list.id === listId,
-        );
-        if (listIndex !== -1) {
-          const unfollowedList = followedLists.value.splice(listIndex, 1)[0];
-          notFollowingLists.value.unshift(unfollowedList);
+        // Remove from followed list IDs
+        const index = followedListIds.value.indexOf(listId);
+        if (index !== -1) {
+          followedListIds.value.splice(index, 1);
         }
 
         // Refresh the sidebar lists
         await smartListsStore.fetchSmartLists();
       } catch (error) {
         console.error("Failed to unfollow list:", error);
+      }
+    };
+
+    const handleDeleteList = async (listId) => {
+      try {
+        const userEmail = userStore.userEmail || "dev@example.com";
+        await apiClient.deleteSmartList(listId, userEmail);
+
+        // Remove from owned lists (if it's in there)
+        const ownedIndex = myOwnedLists.value.findIndex(
+          (list) => list.id === listId,
+        );
+        if (ownedIndex !== -1) {
+          myOwnedLists.value.splice(ownedIndex, 1);
+        }
+
+        // Remove from followed list IDs
+        const followedIndex = followedListIds.value.indexOf(listId);
+        if (followedIndex !== -1) {
+          followedListIds.value.splice(followedIndex, 1);
+        }
+
+        // Remove from all lists
+        const allIndex = allLists.value.findIndex((list) => list.id === listId);
+        if (allIndex !== -1) {
+          allLists.value.splice(allIndex, 1);
+        }
+
+        // Refresh the sidebar lists
+        await smartListsStore.fetchSmartLists();
+      } catch (error) {
+        console.error("Failed to delete list:", error);
       }
     };
 
@@ -282,20 +375,25 @@ export default {
     };
 
     onMounted(async () => {
-      await Promise.all([fetchNotFollowingLists(), fetchFollowedLists()]);
+      await Promise.all([
+        fetchAllLists(),
+        fetchMyOwnedLists(),
+        fetchFollowedListIds(),
+      ]);
     });
 
     return {
-      notFollowingLists,
-      followedLists,
-      displayedNotFollowingLists,
-      canShowMoreNotFollowing,
-      loadingNotFollowing,
-      loadingFollowed,
+      yourLists,
+      followedListIds,
+      displayedCommunityLists,
+      canShowMoreCommunityLists,
+      loadingCommunityLists,
+      loadingMyLists,
       loadingMore,
-      showMoreNotFollowing,
+      showMoreCommunityLists,
       handleFollowList,
       handleUnfollowList,
+      handleDeleteList,
       showCreateList,
       closePanelAndShowWelcome,
     };

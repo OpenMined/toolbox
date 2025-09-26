@@ -65,7 +65,8 @@ def create_tables(conn):
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         item_count INTEGER DEFAULT 0,
-        created_at TEXT NOT NULL
+        created_at TEXT NOT NULL,
+        user_email TEXT NOT NULL
     )
     """)
 
@@ -133,15 +134,10 @@ def create_tables(conn):
     )
     """)
 
-    # Handle migration for existing databases that don't have the model column
-    try:
-        cursor.execute("SELECT model FROM smart_list_summaries LIMIT 1")
-    except sqlite3.OperationalError:
-        # Column doesn't exist, add it
-        cursor.execute("ALTER TABLE smart_list_summaries ADD COLUMN model TEXT")
-        print("Added model column to smart_list_summaries table")
+    # Run database migrations
+    from .migrations.v1 import run_v1_migrations
 
-    conn.commit()
+    run_v1_migrations(conn)
 
 
 # def upsert_author(conn, author_data):
@@ -418,17 +414,17 @@ def initialize_dev_user():
         return create_user(conn, "dev@example.com")
 
 
-def insert_smart_list(conn, name: str, item_count: int = 0):
+def insert_smart_list(conn, name: str, user_email: str, item_count: int = 0):
     """Insert a new smart list and return its ID"""
     cursor = conn.cursor()
     now = datetime.now().isoformat()
 
     cursor.execute(
         """
-        INSERT INTO smart_lists (name, item_count, created_at)
-        VALUES (?, ?, ?)
+        INSERT INTO smart_lists (name, item_count, created_at, user_email)
+        VALUES (?, ?, ?, ?)
     """,
-        (name, item_count, now),
+        (name, item_count, now, user_email),
     )
 
     list_id = cursor.lastrowid
@@ -496,15 +492,15 @@ def get_smart_list_api_result_by_id(conn, list_id: int) -> SmartListAPIResult:
     return next((sl for sl in smart_lists if sl.id == list_id), None)
 
 
-def get_all_smart_lists_api_result(conn) -> list["SmartListAPIResult"]:
-    """Get all smart lists with their sources, filters, and authors using a single query"""
-
+def _get_smart_lists_api_result(
+    conn, only_for_user: str = None, exclude_user: str = None, current_user: str = None
+) -> list["SmartListAPIResult"]:
+    """Common function to get smart lists with filtering and following status"""
     cursor = conn.cursor()
 
-    # Single query to get all smart lists with their related data
-    cursor.execute("""
+    base_query = """
         SELECT
-            sl.id, sl.name, sl.item_count, sl.created_at,
+            sl.id, sl.name, sl.item_count, sl.created_at, sl.user_email,
             ls.id as source_id, ls.data_source_id,
             lf.date_range_from, lf.date_range_to, lf.rag_query, lf.threshold,
             da.author
@@ -512,35 +508,90 @@ def get_all_smart_lists_api_result(conn) -> list["SmartListAPIResult"]:
         LEFT JOIN list_sources ls ON sl.id = ls.list_id
         LEFT JOIN list_filters lf ON ls.id = lf.list_source_id
         LEFT JOIN datasource_authors da ON ls.id = da.list_source_id
-        ORDER BY sl.id, ls.id, da.id
-    """)
+    """
 
+    params = []
+    where_conditions = []
+
+    if only_for_user:
+        where_conditions.append("sl.user_email = ?")
+        params.append(only_for_user)
+
+    if exclude_user:
+        where_conditions.append("sl.user_email != ?")
+        params.append(exclude_user)
+
+    if where_conditions:
+        query = f"{base_query} WHERE {' AND '.join(where_conditions)} ORDER BY sl.id, ls.id, da.id"
+    else:
+        query = f"{base_query} ORDER BY sl.id, ls.id, da.id"
+
+    cursor.execute(query, params)
     rows = cursor.fetchall()
+
+    # Get followed list IDs if current_user is provided
+    followed_ids = []
+    if current_user:
+        followed_ids = get_followed_list_ids(conn, current_user)
 
     # Group results by smart list
     lists_data = {}
-
     for row in rows:
         list_id = row["id"]
-
         if list_id not in lists_data:
-            # Create SmartListDB model
             smart_list = SmartListDB.from_sql_row(row)
             lists_data[list_id] = {"smart_list": smart_list, "sources_data": []}
 
-        # Add source data if it exists
         if row["source_id"]:
             lists_data[list_id]["sources_data"].append(row)
 
     # Convert to SmartListAPIResult models
     result = []
     for data in lists_data.values():
+        following = data["smart_list"].id in followed_ids if current_user else False
         api_result = SmartListAPIResult.from_db_data(
-            data["smart_list"], data["sources_data"]
+            data["smart_list"], data["sources_data"], following=following
         )
         result.append(api_result)
 
     return result
+
+
+def get_all_smart_lists_api_result(conn) -> list["SmartListAPIResult"]:
+    """Get all smart lists with their sources, filters, and authors using a single query"""
+    return _get_smart_lists_api_result(conn)
+
+
+def get_my_lists_api_result(conn, user_email: str) -> list["SmartListAPIResult"]:
+    """Get smart lists created by the user, with following status"""
+    return _get_smart_lists_api_result(
+        conn, only_for_user=user_email, current_user=user_email
+    )
+
+
+def get_community_lists_api_result(conn, user_email: str) -> list["SmartListAPIResult"]:
+    """Get smart lists NOT created by the user (community lists), with following status"""
+    return _get_smart_lists_api_result(
+        conn, exclude_user=user_email, current_user=user_email
+    )
+
+
+def delete_smart_list(conn, list_id: int, user_email: str) -> bool:
+    """Delete a smart list if owned by the user. Returns True if deleted, False otherwise."""
+    cursor = conn.cursor()
+
+    # Check if the user owns this list
+    cursor.execute("SELECT user_email FROM smart_lists WHERE id = ?", (list_id,))
+    row = cursor.fetchone()
+
+    if not row or row["user_email"] != user_email:
+        return False  # User doesn't own this list or list doesn't exist
+
+    # Delete the list (CASCADE will handle related tables)
+    cursor.execute("DELETE FROM smart_lists WHERE id = ?", (list_id,))
+    conn.commit()
+
+    return cursor.rowcount > 0
 
 
 def create_smart_list_from_request(
@@ -549,7 +600,7 @@ def create_smart_list_from_request(
     """Create a smart list from SmartListCreate request and auto-follow it. Returns the list ID."""
 
     # Insert the smart list
-    list_id = insert_smart_list(conn, list_data.name, 0)
+    list_id = insert_smart_list(conn, list_data.name, user_email, 0)
 
     # Insert sources and their filters/authors
     for list_source in list_data.listSources:
@@ -592,7 +643,9 @@ def initialize_mock_smart_lists():
 
         for mock_list in mock_lists:
             # Insert the smart list
-            list_id = insert_smart_list(conn, mock_list["name"], mock_list["itemCount"])
+            list_id = insert_smart_list(
+                conn, mock_list["name"], "example@list.org", mock_list["itemCount"]
+            )
 
             # Insert sources and their filters/authors
             for list_source in mock_list["listSources"]:

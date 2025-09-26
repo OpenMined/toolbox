@@ -26,6 +26,7 @@ class SmartListDB(BaseModel):
     name: str
     item_count: int
     created_at: str
+    user_email: str
 
     @classmethod
     def from_sql_row(cls, row):
@@ -35,6 +36,7 @@ class SmartListDB(BaseModel):
             name=row["name"],
             item_count=row["item_count"],
             created_at=row["created_at"],
+            user_email=row["user_email"],
         )
 
 
@@ -98,12 +100,12 @@ class ListSource(BaseModel):
     filters: SmartListFilter
 
 
-class SmartList(BaseModel):
-    id: int
-    name: str
-    listSources: List[ListSource]
-    computedItems: List = []
-    itemCount: int
+# class SmartList(BaseModel):
+#     id: int
+#     name: str
+#     listSources: List[ListSource]
+#     computedItems: List = []
+#     itemCount: int
 
 
 # Connected API result model
@@ -113,9 +115,13 @@ class SmartListAPIResult(BaseModel):
     listSources: List[ListSource]
     computedItems: List = []
     itemCount: int
+    owner_email: str
+    following: bool = False
 
     @classmethod
-    def from_db_data(cls, smart_list: SmartListDB, sources_data: List[Dict]):
+    def from_db_data(
+        cls, smart_list: SmartListDB, sources_data: List[Dict], following: bool = False
+    ):
         """Create SmartListAPIResult from database data"""
         # Group sources by list_source_id
         sources_by_id = {}
@@ -153,6 +159,8 @@ class SmartListAPIResult(BaseModel):
             name=smart_list.name,
             listSources=list_sources,
             itemCount=smart_list.item_count,
+            owner_email=smart_list.user_email,
+            following=following,
         )
 
 

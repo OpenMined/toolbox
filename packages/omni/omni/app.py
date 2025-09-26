@@ -4,11 +4,14 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from omni.db import (
+    _get_smart_lists_api_result,
     create_smart_list_from_request,
     create_user,
+    delete_smart_list,
     follow_list,
-    get_all_smart_lists_api_result,
+    get_community_lists_api_result,
     get_followed_list_ids,
+    get_my_lists_api_result,
     get_omni_connection,
     get_smart_list_api_result_by_id,
     get_user_by_email,
@@ -111,10 +114,10 @@ async def get_data_collections():
 
 
 @app.get("/smart-lists", response_model=List[SmartListAPIResult])
-async def get_all_smart_lists_api_result_endpoint():
-    """Get all available smart lists"""
+async def get_all_smart_lists_api_result_endpoint(user_email: str = "dev@example.com"):
+    """Get all available smart lists with following status"""
     with get_omni_connection() as conn:
-        return get_all_smart_lists_api_result(conn)
+        return _get_smart_lists_api_result(conn, current_user=user_email)
 
 
 @app.get("/smart-lists/followed", response_model=List[SmartListAPIResult])
@@ -122,12 +125,12 @@ async def get_followed_smart_lists(user_email: str = "dev@example.com"):
     """Get smart lists that the user is following"""
     with get_omni_connection() as conn:
         followed_list_ids = get_followed_list_ids(conn, user_email)
-        all_lists = get_all_smart_lists_api_result(conn)
+        all_lists = _get_smart_lists_api_result(conn, current_user=user_email)
 
+    # Filter to only followed lists
     followed_lists = [
         list_item for list_item in all_lists if list_item.id in followed_list_ids
     ]
-
     return followed_lists
 
 
@@ -136,13 +139,27 @@ async def get_not_following_smart_lists(user_email: str = "dev@example.com"):
     """Get smart lists that the user is not following"""
     with get_omni_connection() as conn:
         followed_list_ids = get_followed_list_ids(conn, user_email)
-        all_lists = get_all_smart_lists_api_result(conn)
+        all_lists = _get_smart_lists_api_result(conn, current_user=user_email)
 
     not_following_lists = [
         list_item for list_item in all_lists if list_item.id not in followed_list_ids
     ]
 
     return not_following_lists
+
+
+@app.get("/smart-lists/my", response_model=List[SmartListAPIResult])
+async def get_my_smart_lists(user_email: str = "dev@example.com"):
+    """Get smart lists created by the user"""
+    with get_omni_connection() as conn:
+        return get_my_lists_api_result(conn, user_email)
+
+
+@app.get("/smart-lists/community", response_model=List[SmartListAPIResult])
+async def get_community_smart_lists(user_email: str = "dev@example.com"):
+    """Get community smart lists (not created by the user)"""
+    with get_omni_connection() as conn:
+        return get_community_lists_api_result(conn, user_email)
 
 
 @app.post("/smart-lists/{list_id}/follow")
@@ -159,6 +176,21 @@ async def unfollow_smart_list(list_id: int, user_email: str = "dev@example.com")
     with get_omni_connection() as conn:
         unfollow_list(conn, user_email, list_id)
     return {"message": f"Successfully unfollowed list {list_id}"}
+
+
+@app.delete("/smart-lists/{list_id}")
+async def delete_smart_list_endpoint(list_id: int, user_email: str = "dev@example.com"):
+    """Delete a smart list if owned by the user"""
+    with get_omni_connection() as conn:
+        success = delete_smart_list(conn, list_id, user_email)
+
+    if not success:
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot delete list: either it doesn't exist or you don't own it",
+        )
+
+    return {"message": f"Successfully deleted list {list_id}"}
 
 
 @app.post("/smart-lists")

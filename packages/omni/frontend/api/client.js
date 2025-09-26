@@ -34,8 +34,8 @@ class APIClient {
     return this.request("/data-collections");
   }
 
-  async getSmartLists() {
-    return this.request("/smart-lists");
+  async getSmartLists(userEmail = "dev@example.com") {
+    return this.request(`/smart-lists?user_email=${userEmail}`);
   }
 
   async getFollowedSmartLists(userEmail = "dev@example.com") {
@@ -95,6 +95,20 @@ class APIClient {
 
   async getUser(email) {
     return this.request(`/users/${email}`);
+  }
+
+  async getMySmartLists(userEmail = "dev@example.com") {
+    return this.request(`/smart-lists/my?user_email=${userEmail}`);
+  }
+
+  async getCommunitySmartLists(userEmail = "dev@example.com") {
+    return this.request(`/smart-lists/community?user_email=${userEmail}`);
+  }
+
+  async deleteSmartList(listId, userEmail = "dev@example.com") {
+    return this.request(`/smart-lists/${listId}?user_email=${userEmail}`, {
+      method: "DELETE",
+    });
   }
 }
 

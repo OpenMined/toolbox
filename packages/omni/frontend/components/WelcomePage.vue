@@ -20,13 +20,18 @@
             <h2 class="text-2xl font-light text-gray-900">Your Lists</h2>
           </div>
 
-          <!-- Your Followed Lists -->
-          <div v-if="smartListsStore.smartLists.length > 0" class="max-w-2xl">
+          <!-- Your Lists (owned + followed community lists) -->
+          <div v-if="yourLists.length > 0" class="max-w-2xl">
             <SmartListListView
-              :lists="smartListsStore.smartLists"
-              :show-unfollow-button="true"
+              :lists="yourLists"
+              :show-owned-lists="true"
+              :show-delete-button="true"
+              :show-your-lists="true"
+              :followed-list-ids="followedListIds"
               :clickable="true"
+              @follow="followAndOpenList"
               @unfollow="unfollowList"
+              @delete="deleteList"
               @click="openList"
             />
           </div>
@@ -37,13 +42,13 @@
             class="text-center py-4 bg-gray-50 rounded-lg border border-gray-200"
           >
             <p class="text-gray-600 text-sm">
-              You haven't followed any lists yet
+              You haven't created any lists yet
             </p>
           </div>
         </div>
 
         <!-- Available Lists to Explore -->
-        <div v-if="availableListsToFollow.length > 0">
+        <div v-if="communityLists.length > 0">
           <div class="mb-8">
             <h2 class="text-2xl font-light text-gray-900">Community Lists</h2>
             <p class="text-gray-600 mt-2">
@@ -53,7 +58,7 @@
 
           <div class="max-w-2xl">
             <SmartListListView
-              :lists="availableListsToFollow"
+              :lists="communityLists"
               :show-follow-button="true"
               @follow="followAndOpenList"
             />
@@ -281,25 +286,83 @@ export default {
     const userStore = useUserStore();
 
     const allLists = ref([]);
+    const myOwnedLists = ref([]);
+    const followedListIds = ref([]);
 
     // Get connected data sources
     const connectedSources = computed(() => {
       return dataSourcesStore.connectedDataSources;
     });
 
-    // Get lists that are available to follow (not already followed)
-    const availableListsToFollow = computed(() => {
-      const followedListIds = smartListsStore.smartLists.map((list) => list.id);
+    // "Your Lists" = owned lists + followed community lists
+    const yourLists = computed(() => {
+      const currentUserEmail = userStore.userEmail || "dev@example.com";
+
+      // Get all owned lists
+      const ownedLists = myOwnedLists.value;
+
+      // Get followed community lists (lists owned by others that you're following)
+      const followedCommunityLists = allLists.value.filter(
+        (list) =>
+          list.owner_email !== currentUserEmail &&
+          followedListIds.value.includes(list.id),
+      );
+      // 1. Owned lists that are followed
+      const ownedFollowedLists = ownedLists.filter((list) =>
+        followedListIds.value.includes(list.id),
+      );
+      // 2. Followed community lists (already computed above)
+      // 3. Owned lists that are not followed
+      const ownedUnfollowedLists = ownedLists.filter(
+        (list) => !followedListIds.value.includes(list.id),
+      );
+
+      return [
+        ...ownedFollowedLists,
+        ...followedCommunityLists,
+        ...ownedUnfollowedLists,
+      ];
+
+      // return [...ownedLists, ...followedCommunityLists];
+    });
+
+    // Get community lists (unfollowed lists not created by current user)
+    const communityLists = computed(() => {
+      const currentUserEmail = userStore.userEmail || "dev@example.com";
+
       return allLists.value.filter(
-        (list) => !followedListIds.includes(list.id),
+        (list) =>
+          list.owner_email !== currentUserEmail &&
+          !followedListIds.value.includes(list.id),
       );
     });
 
     const fetchAllLists = async () => {
       try {
-        allLists.value = await apiClient.getSmartLists();
+        const userEmail = userStore.userEmail || "dev@example.com";
+        allLists.value = await apiClient.getSmartLists(userEmail);
       } catch (error) {
         console.error("Failed to fetch all lists:", error);
+      }
+    };
+
+    const fetchMyOwnedLists = async () => {
+      try {
+        const userEmail = userStore.userEmail || "dev@example.com";
+        const lists = await apiClient.getMySmartLists(userEmail);
+        myOwnedLists.value = lists;
+      } catch (error) {
+        console.error("Failed to fetch my owned lists:", error);
+      }
+    };
+
+    const fetchFollowedListIds = async () => {
+      try {
+        const userEmail = userStore.userEmail || "dev@example.com";
+        const followedLists = await apiClient.getFollowedSmartLists(userEmail);
+        followedListIds.value = followedLists.map((list) => list.id);
+      } catch (error) {
+        console.error("Failed to fetch followed list IDs:", error);
       }
     };
 
@@ -307,6 +370,11 @@ export default {
       try {
         const userEmail = userStore.userEmail || "dev@example.com";
         await apiClient.followSmartList(listId, userEmail);
+
+        // Add to followed list IDs
+        if (!followedListIds.value.includes(listId)) {
+          followedListIds.value.push(listId);
+        }
 
         // Refresh the sidebar lists
         await smartListsStore.fetchSmartLists();
@@ -326,6 +394,12 @@ export default {
         const userEmail = userStore.userEmail || "dev@example.com";
         await apiClient.unfollowSmartList(listId, userEmail);
 
+        // Remove from followed list IDs
+        const index = followedListIds.value.indexOf(listId);
+        if (index !== -1) {
+          followedListIds.value.splice(index, 1);
+        }
+
         // If we're currently viewing the unfollowed list, go to welcome page
         if (smartListsStore.currentListId === listId) {
           smartListsStore.currentListId = null;
@@ -336,6 +410,44 @@ export default {
         await smartListsStore.fetchSmartLists();
       } catch (error) {
         console.error("Failed to unfollow list:", error);
+      }
+    };
+
+    const deleteList = async (listId) => {
+      try {
+        const userEmail = userStore.userEmail || "dev@example.com";
+        await apiClient.deleteSmartList(listId, userEmail);
+
+        // Remove from owned lists
+        const ownedIndex = myOwnedLists.value.findIndex(
+          (list) => list.id === listId,
+        );
+        if (ownedIndex !== -1) {
+          myOwnedLists.value.splice(ownedIndex, 1);
+        }
+
+        // Remove from followed list IDs
+        const followedIndex = followedListIds.value.indexOf(listId);
+        if (followedIndex !== -1) {
+          followedListIds.value.splice(followedIndex, 1);
+        }
+
+        // Remove from all lists
+        const allIndex = allLists.value.findIndex((list) => list.id === listId);
+        if (allIndex !== -1) {
+          allLists.value.splice(allIndex, 1);
+        }
+
+        // If we're currently viewing the deleted list, go to welcome page
+        if (smartListsStore.currentListId === listId) {
+          smartListsStore.currentListId = null;
+          dataSourcesStore.closeDashboard();
+        }
+
+        // Refresh the sidebar lists
+        await smartListsStore.fetchSmartLists();
+      } catch (error) {
+        console.error("Failed to delete list:", error);
       }
     };
 
@@ -359,8 +471,12 @@ export default {
     };
 
     onMounted(async () => {
-      // Fetch all lists when component mounts
-      await fetchAllLists();
+      // Fetch all lists, owned lists, and followed list IDs when component mounts
+      await Promise.all([
+        fetchAllLists(),
+        fetchMyOwnedLists(),
+        fetchFollowedListIds(),
+      ]);
     });
 
     return {
@@ -368,13 +484,17 @@ export default {
       smartListsStore,
       connectedSources,
       allLists,
-      availableListsToFollow,
+      myOwnedLists,
+      yourLists,
+      followedListIds,
+      communityLists,
       createNewList,
       discoverLists,
       manageConnectors,
       openList,
       followAndOpenList,
       unfollowList,
+      deleteList,
     };
   },
 };
