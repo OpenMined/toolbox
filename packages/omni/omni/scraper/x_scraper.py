@@ -346,8 +346,8 @@ if __name__ == "__main__":
         "sama",  # not followed
         "sebruder12345",  # non-existent user
     ]
-    scraper.add_scrape_timeline_job(scrape_timeline_duration=30)
-    scraper.add_follow_users_job(handles=handles_to_follow, scrape_timeline_duration=0)
+    # scraper.add_scrape_timeline_job(scrape_timeline_duration=30)
+    scraper.add_follow_users_job(handles=handles_to_follow, scrape_timeline_duration=10)
 
     time.sleep(300)
     scraper.stop()

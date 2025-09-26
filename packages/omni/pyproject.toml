@@ -17,6 +17,7 @@ dependencies = [
     "toolbox_store",
     "tqdm>=4.67.1",
     "apscheduler>=3.11.0",
+    "browser-cookie3>=0.20.1",
 ]
 
 
