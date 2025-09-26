@@ -99,7 +99,7 @@ def get_mock_smart_lists():
                     "filters": {
                         "dateRange": {"from": "2025-07-01", "to": "2025-10-01"},
                         "ragQuery": "vibe coding",
-                        "threshold": 0.1,
+                        "threshold": 0.42,
                         "authors": [
                             "@CrazyJvm",
                             "@seb_ruder",
@@ -110,7 +110,6 @@ def get_mock_smart_lists():
                             "@steipete",
                             "@jeremyphoward",
                             "@bobvanluijt",
-                            "@rohanpaul_ai",
                         ],
                     },
                 }
@@ -126,7 +125,7 @@ def get_mock_smart_lists():
                     "filters": {
                         "dateRange": {"from": "2025-07-01", "to": "2025-10-01"},
                         "ragQuery": "LLM model release",
-                        "threshold": 0.1,
+                        "threshold": 0.43,
                         "authors": [
                             "@CrazyJvm",
                             "@seb_ruder",
@@ -137,7 +136,6 @@ def get_mock_smart_lists():
                             "@steipete",
                             "@jeremyphoward",
                             "@bobvanluijt",
-                            "@rohanpaul_ai",
                         ],
                     },
                 }
@@ -154,7 +152,7 @@ def get_mock_smart_lists():
                     "filters": {
                         "dateRange": {"from": "2025-07-01", "to": "2025-10-01"},
                         "ragQuery": "RAG retrieval augmented generation",
-                        "threshold": 0.4,
+                        "threshold": 0.43,
                         "authors": [
                             "@CrazyJvm",
                             "@seb_ruder",
@@ -165,7 +163,6 @@ def get_mock_smart_lists():
                             "@steipete",
                             "@jeremyphoward",
                             "@bobvanluijt",
-                            "@rohanpaul_ai",
                         ],
                     },
                 }

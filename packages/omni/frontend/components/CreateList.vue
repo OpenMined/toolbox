@@ -46,28 +46,46 @@
             <!-- Date Range (Global) -->
             <div class="max-w-2xl">
               <label class="block text-sm font-medium text-gray-900 mb-3"
-                >Date Range (All Sources)</label
+                >Date Range (optional)</label
               >
               <div class="flex space-x-4">
                 <div class="flex-1">
                   <label class="block text-xs text-gray-500 mb-1"
                     >Start Date</label
                   >
-                  <input
-                    v-model="globalFilters.startDate"
-                    type="date"
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  <div class="relative">
+                    <input
+                      v-model="globalFilters.startDate"
+                      type="date"
+                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      :class="{ 'text-transparent': !globalFilters.startDate }"
+                    />
+                    <div
+                      v-if="!globalFilters.startDate"
+                      class="absolute inset-0 px-3 py-2 text-sm text-gray-400 pointer-events-none flex items-center"
+                    >
+                      No start date
+                    </div>
+                  </div>
                 </div>
                 <div class="flex-1">
                   <label class="block text-xs text-gray-500 mb-1"
                     >End Date</label
                   >
-                  <input
-                    v-model="globalFilters.endDate"
-                    type="date"
-                    class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
+                  <div class="relative">
+                    <input
+                      v-model="globalFilters.endDate"
+                      type="date"
+                      class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      :class="{ 'text-transparent': !globalFilters.endDate }"
+                    />
+                    <div
+                      v-if="!globalFilters.endDate"
+                      class="absolute inset-0 px-3 py-2 text-sm text-gray-400 pointer-events-none flex items-center"
+                    >
+                      No end date
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -289,48 +307,84 @@
                     class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     placeholder="Semantic search query for content matching"
                   />
-                  <div class="grid grid-cols-2 gap-2">
-                    <select
-                      v-model="sourceFilters[currentSource.id].ragFilter.model"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                    >
-                      <option value="">Select model</option>
-                      <option value="ollama/nomic-embed-text">
-                        ollama/nomic-embed-text
-                      </option>
-                      <option value="openai/text-embedding-3-small">
-                        openai/text-embedding-3-small
-                      </option>
-                      <option value="openai/text-embedding-3-large">
-                        openai/text-embedding-3-large
-                      </option>
-                    </select>
-                    <input
-                      v-model.number="
-                        sourceFilters[currentSource.id].ragFilter.threshold
-                      "
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="1"
-                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                      placeholder="Threshold (0.7)"
-                    />
-                  </div>
                 </div>
               </div>
 
-              <!-- LLM Filter -->
+              <!-- Advanced Options -->
               <div>
-                <label class="block text-sm font-medium text-gray-700 mb-2"
-                  >LLM Filter</label
+                <button
+                  @click="toggleAdvanced(currentSource.id)"
+                  class="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
                 >
-                <textarea
-                  v-model="sourceFilters[currentSource.id].llmFilter"
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  rows="2"
-                  placeholder="Include only items matching criteria (e.g., 'mentions AI or ML', 'privacy concerns')"
-                ></textarea>
+                  <span>Advanced Options</span>
+                  <svg
+                    class="w-3 h-3 transform transition-transform"
+                    :class="{ 'rotate-180': showAdvanced[currentSource.id] }"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+
+                <div
+                  v-if="showAdvanced[currentSource.id]"
+                  class="mt-4 space-y-4"
+                >
+                  <div class="grid grid-cols-2 gap-2">
+                    <div>
+                      <label
+                        class="block text-xs font-medium text-gray-600 mb-1"
+                        >Model</label
+                      >
+                      <select
+                        v-model="
+                          sourceFilters[currentSource.id].ragFilter.model
+                        "
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      >
+                        <option value="ollama/embeddinggemma:latest">
+                          ollama/embeddinggemma:latest
+                        </option>
+                      </select>
+                    </div>
+                    <div>
+                      <label
+                        class="block text-xs font-medium text-gray-600 mb-1"
+                        >Threshold</label
+                      >
+                      <input
+                        v-model.number="
+                          sourceFilters[currentSource.id].ragFilter.threshold
+                        "
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        placeholder="0.7"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-medium text-gray-600 mb-1"
+                      >LLM Filter</label
+                    >
+                    <textarea
+                      v-model="sourceFilters[currentSource.id].llmFilter"
+                      class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                      rows="2"
+                      placeholder="Include only items matching criteria (e.g., 'mentions AI or ML', 'privacy concerns')"
+                    ></textarea>
+                  </div>
+                </div>
               </div>
 
               <!-- Preview Results -->
@@ -409,6 +463,7 @@ export default {
 
     const sourceFilters = reactive({});
     const previewResults = reactive({});
+    const showAdvanced = reactive({});
 
     const initializeSourceFilter = (sourceId) => {
       if (!sourceFilters[sourceId]) {
@@ -416,11 +471,14 @@ export default {
           authors: [],
           llmFilter: "",
           ragFilter: {
-            query: "",
-            model: "",
-            threshold: 0.6,
+            query: listName.value.trim(),
+            model: "ollama/embeddinggemma:latest",
+            threshold: 0.4,
           },
         };
+      }
+      if (!showAdvanced[sourceId]) {
+        showAdvanced[sourceId] = false;
       }
     };
 
@@ -441,6 +499,8 @@ export default {
           ...currentSource.value,
           filters: { ...sourceFilters[currentSource.value.id] },
         });
+        // Reset the current source selection to hide the options
+        currentSource.value = null;
       }
     };
 
@@ -557,6 +617,21 @@ export default {
       generateMockPreview(sourceId);
     };
 
+    const toggleAdvanced = (sourceId) => {
+      showAdvanced[sourceId] = !showAdvanced[sourceId];
+    };
+
+    // Watch for changes in list name and update RAG filter queries
+    watch(listName, (newListName) => {
+      const trimmedName = newListName.trim();
+      // Update all existing source filters
+      Object.keys(sourceFilters).forEach((sourceId) => {
+        if (sourceFilters[sourceId] && sourceFilters[sourceId].ragFilter) {
+          sourceFilters[sourceId].ragFilter.query = trimmedName;
+        }
+      });
+    });
+
     const canCreate = computed(() => {
       return listName.value.trim() && addedSources.value.length > 0;
     });
@@ -574,7 +649,8 @@ export default {
               to: globalFilters.endDate,
             },
             ragQuery: sourceFilters[source.id]?.ragFilter?.query || "",
-            threshold: sourceFilters[source.id]?.ragFilter?.threshold || 0.6,
+            threshold: sourceFilters[source.id]?.ragFilter?.threshold || 0.4,
+            authors: sourceFilters[source.id]?.authors || [],
           },
         })),
         itemCount: addedSources.value.reduce((sum, source) => {
@@ -597,11 +673,13 @@ export default {
       globalFilters,
       sourceFilters,
       previewResults,
+      showAdvanced,
       selectSourceForConfiguration,
       addCurrentSource,
       addAuthor,
       removeAuthor,
       refreshPreview,
+      toggleAdvanced,
       canCreate,
       createList,
     };

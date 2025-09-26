@@ -10,6 +10,10 @@ sync-data:
     #!/bin/bash
     scp -r ~/.twitter-mcp/tweet_toolbox_store.db toolbox-prod:/home/azureuser/.twitter-mcp/tweet_toolbox_store.db
 
+sync-summaries:
+    #!/bin/bash
+    scp -r ~/.twitter-mcp/db.sqlite toolbox-prod:/home/azureuser/.twitter-mcp/db.sqlite
+
 # Kill existing dev processes
 kill-dev:
     #!/bin/bash
@@ -30,6 +34,7 @@ dev:
     just kill-dev
     trap 'just kill-dev' EXIT
     echo "Starting backend server..."
+    export USE_ANTHROPIC=True
     cd omni && python app.py &
     BACKEND_PID=$!
     echo "Backend started with PID: $BACKEND_PID"
