@@ -1,6 +1,15 @@
 #!/usr/bin/env just --justfile
 # Vue.js and FastAPI development commands
 
+
+deploy:
+    #!/bin/bash
+    ./deploy_omni.sh
+
+sync-data:
+    #!/bin/bash
+    scp -r ~/.twitter-mcp/tweet_toolbox_store.db toolbox-prod:/home/azureuser/.twitter-mcp/tweet_toolbox_store.db
+
 # Kill existing dev processes
 kill-dev:
     #!/bin/bash
