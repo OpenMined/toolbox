@@ -9,7 +9,7 @@ dependencies = [
     "pydantic-settings>=2.10.0",
     "slack_sdk==3.35.0",
     "sqlite-vec==0.1.7a2",
-    "numpy==2.3.2",
+    "numpy>=2.3.2",
     "tqdm==4.67.1",
     "loguru==0.7.3",
     "mcp>=1.9.2",
