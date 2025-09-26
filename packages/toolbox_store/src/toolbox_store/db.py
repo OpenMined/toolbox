@@ -447,7 +447,19 @@ class TBDatabase(Generic[T]):
             params_dict,
         )
 
-        rows = cursor.fetchall()
+        rows = []
+        for row in cursor.fetchall():
+            row_dict = dict(row)
+            embedding_blob = row_dict.get("embedding", None)
+            if isinstance(embedding_blob, bytes):
+                row_dict["embedding"] = deserialize_float32(embedding_blob)
+            else:
+                row_dict["embedding"] = None
+
+            # Convert distance to score
+            distance = row_dict.get("distance", None)
+            if distance is not None:
+                row_dict["score"] = 1 - distance
         return [RetrievedChunk.from_sql_row(row) for row in rows]
 
     def get_docs_without_embeddings(
