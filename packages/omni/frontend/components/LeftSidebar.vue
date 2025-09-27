@@ -21,7 +21,7 @@
     </div>
 
     <!-- Data Connections Section -->
-    <div class="mb-6">
+    <!-- <div class="mb-6">
       <div class="flex items-center justify-between mb-3">
         <h3 class="text-sm font-medium text-gray-900">Data Connections</h3>
         <button
@@ -70,7 +70,7 @@
           </span>
         </div>
       </div>
-    </div>
+    </div> -->
 
     <!-- Lists Section -->
     <div class="flex-1">
@@ -84,19 +84,40 @@
         </button>
       </div>
       <div class="space-y-1">
-        <a
+        <div
           v-for="list in smartListsStore.smartLists"
           :key="list.id"
-          class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+          class="flex items-center justify-between p-2 rounded-lg hover:bg-gray-50 transition-colors group"
           :class="{
             'bg-blue-50 border border-blue-200':
               list.id === smartListsStore.currentListId,
           }"
-          @click="selectList(list.id)"
         >
-          <span class="text-sm text-gray-700">{{ list.name }}</span>
-          <span class="text-xs text-gray-400">{{ list.itemCount }}</span>
-        </a>
+          <div
+            class="flex items-center flex-1 cursor-pointer"
+            @click="selectList(list.id)"
+          >
+            <span class="text-sm text-gray-700">{{ list.name }}</span>
+          </div>
+          <div class="flex items-center gap-1">
+            <span class="text-xs text-gray-400">{{ list.itemCount }}</span>
+            <button
+              @click.stop="unfollowList(list.id)"
+              class="p-1 hover:bg-red-100 rounded transition-all duration-200 flex-shrink-0"
+              title="Unfollow list"
+            >
+              <svg
+                class="h-4 w-4 text-red-500"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M16,12V4H17V2H7V4H8V12L6,14V16H11.2V22H12.8V16H18V14L16,12Z"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -122,6 +143,8 @@
 import { useDataSourcesStore } from "../stores/dataSourcesStore";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import { useNewChatStore } from "../stores/newChatStore";
+import { useUserStore } from "../stores/userStore";
+import { apiClient } from "../api/client.js";
 
 export default {
   name: "LeftSidebar",
@@ -129,9 +152,10 @@ export default {
     const dataSourcesStore = useDataSourcesStore();
     const smartListsStore = useSmartListsStore();
     const chatStore = useNewChatStore();
+    const userStore = useUserStore();
 
     // Mock user account data - this would come from an auth store in a real app
-    const userAccount = { email: "user@example.com" };
+    const userAccount = { email: "dev@example.com" };
 
     const getUserAvatarUrl = () => {
       const username = userAccount.email.split("@")[0];
@@ -150,7 +174,25 @@ export default {
     };
 
     const showAddList = () => {
-      dataSourcesStore.setDashboardView("CreateList");
+      dataSourcesStore.setDashboardView("DiscoverListsPanel");
+    };
+
+    const unfollowList = async (listId) => {
+      try {
+        const userEmail = userStore.userEmail || "dev@example.com";
+        await apiClient.unfollowSmartList(listId, userEmail);
+
+        // If we're currently viewing the unfollowed list, go to welcome page
+        if (smartListsStore.currentListId === listId) {
+          smartListsStore.currentListId = null;
+          dataSourcesStore.closeDashboard();
+        }
+
+        // Refresh the sidebar lists
+        await smartListsStore.fetchSmartLists();
+      } catch (error) {
+        console.error("Failed to unfollow list:", error);
+      }
     };
 
     const goToWelcome = () => {
@@ -168,6 +210,7 @@ export default {
       getUserAvatarUrl,
       selectList,
       showAddList,
+      unfollowList,
       goToWelcome,
     };
   },

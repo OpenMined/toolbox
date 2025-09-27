@@ -65,10 +65,41 @@
         </div>
       </div>
 
+      <!-- Sorting Panel -->
+      <div class="px-4 py-3 bg-white border-b border-gray-200">
+        <div class="flex items-center gap-3">
+          <span class="text-sm font-medium text-gray-700">Sort by:</span>
+          <div class="flex bg-gray-100 rounded-lg p-1">
+            <button
+              @click="setSortMethod('date')"
+              :class="[
+                'px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
+                sortMethod === 'date'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+              ]"
+            >
+              Date
+            </button>
+            <button
+              @click="setSortMethod('similarity')"
+              :class="[
+                'px-3 py-1.5 text-sm font-medium rounded-md transition-all duration-200',
+                sortMethod === 'similarity'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50',
+              ]"
+            >
+              Similarity
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Tweet List -->
       <div class="divide-y divide-gray-200">
         <component
-          v-for="item in smartListsStore.currentListItems"
+          v-for="item in sortedItems"
           :key="item.id"
           :is="getComponentForType(item.type)"
           :item="item"
@@ -79,7 +110,7 @@
 </template>
 
 <script>
-import { onMounted, watch, ref } from "vue";
+import { onMounted, watch, ref, computed } from "vue";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import TweetItem from "./TweetItem.vue";
 
@@ -92,6 +123,7 @@ export default {
     const smartListsStore = useSmartListsStore();
     const isExpanded = ref(false);
     const maxBulletsCollapsed = 3;
+    const sortMethod = ref("date");
 
     // Generate summary when list changes
     watch(
@@ -192,6 +224,29 @@ export default {
       isExpanded.value = !isExpanded.value;
     };
 
+    const sortedItems = computed(() => {
+      const items = [...smartListsStore.currentListItems];
+
+      if (sortMethod.value === "similarity") {
+        return items.sort((a, b) => {
+          const scoreA = a.similarity_score || 0;
+          const scoreB = b.similarity_score || 0;
+          return scoreB - scoreA; // Descending order (highest similarity first)
+        });
+      } else {
+        // Sort by date (default)
+        return items.sort((a, b) => {
+          const dateA = new Date(a.timestamp);
+          const dateB = new Date(b.timestamp);
+          return dateB - dateA; // Descending order (newest first)
+        });
+      }
+    });
+
+    const setSortMethod = (method) => {
+      sortMethod.value = method;
+    };
+
     return {
       smartListsStore,
       getComponentForType,
@@ -203,6 +258,9 @@ export default {
       shouldShowReadMore,
       toggleExpanded,
       isExpanded,
+      sortMethod,
+      sortedItems,
+      setSortMethod,
     };
   },
 };
