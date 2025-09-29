@@ -66,10 +66,10 @@ def load_cookies_from_file() -> list[dict] | None:
     return
 
 
-def get_cookies_for_playwright() -> list[dict]:
+def get_cookies_for_playwright(reload: bool = True) -> list[dict]:
     """Get cookies in Playwright format"""
     cookies = load_cookies_from_file()
-    if cookies is not None:
+    if cookies is not None and not reload:
         return cookies
 
     x_cookies = get_cookies_from_brave()
@@ -126,7 +126,7 @@ async def scroll_vertical_mousewheel(
     page: Page,
     duration: int,
     distance_range: tuple[int, int] = (200, 1000),
-    delay_range: tuple[float, float] = (0.3, 1.0),
+    delay_range: tuple[float, float] = (1, 5),
 ):
     start_time = time.time()
 
@@ -443,7 +443,6 @@ if __name__ == "__main__":
 
     # Example: follow specific users once
     handles_to_follow = [
-        "anthropicai",
         "openai",
     ]
     # scraper.add_scrape_timeline_job(scrape_timeline_duration=30)

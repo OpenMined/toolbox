@@ -81,12 +81,12 @@
             v-if="showYourLists && isListFollowed(list.id)"
             @click="handleUnfollow(list.id)"
             :disabled="loading"
-            class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 transition-colors"
+            class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 transition-colors"
           >
             <span v-if="!loading">Unfollow</span>
             <svg
               v-else
-              class="animate-spin h-3 w-3 text-red-600"
+              class="animate-spin h-3 w-3 text-gray-600"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
@@ -111,12 +111,12 @@
             v-if="showDeleteButton && !isCommunityList(list)"
             @click="handleDelete(list.id)"
             :disabled="loading"
-            class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-gray-600 bg-gray-50 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500 disabled:opacity-50 transition-colors"
+            class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-md text-red-600 bg-red-50 hover:bg-red-100 focus:outline-none focus:ring-2 focus:ring-red-500 disabled:opacity-50 transition-colors"
           >
             <span v-if="!loading">Delete</span>
             <svg
               v-else
-              class="animate-spin h-3 w-3 text-gray-600"
+              class="animate-spin h-3 w-3 text-red-600"
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"

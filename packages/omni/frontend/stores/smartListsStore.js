@@ -14,6 +14,12 @@ export const useSmartListsStore = defineStore("smartLists", {
 
     // Cache for list summaries
     summariesCache: {},
+
+    // Loading state for individual list items
+    listItemsLoading: {},
+
+    // Loading start times for progress messages
+    listLoadingStartTimes: {},
   }),
 
   getters: {
@@ -23,6 +29,16 @@ export const useSmartListsStore = defineStore("smartLists", {
     currentListItems: (state) => {
       if (!state.currentListId) return [];
       return state.computedItemsCache[state.currentListId] || [];
+    },
+
+    isCurrentListLoading: (state) => {
+      if (!state.currentListId) return false;
+      return state.listItemsLoading[state.currentListId] || false;
+    },
+
+    getCurrentListLoadingStartTime: (state) => {
+      if (!state.currentListId) return null;
+      return state.listLoadingStartTimes[state.currentListId] || null;
     },
 
     currentListSummary: (state) => {
@@ -67,12 +83,19 @@ export const useSmartListsStore = defineStore("smartLists", {
     async fetchListItems(listId) {
       if (!listId) return;
 
+      // Set loading state for this specific list
+      this.listItemsLoading[listId] = true;
+      this.listLoadingStartTimes[listId] = Date.now();
+
       try {
         const items = await apiClient.getSmartListItems(listId);
         this.computedItemsCache[listId] = items;
       } catch (error) {
         console.error(`Failed to fetch items for list ${listId}:`, error);
         this.computedItemsCache[listId] = [];
+      } finally {
+        this.listItemsLoading[listId] = false;
+        delete this.listLoadingStartTimes[listId];
       }
     },
 

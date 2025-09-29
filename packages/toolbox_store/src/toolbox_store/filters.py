@@ -90,7 +90,7 @@ def build_condition(
         placeholders = [f":{param_base}_{i}" for i in range(len(value))]
         for i, item in enumerate(value):
             params[f"{param_base}_{i}"] = prepare_value(item, "eq")
-        return f"{sql_field} IN ({','.join(placeholders)})"
+        return f"LOWER({sql_field}) IN ({','.join(placeholders)})"
 
     if op not in OPERATORS:
         raise ValueError(f"Unknown operator: {op}")

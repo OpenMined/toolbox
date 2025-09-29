@@ -76,7 +76,8 @@ def search_tweets(
                 max_doc_score = max(chunk.score for chunk in doc.chunks)
                 if max_doc_score >= similarity_threshold:
                     documents.append(doc)
-            print("got documents", len(documents))
+                    similarities.append(max_doc_score)
+
         else:
             similarities = [None for _ in documents]
 

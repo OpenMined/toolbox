@@ -1,12 +1,70 @@
 <template>
   <div class="h-full">
+    <!-- Loading State -->
     <div
-      v-if="smartListsStore.currentListItems.length === 0"
+      v-if="smartListsStore.isCurrentListLoading"
       class="flex items-center justify-center h-full"
     >
-      <p class="text-gray-500">No items in this list</p>
+      <div class="text-center">
+        <div
+          class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm shadow rounded-md text-blue-500 bg-white transition ease-in-out duration-150"
+        >
+          <svg
+            class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-500"
+            xmlns="http://www.w3.org/2000/svg"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle
+              class="opacity-25"
+              cx="12"
+              cy="12"
+              r="10"
+              stroke="currentColor"
+              stroke-width="4"
+            ></circle>
+            <path
+              class="opacity-75"
+              fill="currentColor"
+              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+            ></path>
+          </svg>
+          {{ loadingMessage }}
+        </div>
+      </div>
     </div>
 
+    <!-- Empty State -->
+    <div
+      v-else-if="smartListsStore.currentListItems.length === 0"
+      class="flex items-center justify-center h-full"
+    >
+      <div class="text-center">
+        <div
+          class="w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full flex items-center justify-center"
+        >
+          <svg
+            class="w-8 h-8 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10l1 14H6l1-14zM10 7v2m4-2v2"
+            ></path>
+          </svg>
+        </div>
+        <p class="text-gray-500 mb-2">No tweets found</p>
+        <p class="text-sm text-gray-400">
+          This list may still be fetching tweets from the network
+        </p>
+      </div>
+    </div>
+
+    <!-- Content -->
     <div v-else>
       <!-- Content Summary -->
       <div class="p-4 bg-blue-50 border-b border-blue-100 mb-0">
@@ -110,7 +168,7 @@
 </template>
 
 <script>
-import { onMounted, watch, ref, computed } from "vue";
+import { onMounted, watch, ref, computed, onUnmounted } from "vue";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import TweetItem from "./TweetItem.vue";
 
@@ -124,6 +182,8 @@ export default {
     const isExpanded = ref(false);
     const maxBulletsCollapsed = 3;
     const sortMethod = ref("date");
+    const loadingMessage = ref("Loading tweets...");
+    let loadingMessageInterval = null;
 
     // Generate summary when list changes
     watch(
@@ -247,6 +307,52 @@ export default {
       sortMethod.value = method;
     };
 
+    // Update loading message based on elapsed time
+    const updateLoadingMessage = () => {
+      if (!smartListsStore.isCurrentListLoading) {
+        loadingMessage.value = "Loading tweets...";
+        return;
+      }
+
+      const startTime = smartListsStore.getCurrentListLoadingStartTime;
+      if (!startTime) {
+        loadingMessage.value = "Loading tweets...";
+        return;
+      }
+
+      const elapsed = Date.now() - startTime;
+
+      if (elapsed < 2000) {
+        loadingMessage.value = "Fetching data from your sources";
+      } else {
+        loadingMessage.value = "Computing relevance";
+      }
+    };
+
+    // Watch for loading state changes
+    watch(
+      () => smartListsStore.isCurrentListLoading,
+      (isLoading) => {
+        if (isLoading) {
+          updateLoadingMessage();
+          loadingMessageInterval = setInterval(updateLoadingMessage, 500); // Update every 500ms
+        } else {
+          if (loadingMessageInterval) {
+            clearInterval(loadingMessageInterval);
+            loadingMessageInterval = null;
+          }
+        }
+      },
+      { immediate: true },
+    );
+
+    // Cleanup interval on unmount
+    onUnmounted(() => {
+      if (loadingMessageInterval) {
+        clearInterval(loadingMessageInterval);
+      }
+    });
+
     return {
       smartListsStore,
       getComponentForType,
@@ -261,6 +367,7 @@ export default {
       sortMethod,
       sortedItems,
       setSortMethod,
+      loadingMessage,
     };
   },
 };
