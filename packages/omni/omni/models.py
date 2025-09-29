@@ -230,3 +230,20 @@ class User(BaseModel):
     def from_sql_row(cls, row):
         """Create User instance from SQLite row"""
         return cls(id=row[0], email=row[1], created_at=row[2])
+
+
+class TwitterAccountCheckRequest(BaseModel):
+    handle: str
+
+
+class TwitterAccountCheckResponse(BaseModel):
+    handle: str
+    exists: bool
+
+
+class TweetCountRequest(BaseModel):
+    handles: List[str]
+
+
+class TweetCountResponse(BaseModel):
+    tweet_counts: Dict[str, int]

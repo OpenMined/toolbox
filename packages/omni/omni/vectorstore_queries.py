@@ -118,3 +118,41 @@ def get_author_count() -> int:
     except Exception as e:
         print(f"Error getting author count: {e}")
         return 0
+
+
+def get_tweet_counts_by_handles(handles: List[str]) -> dict[str, int]:
+    """Get tweet counts for a list of handles"""
+    store = get_tweet_store()
+    try:
+        # Clean handles by removing @ prefix if present
+        clean_handles = [handle.lstrip("@") for handle in handles]
+
+        # Build query to count tweets for each handle
+        results = {}
+
+        # Initialize all handles with 0 count
+        for handle in clean_handles:
+            results[handle] = 0
+
+        # Query the database directly for efficient counting
+        if clean_handles:
+            placeholders = ",".join("?" * len(clean_handles))
+            query = f"""
+                SELECT
+                    json_extract(author, '$.screen_name') as screen_name,
+                    COUNT(*) as tweet_count
+                FROM {store.db.documents_table}
+                WHERE json_extract(author, '$.screen_name') IN ({placeholders})
+                GROUP BY json_extract(author, '$.screen_name')
+            """
+
+            cursor = store.db.conn.execute(query, clean_handles)
+            for screen_name, count in cursor.fetchall():
+                if screen_name in results:
+                    results[screen_name] = count
+
+        return results
+    except Exception as e:
+        print(f"Error getting tweet counts by handles: {e}")
+        # Return zeros for all handles on error
+        return {handle.lstrip("@"): 0 for handle in handles}

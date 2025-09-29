@@ -110,6 +110,20 @@ class APIClient {
       method: "DELETE",
     });
   }
+
+  async checkTwitterAccount(handle) {
+    return this.request("/twitter/check-account", {
+      method: "POST",
+      body: JSON.stringify({ handle }),
+    });
+  }
+
+  async getTweetCounts(handles) {
+    return this.request("/twitter/tweet-counts", {
+      method: "POST",
+      body: JSON.stringify({ handles }),
+    });
+  }
 }
 
 export const apiClient = new APIClient();

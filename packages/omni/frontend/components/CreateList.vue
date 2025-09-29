@@ -259,19 +259,144 @@
                   >Authors</label
                 >
                 <div class="flex space-x-2">
-                  <input
-                    v-model="newAuthor[currentSource.id]"
-                    type="text"
-                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Add author (default: any author)"
-                    @keyup.enter="addAuthor(currentSource.id)"
-                  />
+                  <div class="flex-1 relative">
+                    <div
+                      class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+                    >
+                      @
+                    </div>
+                    <input
+                      v-model="newAuthor[currentSource.id]"
+                      type="text"
+                      class="w-full pl-8 pr-16 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      :class="{
+                        'border-green-500 focus:ring-green-500':
+                          authorValidation[currentSource.id]?.isValid,
+                        'border-red-500 focus:ring-red-500':
+                          authorValidation[currentSource.id]?.isValid === false,
+                      }"
+                      placeholder="Add author (default: any author)"
+                      @keyup.enter="addAuthor(currentSource.id)"
+                      @input="onAuthorInput(currentSource.id)"
+                    />
+                    <!-- Validation status icons -->
+                    <div
+                      class="absolute right-12 top-1/2 transform -translate-y-1/2 flex items-center"
+                    >
+                      <!-- Loading spinner -->
+                      <div
+                        v-if="authorValidation[currentSource.id]?.isLoading"
+                        class="animate-spin h-4 w-4"
+                      >
+                        <svg
+                          class="w-4 h-4 text-blue-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="4"
+                          ></circle>
+                          <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                      </div>
+                      <!-- Valid checkmark -->
+                      <div
+                        v-else-if="authorValidation[currentSource.id]?.isValid"
+                        class="text-green-500"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <!-- Invalid X -->
+                      <div
+                        v-else-if="
+                          authorValidation[currentSource.id]?.isValid === false
+                        "
+                        class="text-red-500"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <!-- Twitter profile link button -->
+                    <button
+                      v-if="
+                        newAuthor[currentSource.id]?.trim() &&
+                        currentSource.id === 'twitter'
+                      "
+                      @click="openTwitterProfile(newAuthor[currentSource.id])"
+                      class="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 p-1"
+                      title="View Twitter profile"
+                    >
+                      <svg
+                        class="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"
+                        />
+                        <path
+                          d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"
+                        />
+                      </svg>
+                    </button>
+                  </div>
                   <button
                     @click="addAuthor(currentSource.id)"
-                    :disabled="!newAuthor[currentSource.id]?.trim()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                    :disabled="
+                      !canAddAuthor(currentSource.id) || isAddingAuthor
+                    "
+                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center"
                   >
-                    Add
+                    <div
+                      v-if="isAddingAuthor"
+                      class="animate-spin h-4 w-4 mr-2"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        ></circle>
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    </div>
+                    {{ isAddingAuthor ? "Checking..." : "Add" }}
                   </button>
                 </div>
                 <div
@@ -284,7 +409,26 @@
                     :key="index"
                     class="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
                   >
-                    {{ author }}
+                    @{{ author }}
+                    <button
+                      v-if="currentSource.id === 'twitter'"
+                      @click="openTwitterProfile(author)"
+                      class="ml-1 text-blue-600 hover:text-blue-800"
+                      title="View Twitter profile"
+                    >
+                      <svg
+                        class="w-3 h-3"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"
+                        />
+                        <path
+                          d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"
+                        />
+                      </svg>
+                    </button>
                     <button
                       @click="removeAuthor(currentSource.id, index)"
                       class="ml-1 text-blue-600 hover:text-blue-800"
@@ -443,6 +587,7 @@ import { ref, computed, reactive, watch } from "vue";
 import { useDataSourcesStore } from "../stores/dataSourcesStore";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import { DATA_SOURCES } from "../constants/dataSources";
+import { apiClient } from "../api/client";
 
 export default {
   name: "CreateList",
@@ -455,6 +600,9 @@ export default {
     const currentSource = ref(null);
     const addedSources = ref([]);
     const newAuthor = reactive({});
+    const isAddingAuthor = ref(false);
+    const authorValidation = reactive({});
+    const validationTimeouts = reactive({});
 
     const globalFilters = reactive({
       startDate: "",
@@ -504,8 +652,29 @@ export default {
       }
     };
 
-    const addAuthor = (sourceId) => {
+    const addAuthor = async (sourceId) => {
       const author = newAuthor[sourceId]?.trim();
+      if (!canAddAuthor(sourceId) || isAddingAuthor.value) return;
+
+      // For Twitter, validate the account before adding if not already validated
+      if (sourceId === "twitter" && author) {
+        // If we don't have a validation result yet, validate now
+        if (authorValidation[sourceId]?.isValid !== true) {
+          isAddingAuthor.value = true;
+          try {
+            const isValid = await validateTwitterAccount(author);
+            if (!isValid) {
+              alert(
+                `Twitter account @${author} does not exist or is not accessible.`,
+              );
+              return;
+            }
+          } finally {
+            isAddingAuthor.value = false;
+          }
+        }
+      }
+
       if (
         author &&
         sourceFilters[sourceId] &&
@@ -513,6 +682,11 @@ export default {
       ) {
         sourceFilters[sourceId].authors.push(author);
         newAuthor[sourceId] = "";
+        // Reset validation state
+        if (authorValidation[sourceId]) {
+          authorValidation[sourceId].isValid = null;
+          authorValidation[sourceId].isLoading = false;
+        }
         generateMockPreview(sourceId);
       }
     };
@@ -621,6 +795,74 @@ export default {
       showAdvanced[sourceId] = !showAdvanced[sourceId];
     };
 
+    const onAuthorInput = (sourceId) => {
+      const author = newAuthor[sourceId]?.trim();
+
+      // Initialize validation state if not exists
+      if (!authorValidation[sourceId]) {
+        authorValidation[sourceId] = {
+          isValid: null,
+          isLoading: false,
+        };
+      }
+
+      // Clear existing timeout
+      if (validationTimeouts[sourceId]) {
+        clearTimeout(validationTimeouts[sourceId]);
+      }
+
+      // Reset validation state immediately when user types
+      authorValidation[sourceId].isValid = null;
+      authorValidation[sourceId].isLoading = false;
+
+      if (!author || sourceId !== "twitter") {
+        return;
+      }
+
+      // Debounce validation for 5 seconds
+      validationTimeouts[sourceId] = setTimeout(async () => {
+        authorValidation[sourceId].isLoading = true;
+        try {
+          const isValid = await validateTwitterAccount(author);
+          authorValidation[sourceId].isValid = isValid;
+        } catch (error) {
+          authorValidation[sourceId].isValid = false;
+        } finally {
+          authorValidation[sourceId].isLoading = false;
+        }
+      }, 5000);
+    };
+
+    const canAddAuthor = (sourceId) => {
+      const author = newAuthor[sourceId]?.trim();
+      if (!author) return false;
+
+      // For Twitter, allow adding if we haven't validated yet, or if validation passed
+      if (sourceId === "twitter") {
+        return authorValidation[sourceId]?.isValid !== false;
+      }
+
+      return true;
+    };
+
+    const validateTwitterAccount = async (handle) => {
+      if (!handle?.trim()) return false;
+
+      try {
+        const cleanHandle = handle.replace("@", "");
+        const response = await apiClient.checkTwitterAccount(cleanHandle);
+        return response.exists;
+      } catch (error) {
+        console.error("Error validating Twitter account:", error);
+        return false;
+      }
+    };
+
+    const openTwitterProfile = (handle) => {
+      const cleanHandle = handle.replace("@", "");
+      window.open(`https://twitter.com/${cleanHandle}`, "_blank");
+    };
+
     // Watch for changes in list name and update RAG filter queries
     watch(listName, (newListName) => {
       const trimmedName = newListName.trim();
@@ -682,6 +924,11 @@ export default {
       toggleAdvanced,
       canCreate,
       createList,
+      isAddingAuthor,
+      authorValidation,
+      onAuthorInput,
+      canAddAuthor,
+      openTwitterProfile,
     };
   },
 };

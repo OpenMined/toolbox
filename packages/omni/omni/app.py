@@ -38,7 +38,11 @@ from omni.models import (
     SmartListAPIResult,
     SmartListCreate,
     SummaryResponse,
+    TweetCountRequest,
+    TweetCountResponse,
     TweetItem,
+    TwitterAccountCheckRequest,
+    TwitterAccountCheckResponse,
     User,
     UserCreate,
 )
@@ -49,7 +53,8 @@ from omni.summaries import (
     get_anthropic_completion,
     get_or_generate_smart_list_summary,
 )
-from omni.twitter import query_twitter_data
+from omni.twitter import account_exists, get_guest_token, query_twitter_data
+from omni.vectorstore_queries import get_tweet_counts_by_handles
 
 
 def init_app_data():
@@ -338,6 +343,21 @@ async def ask_question(list_id: int, request: QuestionRequest):
             "timestamp": "2024-01-15T10:00:00Z",
         }
         return response
+
+
+@app.post("/twitter/check-account", response_model=TwitterAccountCheckResponse)
+async def check_twitter_account(request: TwitterAccountCheckRequest):
+    """Check if a Twitter account exists by handle"""
+    cookie_value, expires = get_guest_token()
+    exists = account_exists(request.handle, cookie_value)
+    return TwitterAccountCheckResponse(handle=request.handle, exists=exists)
+
+
+@app.post("/twitter/tweet-counts", response_model=TweetCountResponse)
+async def get_tweet_counts(request: TweetCountRequest):
+    """Get tweet counts for a list of handles from the vectorstore"""
+    tweet_counts = get_tweet_counts_by_handles(request.handles)
+    return TweetCountResponse(tweet_counts=tweet_counts)
 
 
 if __name__ == "__main__":
