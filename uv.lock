@@ -3329,11 +3329,7 @@ wheels = [
 [[package]]
 name = "rerankers"
 version = "0.10.0"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/a2/1e/3ed2026be7c135939905eac4f50d1bf8339180821c6757b2e91b83de2fa5/rerankers-0.10.0.tar.gz", hash = "sha256:b8e8b363abc4e9757151956949c27b197993c0a774437287a932f855afc17a73", size = 49679, upload-time = "2025-05-22T08:22:53.396Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/df/ed/f3b81ca8743d69b95d679b95e6e1d22cb7cc678ae77c6a57827303a7e48c/rerankers-0.10.0-py3-none-any.whl", hash = "sha256:634a6befa130a245ed46022ade217ee482869448f01aae2051ed54d7d5bd2791", size = 53084, upload-time = "2025-05-22T08:22:52.022Z" },
-]
+source = { git = "https://github.com/eelcovdw/rerankers.git?rev=fix-colbert-query-mask#91794d0036eaaeb15fc8637deb1215a1c3761b6a" }
 
 [package.optional-dependencies]
 transformers = [
@@ -4334,7 +4330,7 @@ requires-dist = [
     { name = "packaging", specifier = ">=25.0" },
     { name = "pydantic", specifier = ">=2.11.7" },
     { name = "pydantic-settings", specifier = ">=2.10.1" },
-    { name = "rerankers", extras = ["transformers"], specifier = ">=0.10.0" },
+    { name = "rerankers", extras = ["transformers"], git = "https://github.com/eelcovdw/rerankers.git?rev=fix-colbert-query-mask" },
     { name = "semantic-text-splitter", specifier = ">=0.28.0" },
     { name = "sqlite-vec", specifier = "==0.1.7a2" },
     { name = "torch", specifier = "==2.2.2" },

@@ -23,6 +23,9 @@ dependencies = [
 requires = ["uv_build>=0.8.3,<0.9.0"]
 build-backend = "uv_build"
 
+[tool.uv.sources]
+rerankers = { git = "https://github.com/eelcovdw/rerankers.git", rev = "fix-colbert-query-mask" }
+
 [dependency-groups]
 dev = [
     "datasets>=4.0.0",
