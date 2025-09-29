@@ -240,7 +240,6 @@ async def create_smart_list(
 
     x_data_fetcher.add_follow_users_job(
         handles=list_data.get_all_authors(),
-        fetch_timeline_duration=60,
     )
 
     return {

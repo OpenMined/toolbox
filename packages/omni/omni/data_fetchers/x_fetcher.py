@@ -3,6 +3,7 @@ import json
 import random
 import time
 from datetime import datetime
+from functools import partial
 from http.cookiejar import Cookie
 from pathlib import Path
 from typing import Any, Callable
@@ -11,8 +12,9 @@ import browser_cookie3
 from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 
 from omni.data_fetchers.job_queue import DataFetcherJobQueue
-from omni.data_fetchers.x_utils import parse_tweets_json
+from omni.data_fetchers.x_utils import parse_tweets_json, parse_user_tweets_json
 from omni.db import get_tweet_store
+from omni.vectorstore_models import Tweet
 
 BASE_DIR = Path.home() / ".omni"
 DATA_FETCHER_DIR = BASE_DIR / "scraper_data"
@@ -136,27 +138,36 @@ async def scroll_vertical_mousewheel(
         await asyncio.sleep(random.uniform(*delay_range))
 
 
+async def handle_request(request, save_fn):
+    """Intercept and save timeline API responses"""
+    if is_home_timeline_url(request.url):
+        response = await request.response()
+        if response is not None:
+            try:
+                json_data = await response.json()
+                timeline_tweets = parse_tweets_json(json_data)
+                save_fn(timeline_tweets)
+            except Exception as e:
+                print(f"Failed to parse and store JSON from response: {e}")
+        print("API call to HomeLatestTimeline")
+
+    elif is_usertweet_url(request.url):
+        response = await request.response()
+        if response is not None:
+            try:
+                json_data = await response.json()
+                user_tweets = parse_user_tweets_json(json_data)
+                save_fn(user_tweets)
+            except Exception as e:
+                print(f"Failed to parse and store JSON from response: {e}")
+        print("API call to UserTweets")
+
+
 async def fetch_timeline(
     page: Page,
     duration: int = 60,
-    save_fn: Callable[[Any], None] = save_home_timeline,
 ):
     """Fetch timeline data from X/Twitter"""
-
-    async def handle_timeline_request(request):
-        """Intercept and save timeline API responses"""
-        if is_home_timeline_url(request.url):
-            response = await request.response()
-            if response is not None:
-                try:
-                    json_data = await response.json()
-                    save_fn(json_data)
-                except Exception as e:
-                    print(f"Failed to parse and store JSON from response: {e}")
-            print("API call to HomeLatestTimeline")
-
-    # Setup request interception
-    page.on("request", handle_timeline_request)
 
     # Navigate to X.com
     await page.goto("https://x.com")
@@ -241,7 +252,17 @@ async def get_unfollow_button(page: Page, handle: str):
     return element
 
 
-async def follow_user(page: Page, handle: str):
+def is_usertweet_url(url: str) -> bool:
+    """Check if URL is a home timeline API endpoint"""
+    if "graphql" in url and ("UserTweets" in url):
+        return True
+    return False
+
+
+async def follow_user(
+    page: Page,
+    handle: str,
+):
     """Follow a specific user by their handle"""
 
     # Navigate to user's profile
@@ -313,6 +334,8 @@ async def run_x_fetcher(
     # Setup browser with cookies
     browser, context, page = await setup_browser(cookies, headless=headless)
 
+    page.on("request", partial(handle_request, save_fn=timeline_save_fn))
+
     try:
         if handles_to_follow:
             await follow_users(page, handles_to_follow)
@@ -323,7 +346,6 @@ async def run_x_fetcher(
             await fetch_timeline(
                 page,
                 fetch_timeline_duration,
-                save_fn=timeline_save_fn,
             )
 
     finally:
@@ -342,10 +364,7 @@ def save_tweets_to_file(json_data: Any) -> None:
     print(f"Saved JSON to {filename}")
 
 
-def save_tweets_to_store(json_data: Any) -> None:
-    # Parse tweets from JSON
-    tweets = parse_tweets_json(json_data)
-
+def save_tweets_to_store(tweets: list[Tweet]) -> None:
     if tweets:
         # NOTE tweet store is initialized here because sqlite3 is not
         # thread-safe.
