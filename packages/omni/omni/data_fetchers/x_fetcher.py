@@ -152,7 +152,7 @@ async def fetch_timeline(
                     json_data = await response.json()
                     save_fn(json_data)
                 except Exception as e:
-                    print(f"Failed to get JSON from response: {e}")
+                    print(f"Failed to parse and store JSON from response: {e}")
             print("API call to HomeLatestTimeline")
 
     # Setup request interception

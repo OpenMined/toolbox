@@ -3,19 +3,36 @@ from typing import Any
 from omni.vectorstore_models import Tweet
 
 
+def parse_user_tweets_json(data: Any) -> list[Tweet]:
+    """Parse tweets from JSON data structure."""
+    instructions = (
+        data.get("data", {})
+        .get("user", {})
+        .get("result", {})
+        .get("timeline", {})
+        .get("timeline", {})
+        .get("instructions", [])
+    )
+    return parse_tweets_from_instructions(instructions)
+
+
 def parse_tweets_json(data: Any) -> list[Tweet]:
     """Parse tweets from JSON data structure."""
-    all_tweets = []
-    seen_tweet_ids = set()
 
     # Navigate through the JSON structure and find all tweet_results
+    # data user result timeline timeline instructions
     instructions = (
         data.get("data", {})
         .get("home", {})
         .get("home_timeline_urt", {})
         .get("instructions", [])
     )
+    return parse_tweets_from_instructions(instructions)
 
+
+def parse_tweets_from_instructions(instructions: list[Any]) -> list[Tweet]:
+    all_tweets = []
+    seen_tweet_ids = set()
     for instruction in instructions:
         if instruction.get("type") != "TimelineAddEntries":
             continue
