@@ -27,14 +27,14 @@ class ScraperJobSchedule:
     kwargs: dict
 
 
-class ScraperJobQueue:
+class DataFetcherJobQueue:
     def __init__(
         self,
         max_job_age: int = 300,
         max_queue_size: int | None = None,
         worker_delay: float | tuple[float, float] = 0,
     ) -> None:
-        """Initialize the ScraperJobQueue.
+        """Initialize the DataFetcherJobQueue.
 
         Args:
             max_job_age (int, optional):
@@ -54,12 +54,12 @@ class ScraperJobQueue:
         self.scheduler_thread = Thread(target=self._scheduler, daemon=True)
 
     def start(self) -> None:
-        logger.info("Starting ScraperJobQueue threads")
+        logger.info("Starting DataFetcherJobQueue threads")
         self.worker_thread.start()
         self.scheduler_thread.start()
 
     def stop(self) -> None:
-        logger.info("Stopping ScraperJobQueue")
+        logger.info("Stopping DataFetcherJobQueue")
         self.running = False
 
     def _job_is_stale(self, job: ScraperJob) -> bool:

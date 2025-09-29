@@ -168,6 +168,12 @@ class SmartListCreate(BaseModel):
     name: str
     listSources: List[ListSource]
 
+    def get_all_authors(self) -> list[str]:
+        authors = set()
+        for source in self.listSources:
+            authors.update(source.filters.authors)
+        return list(authors)
+
 
 class TweetItem(BaseModel):
     id: Union[

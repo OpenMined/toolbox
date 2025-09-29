@@ -1,8 +1,11 @@
+from contextlib import asynccontextmanager
 from typing import List
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from toolbox_store.store import ToolboxStore
 
+from omni.data_fetchers.x_fetcher import XDataFetcher
 from omni.db import (
     _get_smart_lists_api_result,
     create_smart_list_from_request,
@@ -14,6 +17,7 @@ from omni.db import (
     get_my_lists_api_result,
     get_omni_connection,
     get_smart_list_api_result_by_id,
+    get_tweet_store,
     get_user_by_email,
     initialize_dev_user,
     initialize_mock_smart_lists,
@@ -47,7 +51,45 @@ from omni.summaries import (
 )
 from omni.twitter import query_twitter_data
 
-app = FastAPI(title="Omni API", description="Backend API for Omni application")
+
+def init_app_data():
+    """Initialize database and dev user"""
+    try:
+        # Initialize the dev user for development
+        initialize_dev_user()
+        print("✅ Dev user initialized successfully")
+
+        # Initialize mock smart lists data
+        initialize_mock_smart_lists()
+        print("✅ Mock smart lists initialized successfully")
+    except Exception as e:
+        print(f"⚠️ Failed to initialize startup data: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    store = get_tweet_store()
+    print(f"Using ToolboxStore at {store.db.db_path}")
+    x_data_fetcher = XDataFetcher()
+    x_data_fetcher.start(
+        download_schedule=settings.x_download_schedule_seconds,
+    )
+    print("Started X downloader")
+    init_app_data()
+    app.state.x_data_fetcher = x_data_fetcher
+    app.state.store = store
+
+    yield
+
+    x_data_fetcher.stop()
+    store.close()
+
+
+app = FastAPI(
+    title="Omni API",
+    description="Backend API for Omni application",
+    lifespan=lifespan,
+)
 
 # Enable CORS
 app.add_middleware(
@@ -60,19 +102,12 @@ app.add_middleware(
 )
 
 
-@app.on_event("startup")
-async def startup_event():
-    """Initialize database and dev user on startup"""
-    try:
-        # Initialize the dev user for development
-        initialize_dev_user()
-        print("✅ Dev user initialized successfully")
+def get_store(request: Request) -> ToolboxStore:
+    return request.app.state.store
 
-        # Initialize mock smart lists data
-        initialize_mock_smart_lists()
-        print("✅ Mock smart lists initialized successfully")
-    except Exception as e:
-        print(f"⚠️ Failed to initialize startup data: {e}")
+
+def get_x_data_fetcher(request: Request) -> XDataFetcher:
+    return request.app.state.x_data_fetcher
 
 
 # Routes
@@ -195,11 +230,18 @@ async def delete_smart_list_endpoint(list_id: int, user_email: str = "dev@exampl
 
 @app.post("/smart-lists")
 async def create_smart_list(
-    list_data: SmartListCreate, user_email: str = "dev@example.com"
+    list_data: SmartListCreate,
+    user_email: str = "dev@example.com",
+    x_data_fetcher: XDataFetcher = Depends(get_x_data_fetcher),
 ):
     """Create a new smart list and auto-follow it"""
     with get_omni_connection() as conn:
         list_id = create_smart_list_from_request(conn, list_data, user_email)
+
+    x_data_fetcher.add_follow_users_job(
+        handles=list_data.get_all_authors(),
+        fetch_timeline_duration=60,
+    )
 
     return {
         "message": f"Successfully created and followed list {list_id}",

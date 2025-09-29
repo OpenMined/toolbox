@@ -5,7 +5,7 @@ from omni.vectorstore_queries import (
 )
 
 
-def query_twitter_data(list_source):
+def query_twitter_data(list_source) -> list[dict]:
     """Query Twitter data based on list source filters"""
 
     filters = list_source.filters

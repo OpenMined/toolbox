@@ -10,12 +10,14 @@ from typing import Any, Callable
 import browser_cookie3
 from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 
-from omni.scraper.job_queue import ScraperJobQueue
+from omni.data_fetchers.job_queue import DataFetcherJobQueue
+from omni.data_fetchers.x_utils import parse_tweets_json
+from omni.db import get_tweet_store
 
 BASE_DIR = Path.home() / ".omni"
-SCRAPER_DIR = BASE_DIR / "scraper_data"
-COOKIES_FILE = SCRAPER_DIR / "x_cookies.json"
-DATA_DIR = SCRAPER_DIR / "data"
+DATA_FETCHER_DIR = BASE_DIR / "scraper_data"
+COOKIES_FILE = DATA_FETCHER_DIR / "x_cookies.json"
+DATA_DIR = DATA_FETCHER_DIR / "data"
 
 
 def cookie_to_playwright_cookie(cookie: Cookie) -> dict:
@@ -48,7 +50,7 @@ def get_cookies_from_brave() -> list[Cookie]:
 
 def save_cookies_to_file(cookies: list[dict]) -> None:
     """Save cookies to a JSON file"""
-    SCRAPER_DIR.mkdir(parents=True, exist_ok=True)
+    DATA_FETCHER_DIR.mkdir(parents=True, exist_ok=True)
     with open(COOKIES_FILE, "w") as f:
         json.dump(cookies, f)
         print(f"Saved {len(cookies)} cookies to {COOKIES_FILE}")
@@ -124,7 +126,7 @@ async def scroll_vertical_mousewheel(
     page: Page,
     duration: int,
     distance_range: tuple[int, int] = (200, 1000),
-    delay_range: tuple[float, float] = (0.1, 1.0),
+    delay_range: tuple[float, float] = (0.3, 1.0),
 ):
     start_time = time.time()
 
@@ -134,12 +136,12 @@ async def scroll_vertical_mousewheel(
         await asyncio.sleep(random.uniform(*delay_range))
 
 
-async def scrape_timeline(
+async def fetch_timeline(
     page: Page,
     duration: int = 60,
     save_fn: Callable[[Any], None] = save_home_timeline,
 ):
-    """Scrape timeline data from X/Twitter"""
+    """Fetch timeline data from X/Twitter"""
 
     async def handle_timeline_request(request):
         """Intercept and save timeline API responses"""
@@ -189,20 +191,54 @@ async def click_element_human_like(page: Page, element):
 
 async def get_follow_button(page: Page, handle: str):
     """Get the follow button element for a specific user by their handle"""
-    username = handle.lstrip("@")
-    follow_button = await page.query_selector(
-        f'[aria-label*="@{username}"][data-testid*="-follow"]:not([data-testid*="-unfollow"])'
+    username = handle.lstrip("@").lower()
+
+    # Use evaluate to find button with case-insensitive matching
+    follow_button = await page.evaluate_handle(
+        """
+        (username) => {
+            const buttons = document.querySelectorAll('[data-testid*="-follow"]:not([data-testid*="-unfollow"])');
+            for (const button of buttons) {
+                const ariaLabel = button.getAttribute('aria-label');
+                if (ariaLabel && ariaLabel.toLowerCase().includes('@' + username)) {
+                    return button;
+                }
+            }
+            return null;
+        }
+    """,
+        username,
     )
-    return follow_button
+
+    # Convert handle to element or return None
+    element = follow_button.as_element() if follow_button else None
+    return element
 
 
 async def get_unfollow_button(page: Page, handle: str):
     """Get the unfollow button element for a specific user by their handle"""
-    username = handle.lstrip("@")
-    unfollow_button = await page.query_selector(
-        f'[aria-label*="@{username}"][data-testid*="-unfollow"]'
+    username = handle.lstrip("@").lower()
+
+    # Use evaluate to find button with case-insensitive matching
+    unfollow_button = await page.evaluate_handle(
+        """
+        (username) => {
+            const buttons = document.querySelectorAll('[data-testid*="-unfollow"]');
+            for (const button of buttons) {
+                const ariaLabel = button.getAttribute('aria-label');
+                if (ariaLabel && ariaLabel.toLowerCase().includes('@' + username)) {
+                    return button;
+                }
+            }
+            return null;
+        }
+    """,
+        username,
     )
-    return unfollow_button
+
+    # Convert handle to element or return None
+    element = unfollow_button.as_element() if unfollow_button else None
+    return element
 
 
 async def follow_user(page: Page, handle: str):
@@ -233,7 +269,7 @@ async def follow_user(page: Page, handle: str):
 
 
 async def follow_users(
-    page: Page, handles: list[str], delay_range: tuple[float, float] = (5, 15)
+    page: Page, handles: list[str], delay_range: tuple[float, float] = (2, 5)
 ):
     """Follow multiple users with random delays between each"""
 
@@ -250,20 +286,21 @@ async def follow_users(
     print(f"\nCompleted processing {len(handles)} handles")
 
 
-async def run_x_scraper(
-    scrape_timeline_duration: int = 0,
+async def run_x_fetcher(
+    fetch_timeline_duration: int = 0,
     handles_to_follow: list[str] = None,
     headless: bool = False,
+    timeline_save_fn: Callable[[Any], None] = save_home_timeline,
 ):
-    """Run the X scraper.
+    """Run the X data fetcher.
 
     Args:
-        scrape_timeline_duration (int, optional): Duration to scrape the timeline. Defaults to None.
+        fetch_timeline_duration (int, optional): Duration to fetch the timeline. Defaults to None.
         handles_to_follow (list[str], optional): List of user handles to follow. Defaults to None.
         headless (bool, optional): Run browser in headless mode. Defaults to False.
     """
 
-    if not scrape_timeline_duration and not handles_to_follow:
+    if not fetch_timeline_duration and not handles_to_follow:
         print("Nothing to do, exiting.")
         return
 
@@ -279,75 +316,138 @@ async def run_x_scraper(
     try:
         if handles_to_follow:
             await follow_users(page, handles_to_follow)
-        if scrape_timeline_duration:
+        if fetch_timeline_duration:
             if handles_to_follow:
-                print("Waiting before starting timeline scraping...")
+                print("Waiting before starting timeline fetching...")
                 await asyncio.sleep(random.uniform(2, 5))
-            await scrape_timeline(page, scrape_timeline_duration)
+            await fetch_timeline(
+                page,
+                fetch_timeline_duration,
+                save_fn=timeline_save_fn,
+            )
 
     finally:
         await browser.close()
 
 
-class XScraper(ScraperJobQueue):
-    def setup(self, enable_schedule: bool = True):
-        if enable_schedule:
+def save_tweets_to_file(json_data: Any) -> None:
+    """Default save function for timeline data"""
+
+    dt_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    filename = f"home_latest_timeline_{dt_str}.json"
+    output_path = DATA_DIR / filename
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(json_data, f)
+    print(f"Saved JSON to {filename}")
+
+
+def save_tweets_to_store(json_data: Any) -> None:
+    # Parse tweets from JSON
+    tweets = parse_tweets_json(json_data)
+
+    if tweets:
+        # NOTE tweet store is initialized here because sqlite3 is not
+        # thread-safe.
+        store = get_tweet_store()
+        store.insert_docs(
+            tweets,
+            create_embeddings=True,
+            overwrite=True,
+        )
+        store.close()
+        print(f"Saved {len(tweets)} tweets to store.")
+    else:
+        print("No tweets found in JSON data")
+
+
+class XDataFetcher(DataFetcherJobQueue):
+    def __init__(
+        self,
+        max_job_age=300,
+        max_queue_size=None,
+        worker_delay=0,
+        headless: bool = True,
+        timeline_save_fn: Callable[[Any], None] = save_tweets_to_store,
+    ):
+        super().__init__(max_job_age, max_queue_size, worker_delay)
+        self.headless = headless
+        self.timeline_save_fn = timeline_save_fn
+
+    def start(
+        self,
+        download_schedule: int | tuple[int, int] | None = None,
+    ) -> None:
+        """Start the data fetcher, with optional regular timeline downloading.
+
+        Args:
+            download_schedule (int | tuple[int, int] | None, optional): Interval in seconds or
+                (min, max) tuple for random interval. If None, no scheduled downloading. Defaults to None.
+
+        """
+        if download_schedule:
             self.add_schedule(
-                func=self._scrape_timeline_job,
-                interval=(3600, 7200),  # every 1-2 hours
+                func=self._fetch_timeline_job,
+                interval=download_schedule,
+                kwargs={"fetch_timeline_duration": 60},
             )
 
+        return super().start()
+
     def add_follow_users_job(
-        self, handles: list[str], scrape_timeline_duration: int = 0
+        self, handles: list[str], fetch_timeline_duration: int = 0
     ):
         self.add_job(
             func=self._follow_users_job,
             kwargs={
                 "handles": handles,
-                "scrape_timeline_duration": scrape_timeline_duration,
+                "fetch_timeline_duration": fetch_timeline_duration,
             },
         )
 
-    def add_scrape_timeline_job(self, scrape_timeline_duration: int = 30):
-        # allow_duplicates=False to avoid multiple timeline scrapes in queue
+    def add_fetch_timeline_job(self, fetch_timeline_duration: int = 30):
+        # allow_duplicates=False to avoid multiple timeline fetches in queue
         self.add_job(
-            func=self._scrape_timeline_job,
-            kwargs={"scrape_timeline_duration": scrape_timeline_duration},
+            func=self._fetch_timeline_job,
+            kwargs={"fetch_timeline_duration": fetch_timeline_duration},
             allow_duplicates=False,
+            timeline_save_fn=self.timeline_save_fn,
         )
 
-    def _scrape_timeline_job(self, scrape_timeline_duration: int = 30):
+    def _fetch_timeline_job(self, fetch_timeline_duration: int = 30):
         asyncio.run(
-            run_x_scraper(
-                scrape_timeline_duration=scrape_timeline_duration,
+            run_x_fetcher(
+                fetch_timeline_duration=fetch_timeline_duration,
                 handles_to_follow=None,
-                headless=False,
+                headless=self.headless,
+                timeline_save_fn=self.timeline_save_fn,
             )
         )
 
-    def _follow_users_job(self, handles: list[str], scrape_timeline_duration: int = 0):
+    def _follow_users_job(self, handles: list[str], fetch_timeline_duration: int = 0):
         asyncio.run(
-            run_x_scraper(
-                scrape_timeline_duration=scrape_timeline_duration,
+            run_x_fetcher(
+                fetch_timeline_duration=fetch_timeline_duration,
                 handles_to_follow=handles,
-                headless=False,
+                headless=self.headless,
+                timeline_save_fn=self.timeline_save_fn,
             )
         )
 
 
 if __name__ == "__main__":
-    scraper = XScraper()
-    scraper.setup(enable_schedule=False)
+    scraper = XDataFetcher(
+        headless=False,
+    )
     scraper.start()
 
     # Example: follow specific users once
     handles_to_follow = [
-        "@ch402",  # already followed
-        "sama",  # not followed
-        "sebruder12345",  # non-existent user
+        "anthropicai",
+        "openai",
     ]
     # scraper.add_scrape_timeline_job(scrape_timeline_duration=30)
-    scraper.add_follow_users_job(handles=handles_to_follow, scrape_timeline_duration=10)
+    scraper.add_follow_users_job(handles=handles_to_follow, fetch_timeline_duration=10)
 
     time.sleep(300)
     scraper.stop()

@@ -55,12 +55,17 @@ class TBDatabase(Generic[T]):
         if reset and db_path != ":memory:":
             self.reset()
         self.collection = collection
-        self.conn = sqlite3.connect(str(db_path))
-        self.conn.row_factory = sqlite3.Row
-        self.conn.enable_load_extension(True)
-        sqlite_vec.load(self.conn)
+        self.conn = self._create_connection()
         self.config = config or StoreConfig()
         self.document_class = document_class or TBDocument
+
+    def _create_connection(self) -> sqlite3.Connection:
+        conn = sqlite3.connect(str(self.db_path))
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL;")
+        conn.enable_load_extension(True)
+        sqlite_vec.load(conn)
+        return conn
 
     def reset(self):
         self.db_path.unlink(missing_ok=True)
@@ -157,9 +162,18 @@ class TBDatabase(Generic[T]):
             self.conn.rollback()
             raise
 
-    def insert_documents(self, documents: list[T]):
+    def insert_documents(
+        self, documents: list[T], overwrite: bool = False
+    ) -> dict[str, list[str]]:
+        """
+        Insert new documents. Fails if any document ID already exists.
+        For updating existing documents, use upsert_documents() instead.
+        """
+        if overwrite:
+            return self.upsert_documents(documents)
+
         if not documents:
-            return
+            return {"inserted": [], "updated": [], "unchanged": []}
 
         try:
             # Get fields from first document to build query
@@ -167,8 +181,9 @@ class TBDatabase(Generic[T]):
             fields = list(first_doc.keys())
             placeholders = [f":{field}" for field in fields]
 
+            # Use INSERT without OR REPLACE to fail on duplicates
             query = f"""
-                INSERT OR REPLACE INTO {self.documents_table} ({", ".join(fields)})
+                INSERT INTO {self.documents_table} ({", ".join(fields)})
                 VALUES ({", ".join(placeholders)})
             """
 
@@ -179,6 +194,104 @@ class TBDatabase(Generic[T]):
 
             self.conn.executemany(query, data)
             self.conn.commit()
+            return {
+                "inserted": [doc.id for doc in documents],
+                "updated": [],
+                "unchanged": [],
+            }
+        except Exception:
+            self.conn.rollback()
+            raise
+
+    def _delete_chunks_by_doc_id(self, document_ids: list[str]) -> None:
+        """
+        Delete chunks, embeddings, and FTS entries for given document IDs.
+        Internal method - does not commit the transaction.
+
+        Args:
+            document_ids: List of document IDs whose chunks should be deleted
+        """
+        if not document_ids:
+            return
+
+        placeholders = ",".join("?" for _ in document_ids)
+
+        # Delete from chunks table
+        self.conn.execute(
+            f"DELETE FROM {self.chunks_table} WHERE document_id IN ({placeholders})",
+            document_ids,
+        )
+
+        # Delete from embeddings table
+        self.conn.execute(
+            f"DELETE FROM {self.embeddings_table} WHERE document_id IN ({placeholders})",
+            document_ids,
+        )
+
+        # Delete from FTS table
+        self.conn.execute(
+            f"DELETE FROM {self.fts_table} WHERE document_id IN ({placeholders})",
+            document_ids,
+        )
+
+    def upsert_documents(self, documents: list[T]) -> dict[str, list[str]]:
+        """
+        Upsert documents with proper chunk management.
+        If document content has changed (different content_hash), deletes old chunks.
+
+        Returns:
+            Dictionary with 'inserted', 'updated', and 'unchanged' document IDs
+        """
+        if not documents:
+            return {"inserted": [], "updated": [], "unchanged": []}
+
+        try:
+            # Get existing documents and their content hashes
+            doc_ids = [doc.id for doc in documents]
+            placeholders = ",".join("?" for _ in doc_ids)
+            cursor = self.conn.execute(
+                f"""
+                SELECT id, content_hash
+                FROM {self.documents_table}
+                WHERE id IN ({placeholders})
+                """,
+                doc_ids,
+            )
+            existing = {row["id"]: row["content_hash"] for row in cursor}
+
+            # Categorize documents
+            result = {"inserted": [], "updated": [], "unchanged": []}
+            changed_doc_ids = []
+
+            for doc in documents:
+                if doc.id not in existing:
+                    result["inserted"].append(doc.id)
+                elif existing[doc.id] != doc.content_hash:
+                    result["updated"].append(doc.id)
+                    changed_doc_ids.append(doc.id)
+                else:
+                    result["unchanged"].append(doc.id)
+
+            # Delete chunks for changed documents
+            self._delete_chunks_by_doc_id(changed_doc_ids)
+
+            # Insert/update all documents (including unchanged ones for simplicity)
+            if documents:
+                first_doc = documents[0].to_sql_dict()
+                fields = list(first_doc.keys())
+                field_placeholders = [f":{field}" for field in fields]
+
+                query = f"""
+                    INSERT OR REPLACE INTO {self.documents_table} ({", ".join(fields)})
+                    VALUES ({", ".join(field_placeholders)})
+                """
+
+                data = [doc.to_sql_dict() for doc in documents]
+                self.conn.executemany(query, data)
+
+            self.conn.commit()
+            return result
+
         except Exception:
             self.conn.rollback()
             raise
@@ -313,6 +426,41 @@ class TBDatabase(Generic[T]):
         )
         rows = cursor.fetchall()
         return [self.document_class.from_sql_row(row) for row in rows]
+
+    def delete_documents(self, ids: list[str]) -> None:
+        if not ids:
+            return
+        try:
+            placeholders = ",".join("?" for _ in ids)
+
+            # Delete documents
+            self.conn.execute(
+                f"DELETE FROM {self.documents_table} WHERE id IN ({placeholders})",
+                ids,
+            )
+
+            # Delete associated chunks, embeddings, and FTS entries
+            self._delete_chunks_by_doc_id(ids)
+
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
+
+    def delete_chunks_by_doc_ids(self, document_ids: list[str]) -> None:
+        """
+        Delete chunks, embeddings, and FTS entries for given document IDs.
+        Commits the transaction.
+
+        Args:
+            document_ids: List of document IDs whose chunks should be deleted
+        """
+        try:
+            self._delete_chunks_by_doc_id(document_ids)
+            self.conn.commit()
+        except Exception:
+            self.conn.rollback()
+            raise
 
     def semantic_search(
         self,
