@@ -2,7 +2,7 @@
   <div class="h-full">
     <!-- Loading State -->
     <div
-      v-if="smartListsStore.isCurrentListLoading"
+      v-if="smartListsStore.isCurrentListLoading || isWaitingForTweets"
       class="flex items-center justify-center h-full"
     >
       <div class="text-center">
@@ -29,7 +29,7 @@
               d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
             ></path>
           </svg>
-          {{ loadingMessage }}
+          {{ currentLoadingMessage }}
         </div>
       </div>
     </div>
@@ -168,7 +168,7 @@
 </template>
 
 <script>
-import { onMounted, watch, ref, computed, onUnmounted } from "vue";
+import { onMounted, watch, ref, computed, onUnmounted, inject } from "vue";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import TweetItem from "./TweetItem.vue";
 
@@ -184,6 +184,28 @@ export default {
     const sortMethod = ref("date");
     const loadingMessage = ref("Loading tweets...");
     let loadingMessageInterval = null;
+
+    // Get allTweetCountsZero from parent (MiddlePanel)
+    const allTweetCountsZero = inject("allTweetCountsZero", ref(false));
+
+    // Computed to check if we should show loading state for waiting tweets
+    const isWaitingForTweets = computed(() => {
+      return (
+        allTweetCountsZero.value &&
+        smartListsStore.currentListItems.length === 0 &&
+        !smartListsStore.isCurrentListLoading
+      );
+    });
+
+    // Combined loading message
+    const currentLoadingMessage = computed(() => {
+      if (smartListsStore.isCurrentListLoading) {
+        return loadingMessage.value;
+      } else if (isWaitingForTweets.value) {
+        return "Waiting for tweets to be fetched...";
+      }
+      return loadingMessage.value;
+    });
 
     // Generate summary when list changes
     watch(
@@ -368,6 +390,8 @@ export default {
       sortedItems,
       setSortMethod,
       loadingMessage,
+      isWaitingForTweets,
+      currentLoadingMessage,
     };
   },
 };

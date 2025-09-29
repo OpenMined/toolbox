@@ -157,7 +157,9 @@ async def handle_request(request, save_fn):
             try:
                 json_data = await response.json()
                 user_tweets = parse_user_tweets_json(json_data)
+                print(f"Got {len(user_tweets)} tweets")
                 save_fn(user_tweets)
+                print(f"Stored {len(user_tweets)} tweets from user timeline")
             except Exception as e:
                 print(f"Failed to parse and store JSON from response: {e}")
         print("API call to UserTweets")

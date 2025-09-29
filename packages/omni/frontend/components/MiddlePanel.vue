@@ -142,7 +142,7 @@
 </template>
 
 <script>
-import { ref, computed, watch, onUnmounted } from "vue";
+import { ref, computed, watch, onUnmounted, provide } from "vue";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import { useNewChatStore } from "../stores/newChatStore";
 import { apiClient } from "../api/client";
@@ -225,11 +225,36 @@ export default {
         const response = await apiClient.getTweetCounts(
           currentListAuthors.value,
         );
+        const previousCounts = { ...authorTweetCounts.value };
         authorTweetCounts.value = response.tweet_counts;
+
+        // Check if any author now has tweets when they didn't before
+        const shouldRefetchItems = currentListAuthors.value.some((author) => {
+          const previousCount = previousCounts[author] || 0;
+          const currentCount = authorTweetCounts.value[author] || 0;
+          return previousCount === 0 && currentCount > 0;
+        });
+
+        // If any author now has tweets, refetch the list items
+        if (shouldRefetchItems && smartListsStore.currentListId) {
+          await smartListsStore.refreshComputedItems(
+            smartListsStore.currentListId,
+          );
+        }
       } catch (error) {
         console.error("Error checking author tweet counts:", error);
       }
     };
+
+    // Check if all tweet counts are 0 (indicating loading state)
+    const allTweetCountsZero = computed(() => {
+      if (!currentListAuthors.value.length || !isTwitterSource.value) {
+        return false;
+      }
+      return currentListAuthors.value.every(
+        (author) => (authorTweetCounts.value[author] || 0) === 0,
+      );
+    });
 
     const startPolling = () => {
       if (pollingInterval.value) {
@@ -242,6 +267,9 @@ export default {
       );
 
       if (hasLoadingAuthors && isTwitterSource.value) {
+        // Use 5 seconds if all tweet counts are 0, otherwise 15 seconds
+        const interval = allTweetCountsZero.value ? 5000 : 15000;
+
         pollingInterval.value = setInterval(async () => {
           await checkAuthorTweetCounts();
 
@@ -254,7 +282,7 @@ export default {
             clearInterval(pollingInterval.value);
             pollingInterval.value = null;
           }
-        }, 15000); // 15 seconds
+        }, interval);
       }
     };
 
@@ -298,6 +326,9 @@ export default {
       },
       { immediate: true },
     );
+
+    // Provide allTweetCountsZero to child components
+    provide("allTweetCountsZero", allTweetCountsZero);
 
     // Cleanup on unmount
     onUnmounted(() => {
@@ -358,6 +389,7 @@ export default {
       openTwitterProfile,
       isAuthorLoading,
       authorTweetCounts,
+      allTweetCountsZero,
     };
   },
 };

@@ -137,13 +137,16 @@ def get_tweet_counts_by_handles(handles: List[str]) -> dict[str, int]:
         # Query the database directly for efficient counting
         if clean_handles:
             placeholders = ",".join("?" * len(clean_handles))
+            # only include tweets that have a vector embedding, otherwise we shouldnt count them
             query = f"""
                 SELECT
-                    json_extract(author, '$.screen_name') as screen_name,
-                    COUNT(*) as tweet_count
-                FROM {store.db.documents_table}
-                WHERE json_extract(author, '$.screen_name') IN ({placeholders})
-                GROUP BY json_extract(author, '$.screen_name')
+                    json_extract(d.author, '$.screen_name') AS screen_name,
+                    COUNT(*) AS tweet_count
+                FROM {store.db.documents_table} d
+                INNER JOIN {store.db.chunks_table} c
+                    ON d.id = c.document_id
+                WHERE json_extract(d.author, '$.screen_name') IN ({placeholders})
+                GROUP BY json_extract(d.author, '$.screen_name')
             """
 
             cursor = store.db.conn.execute(query, clean_handles)
