@@ -4298,7 +4298,7 @@ dev = [
 
 [[package]]
 name = "toolbox-store"
-version = "0.1.0"
+version = "0.1.1"
 source = { editable = "packages/toolbox_store" }
 dependencies = [
     { name = "httpx" },
@@ -4333,7 +4333,7 @@ requires-dist = [
     { name = "rerankers", extras = ["transformers"], git = "https://github.com/eelcovdw/rerankers.git?rev=fix-colbert-query-mask" },
     { name = "semantic-text-splitter", specifier = ">=0.28.0" },
     { name = "sqlite-vec", specifier = "==0.1.7a2" },
-    { name = "torch", specifier = "==2.2.2" },
+    { name = "torch", specifier = ">=2.2.2" },
     { name = "transformers", specifier = ">=4.56" },
 ]
 

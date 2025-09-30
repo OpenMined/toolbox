@@ -14,10 +14,13 @@ dependencies = [
     "requests",
     "numpy>=2.3.3",
     "sqlite-vec>=0.1.6",
-    "toolbox_store",
+    "toolbox_store>=0.1.1",
     "tqdm>=4.67.1",
     "apscheduler>=3.11.0",
     "browser-cookie3>=0.20.1",
+    "playwright>=1.55.0",
+    "cachetools>=6.2.0",
+    "httpx==0.28.1",
 ]
 
 
