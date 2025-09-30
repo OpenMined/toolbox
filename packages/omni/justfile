@@ -41,6 +41,7 @@ dev:
     echo "Starting backend server..."
     export USE_ANTHROPIC=True
     export USE_CACHED_X_COOKIES=False
+    export USE_MOCK_SUMMARIES=True
     cd omni && python app.py &
     BACKEND_PID=$!
     echo "Backend started with PID: $BACKEND_PID"

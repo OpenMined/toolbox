@@ -173,8 +173,34 @@ export default {
     const formatDateRange = (dateRange) => {
       if (!dateRange) return "";
 
+      // Check if both dates are provided and valid
+      if (!dateRange.from && !dateRange.to) {
+        return "All time";
+      }
+
+      // If only one date is provided
+      if (!dateRange.from || !dateRange.to) {
+        const options = { month: "short", day: "numeric", year: "numeric" };
+        if (dateRange.from) {
+          const fromDate = new Date(dateRange.from);
+          if (isNaN(fromDate.getTime())) return "";
+          return `From ${fromDate.toLocaleDateString("en-US", options)}`;
+        }
+        if (dateRange.to) {
+          const toDate = new Date(dateRange.to);
+          if (isNaN(toDate.getTime())) return "";
+          return `Until ${toDate.toLocaleDateString("en-US", options)}`;
+        }
+        return "";
+      }
+
       const fromDate = new Date(dateRange.from);
       const toDate = new Date(dateRange.to);
+
+      // Validate dates
+      if (isNaN(fromDate.getTime()) || isNaN(toDate.getTime())) {
+        return "";
+      }
 
       const options = { month: "short", day: "numeric" };
       const fromFormatted = fromDate.toLocaleDateString("en-US", options);
