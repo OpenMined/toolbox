@@ -145,6 +145,7 @@
 <script>
 import { ref } from "vue";
 import { useUserStore } from "../stores/userStore";
+import posthog from "posthog-js";
 
 export default {
   name: "SmartListListView",
@@ -239,6 +240,19 @@ export default {
     };
 
     const handleClick = (listId) => {
+      const list = props.lists.find((l) => l.id === listId);
+
+      // Track list navigation in PostHog
+      if (typeof posthog !== "undefined" && posthog.__loaded) {
+        posthog.capture("list_navigated", {
+          list_id: listId,
+          list_name: list?.name,
+          is_community_list: isCommunityList(list),
+          authors: getAuthorsFromList(list),
+          item_count: list?.itemCount,
+        });
+      }
+
       emit("click", listId);
     };
 

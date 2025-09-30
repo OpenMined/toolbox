@@ -45,6 +45,7 @@ export PATH=/home/azureuser/.local/bin:/home/azureuser/.nvm/versions/node/v20.19
 export VITE_API_BASE_URL=http://20.224.153.50:8000
 export USE_ANTHROPIC=True
 export ANTHROPIC_API_KEY=$ANTHROPIC_API_KEY
+export VITE_POSTHOG_API_KEY=$POSTHOG_API_KEY
 
 cd /home/azureuser/omni
 source .venv/bin/activate

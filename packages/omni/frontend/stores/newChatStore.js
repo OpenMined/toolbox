@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { apiClient } from "../api/client.js";
+import posthog from "posthog-js";
 
 export const useNewChatStore = defineStore("newChat", {
   state: () => ({
@@ -92,6 +93,17 @@ export const useNewChatStore = defineStore("newChat", {
 
       this.isLoading = true;
       this.error = null;
+
+      // Track question asking in PostHog
+      if (typeof posthog !== "undefined" && posthog.__loaded) {
+        posthog.capture("question_asked", {
+          question: question,
+          list_id: this.currentListId,
+          is_new_chat: !this.selectedChatId,
+          question_length: question.length,
+          has_context: this.currentChats.length > 0,
+        });
+      }
 
       try {
         // Initialize chats array if it doesn't exist
