@@ -2355,8 +2355,11 @@ source = { editable = "packages/omni" }
 dependencies = [
     { name = "apscheduler" },
     { name = "browser-cookie3" },
+    { name = "cachetools" },
     { name = "fastapi" },
+    { name = "httpx" },
     { name = "numpy" },
+    { name = "playwright" },
     { name = "pydantic-settings" },
     { name = "requests" },
     { name = "sqlite-vec" },
@@ -2369,8 +2372,11 @@ dependencies = [
 requires-dist = [
     { name = "apscheduler", specifier = ">=3.11.0" },
     { name = "browser-cookie3", specifier = ">=0.20.1" },
+    { name = "cachetools", specifier = ">=6.2.0" },
     { name = "fastapi", specifier = ">=0.104.1" },
+    { name = "httpx", specifier = "==0.28.1" },
     { name = "numpy", specifier = ">=2.3.3" },
+    { name = "playwright", specifier = ">=1.55.0" },
     { name = "pydantic-settings" },
     { name = "requests" },
     { name = "sqlite-vec", specifier = ">=0.1.6" },
@@ -4298,7 +4304,7 @@ dev = [
 
 [[package]]
 name = "toolbox-store"
-version = "0.1.1"
+version = "0.1.2"
 source = { editable = "packages/toolbox_store" }
 dependencies = [
     { name = "httpx" },
@@ -4324,7 +4330,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "httpx", specifier = ">=0.28.1" },
+    { name = "httpx", specifier = ">=0.28.1,<0.29" },
     { name = "importlib", specifier = ">=1.0.4" },
     { name = "numpy", specifier = ">=2.3.2" },
     { name = "packaging", specifier = ">=25.0" },

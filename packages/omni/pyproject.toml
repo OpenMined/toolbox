@@ -21,9 +21,13 @@ dependencies = [
     "playwright>=1.55.0",
     "cachetools>=6.2.0",
     "httpx==0.28.1",
+    "rerankers[transformers] @ git+https://github.com/eelcovdw/rerankers.git@fix-colbert-query-mask",
 ]
 
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
