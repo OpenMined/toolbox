@@ -4,8 +4,9 @@
     <div class="p-6 border-b border-gray-200">
       <div class="flex items-center justify-between">
         <h2 class="text-2xl font-bold text-gray-900">Create New List</h2>
-        <button
-          @click="dataSourcesStore.closeDashboard()"
+        <a
+          href="#"
+          @click.prevent="dataSourcesStore.closeDashboard()"
           class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
         >
           <svg
@@ -21,7 +22,7 @@
               d="M6 18L18 6M6 6l12 12"
             ></path>
           </svg>
-        </button>
+        </a>
       </div>
     </div>
 
@@ -93,13 +94,15 @@
 
           <!-- Create List Button -->
           <div class="ml-8">
-            <button
-              @click="createList"
-              :disabled="!canCreate"
-              class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            <a
+              href="#"
+              @click.prevent="createList"
+              :class="{ 'pointer-events-none': !canCreate }"
+              class="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              :aria-disabled="!canCreate"
             >
               Create List
-            </button>
+            </a>
           </div>
         </div>
       </div>
@@ -227,13 +230,14 @@
                   {{ currentSource.name }} Filters
                 </h3>
               </div>
-              <button
+              <a
                 v-if="!addedSources.some((s) => s.id === currentSource.id)"
-                @click="addCurrentSource"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                href="#"
+                @click.prevent="addCurrentSource"
+                class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Add to List
-              </button>
+              </a>
               <div v-else class="flex items-center text-green-600">
                 <svg
                   class="w-5 h-5 mr-2"
@@ -346,12 +350,15 @@
                       </div>
                     </div>
                     <!-- Twitter profile link button -->
-                    <button
+                    <a
                       v-if="
                         newAuthor[currentSource.id]?.trim() &&
                         currentSource.id === 'twitter'
                       "
-                      @click="openTwitterProfile(newAuthor[currentSource.id])"
+                      href="#"
+                      @click.prevent="
+                        openTwitterProfile(newAuthor[currentSource.id])
+                      "
                       class="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 p-1"
                       title="View Twitter profile"
                     >
@@ -367,14 +374,16 @@
                           d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"
                         />
                       </svg>
-                    </button>
+                    </a>
                   </div>
-                  <button
-                    @click="addAuthor(currentSource.id)"
-                    :disabled="
-                      !canAddAuthor(currentSource.id) || isAddingAuthor
-                    "
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center"
+                  <a
+                    href="#"
+                    @click.prevent="addAuthor(currentSource.id)"
+                    :class="{
+                      'pointer-events-none':
+                        !canAddAuthor(currentSource.id) || isAddingAuthor,
+                    }"
+                    class="inline-flex px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed items-center"
                   >
                     <div
                       v-if="isAddingAuthor"
@@ -397,7 +406,7 @@
                       </svg>
                     </div>
                     {{ isAddingAuthor ? "Checking..." : "Add" }}
-                  </button>
+                  </a>
                 </div>
                 <div
                   v-if="sourceFilters[currentSource.id]?.authors?.length"
@@ -410,9 +419,10 @@
                     class="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
                   >
                     @{{ author }}
-                    <button
+                    <a
                       v-if="currentSource.id === 'twitter'"
-                      @click="openTwitterProfile(author)"
+                      href="#"
+                      @click.prevent="openTwitterProfile(author)"
                       class="ml-1 text-blue-600 hover:text-blue-800"
                       title="View Twitter profile"
                     >
@@ -428,13 +438,14 @@
                           d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"
                         />
                       </svg>
-                    </button>
-                    <button
-                      @click="removeAuthor(currentSource.id, index)"
+                    </a>
+                    <a
+                      href="#"
+                      @click.prevent="removeAuthor(currentSource.id, index)"
                       class="ml-1 text-blue-600 hover:text-blue-800"
                     >
                       ×
-                    </button>
+                    </a>
                   </span>
                 </div>
               </div>
@@ -456,8 +467,9 @@
 
               <!-- Advanced Options -->
               <div>
-                <button
-                  @click="toggleAdvanced(currentSource.id)"
+                <a
+                  href="#"
+                  @click.prevent="toggleAdvanced(currentSource.id)"
                   class="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
                 >
                   <span>Advanced Options</span>
@@ -475,7 +487,7 @@
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>
-                </button>
+                </a>
 
                 <div
                   v-if="showAdvanced[currentSource.id]"
@@ -537,12 +549,13 @@
                   <h4 class="text-sm font-medium text-gray-900">
                     Preview Results
                   </h4>
-                  <button
-                    @click="refreshPreview(currentSource.id)"
+                  <a
+                    href="#"
+                    @click.prevent="refreshPreview(currentSource.id)"
                     class="text-sm text-blue-600 hover:text-blue-800"
                   >
                     Refresh
-                  </button>
+                  </a>
                 </div>
                 <div
                   v-if="previewResults[currentSource.id]?.length"
@@ -953,8 +966,11 @@ export default {
         });
       }
 
-      smartListsStore.createSmartList(newList);
-      dataSourcesStore.closeDashboard();
+      smartListsStore.createSmartList(newList).then(() => {
+        // Clear current list to show welcome page
+        smartListsStore.currentListId = null;
+        dataSourcesStore.closeDashboard();
+      });
     };
 
     return {

@@ -8,6 +8,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@tailwindcss/typography": "^0.5.19",
+    "marked": "^16.3.0",
     "pinia": "^2.1.0",
     "posthog-js": "^1.268.8",
     "vue": "^3.4.0"

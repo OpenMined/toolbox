@@ -22,6 +22,7 @@ dependencies = [
     "cachetools>=6.2.0",
     "httpx==0.28.1",
     "rerankers[transformers] @ git+https://github.com/eelcovdw/rerankers.git@fix-colbert-query-mask",
+    "anthropic>=0.68.1",
 ]
 
 

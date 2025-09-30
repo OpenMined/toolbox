@@ -14,7 +14,8 @@ from omni.vectorstore_queries import (
     search_tweets,
 )
 
-CLAUDE_MODEL = "claude-opus-4-1-20250805"
+# CLAUDE_MODEL = "claude-opus-4-1-20250805"
+ANTRHOPIC_MODEL = "claude-sonnet-4-5-20250929"
 
 
 def get_ollama_completion(prompt, model="llama3.2:1b"):
@@ -55,7 +56,7 @@ def get_anthropic_completion(prompt):
 
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
-            model=CLAUDE_MODEL,
+            model=ANTRHOPIC_MODEL,
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -92,7 +93,7 @@ remember to double check if each theme has multiple sources, otherwise exclude i
         print("Using Anthropic")
         summary = get_anthropic_completion(prompt)
         if summary:
-            return summary, CLAUDE_MODEL
+            return summary, ANTRHOPIC_MODEL
         print("Anthropic failed, falling back to Ollama")
     elif settings.use_mock_summaries:
         print("Using mock summary")
@@ -126,7 +127,7 @@ def get_intended_model():
     """Get the model that will be used for summary generation"""
 
     if settings.use_anthropic:
-        return "claude-3-haiku-20240307"
+        return ANTRHOPIC_MODEL
     elif settings.use_mock_summaries:
         return "mock"
     else:

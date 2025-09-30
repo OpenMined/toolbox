@@ -2353,6 +2353,7 @@ name = "omni"
 version = "0.1.0"
 source = { editable = "packages/omni" }
 dependencies = [
+    { name = "anthropic" },
     { name = "apscheduler" },
     { name = "browser-cookie3" },
     { name = "cachetools" },
@@ -2362,6 +2363,7 @@ dependencies = [
     { name = "playwright" },
     { name = "pydantic-settings" },
     { name = "requests" },
+    { name = "rerankers", extra = ["transformers"] },
     { name = "sqlite-vec" },
     { name = "toolbox-store" },
     { name = "tqdm" },
@@ -2370,6 +2372,7 @@ dependencies = [
 
 [package.metadata]
 requires-dist = [
+    { name = "anthropic", specifier = ">=0.68.1" },
     { name = "apscheduler", specifier = ">=3.11.0" },
     { name = "browser-cookie3", specifier = ">=0.20.1" },
     { name = "cachetools", specifier = ">=6.2.0" },
@@ -2379,6 +2382,7 @@ requires-dist = [
     { name = "playwright", specifier = ">=1.55.0" },
     { name = "pydantic-settings" },
     { name = "requests" },
+    { name = "rerankers", extras = ["transformers"], git = "https://github.com/eelcovdw/rerankers.git?rev=fix-colbert-query-mask" },
     { name = "sqlite-vec", specifier = ">=0.1.6" },
     { name = "toolbox-store", editable = "packages/toolbox_store" },
     { name = "tqdm", specifier = ">=4.67.1" },
@@ -4304,7 +4308,7 @@ dev = [
 
 [[package]]
 name = "toolbox-store"
-version = "0.1.2"
+version = "0.1.1"
 source = { editable = "packages/toolbox_store" }
 dependencies = [
     { name = "httpx" },

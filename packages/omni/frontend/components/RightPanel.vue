@@ -59,9 +59,9 @@
     </div>
 
     <!-- Chat Area -->
-    <div class="flex-1 flex flex-col">
+    <div class="flex-1 flex flex-col min-h-0">
       <!-- Messages -->
-      <div class="flex-1 overflow-y-auto p-4 space-y-4">
+      <div class="flex-1 overflow-y-auto p-4 space-y-4 min-h-0">
         <!-- Empty state when no conversations exist -->
         <div
           v-if="chatStore.conversations.length === 0"
@@ -108,7 +108,12 @@
                   'bg-gray-100 text-gray-900': message.role === 'assistant',
                 }"
               >
-                <p class="text-sm">{{ message.content }}</p>
+                <div
+                  v-if="message.role === 'assistant'"
+                  class="text-sm prose prose-sm max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0"
+                  v-html="renderMarkdown(message.content)"
+                ></div>
+                <p v-else class="text-sm">{{ message.content }}</p>
               </div>
             </div>
           </div>
@@ -154,6 +159,7 @@
 
 <script>
 import { computed, ref, watch, nextTick } from "vue";
+import { marked } from "marked";
 import { useNewChatStore } from "../stores/newChatStore";
 import { useSmartListsStore } from "../stores/smartListsStore";
 
@@ -220,6 +226,13 @@ export default {
       chatStore.focusInput();
     };
 
+    const renderMarkdown = (content) => {
+      return marked(content, {
+        breaks: true,
+        gfm: true,
+      });
+    };
+
     // Watch for focus input signal
     watch(
       () => chatStore.shouldFocusInput,
@@ -241,6 +254,7 @@ export default {
       formatDateRange,
       handleSubmit,
       handleNewChat,
+      renderMarkdown,
     };
   },
 };
