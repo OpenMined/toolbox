@@ -24,7 +24,7 @@
       <div class="flex-1 flex" v-if="!dataSourcesStore.showDashboard">
         <!-- Welcome Page (default) -->
         <div v-if="!smartListsStore.currentListId" class="flex-1">
-          <WelcomePage />
+          <WelcomePage :key="welcomePageKey" />
         </div>
 
         <!-- List View -->
@@ -60,7 +60,7 @@
 </template>
 
 <script>
-import { onMounted } from "vue";
+import { onMounted, ref, watch } from "vue";
 import { useNewChatStore } from "./stores/newChatStore";
 import { useDataSourcesStore } from "./stores/dataSourcesStore";
 import { useSmartListsStore } from "./stores/smartListsStore";
@@ -103,6 +103,7 @@ export default {
     const smartListsStore = useSmartListsStore();
     const dataCollectionsStore = useDataCollectionsStore();
     const userStore = useUserStore();
+    const welcomePageKey = ref(0);
 
     onMounted(async () => {
       // Initialize authentication first
@@ -126,12 +127,25 @@ export default {
       }
     });
 
+    // Watch for dashboard closing and force WelcomePage to remount
+    watch(
+      () => dataSourcesStore.showDashboard,
+      (isOpen, wasOpen) => {
+        // If dashboard was open and is now closed
+        if (wasOpen && !isOpen && !smartListsStore.currentListId) {
+          // Force WelcomePage to remount by changing key
+          welcomePageKey.value++;
+        }
+      },
+    );
+
     return {
       chatStore,
       dataSourcesStore,
       smartListsStore,
       dataCollectionsStore,
       userStore,
+      welcomePageKey,
     };
   },
 };

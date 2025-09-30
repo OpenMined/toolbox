@@ -89,6 +89,59 @@ def test_query_documents_with_filters(
     assert len(results_10) == len(sample_docs)
 
 
+def test_upsert_logic(tb_store: ToolboxStore) -> None:
+    """Test upsert with embeddings: insert 3 docs, update 2, verify embeddings."""
+
+    # Step 1: Insert 2 documents with embeddings, 1 without
+    doc1 = TBDocument(id="doc1", content="First document", source="test")
+    doc2 = TBDocument(id="doc2", content="Second document", source="test")
+    doc3 = TBDocument(id="doc3", content="Third document", source="test")
+
+    # Test cases: 2 with embeddings, 1 without
+    tb_store.insert_docs([doc1, doc2], create_embeddings=True)
+    tb_store.insert_docs([doc3], create_embeddings=False)
+
+    # Verify initial state - only doc3 should be without embeddings
+    docs_without_embeddings = tb_store.db.get_docs_without_embeddings(limit=10)
+    doc_ids_without = {doc.id for doc in docs_without_embeddings}
+    assert doc_ids_without == {"doc3"}
+
+    # Step 2: Change doc2 and doc3 content
+    doc2_updated = TBDocument(id="doc2", content="Updated second", source="test")
+    doc3_updated = TBDocument(id="doc3", content="Updated third", source="test")
+
+    # Step 3: Re-insert all three (using overwrite=True which calls upsert)
+    tb_store.insert_docs(
+        [doc1, doc2_updated, doc3_updated],
+        create_embeddings=False,
+        overwrite=True,
+    )
+
+    # Step 4: Verify updates
+    docs = tb_store.search_documents().get()
+    assert len(docs) == 3
+    assert next(d for d in docs if d.id == "doc2").content == "Updated second"
+    assert next(d for d in docs if d.id == "doc3").content == "Updated third"
+
+    # Step 5: Verify embeddings - doc1 still has embeddings, doc2 and doc3 don't
+    docs_without_embeddings = tb_store.db.get_docs_without_embeddings(limit=10)
+    doc_ids_without = {doc.id for doc in docs_without_embeddings}
+    assert doc_ids_without == {"doc2", "doc3"}
+
+    # Update again and embed
+    doc2_updated = TBDocument(id="doc2", content="re-updated second", source="test")
+    doc3_updated = TBDocument(id="doc3", content="re-updated third", source="test")
+    tb_store.insert_docs(
+        [doc2_updated, doc3_updated],
+        create_embeddings=True,
+        overwrite=True,
+    )
+
+    # Final verification - all should have embeddings now
+    docs_without_embeddings = tb_store.db.get_docs_without_embeddings(limit=10)
+    assert len(docs_without_embeddings) == 0
+
+
 def test_custom_doc_cls(tb_config: StoreConfig) -> None:
     class Message(TBDocument):
         author: str = "default_value"

@@ -2,9 +2,9 @@
 # Vue.js and FastAPI development commands
 
 
-deploy:
+deploy toolbox_dir="$(cd ../.. && pwd)":
     #!/bin/bash
-    ./deploy_omni.sh
+    TOOLBOX_DIR={{toolbox_dir}} ./deploy_omni.sh
 
 sync-data:
     #!/bin/bash
@@ -13,6 +13,11 @@ sync-data:
 sync-summaries:
     #!/bin/bash
     scp -r ~/.twitter-mcp/db.sqlite toolbox-prod:/home/azureuser/.twitter-mcp/db.sqlite
+
+sync-x-credentials:
+    #!/bin/bash
+    ssh toolbox-prod "mkdir -p /home/azureuser/.omni/scraper_data"
+    scp ~/.omni/scraper_data/x_cookies.json toolbox-prod:/home/azureuser/.omni/scraper_data/x_cookies.json
 
 # Kill existing dev processes
 kill-dev:
@@ -35,6 +40,8 @@ dev:
     trap 'just kill-dev' EXIT
     echo "Starting backend server..."
     export USE_ANTHROPIC=True
+    export USE_CACHED_X_COOKIES=False
+    export USE_MOCK_SUMMARIES=True
     cd omni && python app.py &
     BACKEND_PID=$!
     echo "Backend started with PID: $BACKEND_PID"

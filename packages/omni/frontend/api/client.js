@@ -72,8 +72,8 @@ class APIClient {
     return this.request(`/chats/${listId}`);
   }
 
-  async createSmartList(listData) {
-    return this.request("/smart-lists", {
+  async createSmartList(listData, userEmail = "dev@example.com") {
+    return this.request(`/smart-lists?user_email=${userEmail}`, {
       method: "POST",
       body: JSON.stringify(listData),
     });
@@ -108,6 +108,20 @@ class APIClient {
   async deleteSmartList(listId, userEmail = "dev@example.com") {
     return this.request(`/smart-lists/${listId}?user_email=${userEmail}`, {
       method: "DELETE",
+    });
+  }
+
+  async checkTwitterAccount(handle) {
+    return this.request("/twitter/check-account", {
+      method: "POST",
+      body: JSON.stringify({ handle }),
+    });
+  }
+
+  async getTweetCounts(handles) {
+    return this.request("/twitter/tweet-counts", {
+      method: "POST",
+      body: JSON.stringify({ handles }),
     });
   }
 }

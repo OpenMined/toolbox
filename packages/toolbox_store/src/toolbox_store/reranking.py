@@ -1,8 +1,15 @@
+import warnings
 from typing import Any, cast
 
 from rerankers import Reranker
 
 from toolbox_store.models import RetrievedChunk
+
+warnings.filterwarnings("ignore", category=UserWarning, module="torch")
+warnings.filterwarnings("ignore", message=".*Failed to initialize NumPy.*")
+warnings.filterwarnings(
+    "ignore", message=".*A module that was compiled using NumPy 1.x cannot be *"
+)
 
 loaded_rerankers: dict[(str, str), Reranker] = {}
 
@@ -19,6 +26,11 @@ def load_reranker(
 
     if (model_name, model_type) in loaded_rerankers:
         return loaded_rerankers[(model_name, model_type)]
+
+    # Suppress ColBERT loading messages by setting verbose=0
+    if model_type == "colbert" and "verbose" not in model_kwargs:
+        model_kwargs["verbose"] = 0
+
     reranker = Reranker(model_name, model_type=model_type, **model_kwargs)
     loaded_rerankers[(model_name, model_type)] = reranker
     return reranker

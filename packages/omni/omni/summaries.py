@@ -8,12 +8,14 @@ from typing import Any, Dict, Optional
 import requests
 
 from omni.db import get_omni_connection
+from omni.models import SummaryResponse
 from omni.settings import settings
 from omni.vectorstore_queries import (
     search_tweets,
 )
 
-CLAUDE_MODEL = "claude-opus-4-1-20250805"
+# CLAUDE_MODEL = "claude-opus-4-1-20250805"
+ANTRHOPIC_MODEL = "claude-sonnet-4-5-20250929"
 
 
 def get_ollama_completion(prompt, model="llama3.2:1b"):
@@ -54,7 +56,7 @@ def get_anthropic_completion(prompt):
 
         client = anthropic.Anthropic(api_key=api_key)
         response = client.messages.create(
-            model=CLAUDE_MODEL,
+            model=ANTRHOPIC_MODEL,
             max_tokens=1000,
             messages=[{"role": "user", "content": prompt}],
         )
@@ -91,8 +93,11 @@ remember to double check if each theme has multiple sources, otherwise exclude i
         print("Using Anthropic")
         summary = get_anthropic_completion(prompt)
         if summary:
-            return summary, CLAUDE_MODEL
+            return summary, ANTRHOPIC_MODEL
         print("Anthropic failed, falling back to Ollama")
+    elif settings.use_mock_summaries:
+        print("Using mock summary")
+        return "Mock summary", "mock"
 
     # Default to Ollama
     summary = get_ollama_completion(prompt)
@@ -122,8 +127,11 @@ def get_intended_model():
     """Get the model that will be used for summary generation"""
 
     if settings.use_anthropic:
-        return "claude-3-haiku-20240307"
-    return "llama3.2:1b"
+        return ANTRHOPIC_MODEL
+    elif settings.use_mock_summaries:
+        return "mock"
+    else:
+        return "llama3.2:1b"
 
 
 def generate_filters_hash(list_source):
@@ -177,9 +185,12 @@ def _generate_smart_list_summary_internal(list_source):
     if not authors:
         return "No authors specified for summary.", None
 
-    # Parse date range
-    start_date = datetime.fromisoformat(filters["dateRange"]["from"])
-    end_date = datetime.fromisoformat(filters["dateRange"]["to"])
+    # Parse date range - handle empty dates
+    date_from = filters["dateRange"].get("from", "")
+    date_to = filters["dateRange"].get("to", "")
+
+    start_date = datetime.fromisoformat(date_from) if date_from else None
+    end_date = datetime.fromisoformat(date_to) if date_to else None
 
     # Get RAG query text (only if query is provided and not empty)
     query_text = None
@@ -215,13 +226,15 @@ def _generate_smart_list_summary_internal(list_source):
         return "Unable to generate summary due to an error.", None
 
 
-def get_or_generate_smart_list_summary(list_id, list_source):
+def get_or_generate_smart_list_summary(list_id, list_source) -> SummaryResponse:
     """Get cached summary or generate new one (async if needed)"""
 
     filters_hash = generate_filters_hash(list_source)
 
-    cached = get_cached_summary(list_id, filters_hash)
+    # Get cached summary, excluding errors (will automatically get latest non-error)
+    cached = get_cached_summary(list_id, filters_hash, include_errors=False)
 
+    # If we have a valid cached summary, return it
     if cached:
         print("Getting cached summary")
         summary, status, model = cached
@@ -229,13 +242,14 @@ def get_or_generate_smart_list_summary(list_id, list_source):
         # If we have a cached result but no model info, update it with intended model for generating status
         if status == "generating" and model is None:
             intended_model = get_intended_model()
-            return {"summary": summary, "status": status, "model": intended_model}
+            return SummaryResponse(summary=summary, status=status, model=intended_model)
 
-        return {"summary": summary, "status": status, "model": model}
+        return SummaryResponse(summary=summary, status=status, model=model)
     else:
-        print("Geneting new summary")
+        # No valid cached summary - regenerate
+        print("Generating new summary")
 
-        # No cached summary, start async generation
+        # Start async generation
         intended_model = get_intended_model()
         thread = threading.Thread(
             target=generate_summary_async, args=(list_id, list_source, filters_hash)
@@ -243,20 +257,50 @@ def get_or_generate_smart_list_summary(list_id, list_source):
         thread.daemon = True
         thread.start()
 
-        return {"summary": "", "status": "generating", "model": intended_model}
+        return SummaryResponse(summary="", status="generating", model=intended_model)
 
 
 # Summary cache management (using the same SQLite tables for now)
-def get_cached_summary(list_id: int, filters_hash: str) -> Optional[tuple]:
-    """Get cached summary if available"""
+def get_cached_summary(
+    list_id: int, filters_hash: str, include_errors: bool = False
+) -> Optional[tuple]:
+    """Get cached summary if available
+
+    Args:
+        list_id: The list ID
+        filters_hash: The filters hash
+        include_errors: If True, returns summaries even if status is 'error'.
+                       If False, only returns non-error summaries.
+
+    Returns:
+        Tuple of (summary, status, model) or None
+    """
 
     try:
         with get_omni_connection() as conn:
             cursor = conn.cursor()
-            cursor.execute(
-                "SELECT summary, status, model FROM smart_list_summaries WHERE list_id = ? AND filters_hash = ?",
-                (list_id, filters_hash),
-            )
+
+            if include_errors:
+                # Return any cached summary, ordered by most recent
+                cursor.execute(
+                    """SELECT summary, status, model
+                       FROM smart_list_summaries
+                       WHERE list_id = ? AND filters_hash = ?
+                       ORDER BY updated_at DESC
+                       LIMIT 1""",
+                    (list_id, filters_hash),
+                )
+            else:
+                # Only return non-error summaries, ordered by most recent
+                cursor.execute(
+                    """SELECT summary, status, model
+                       FROM smart_list_summaries
+                       WHERE list_id = ? AND filters_hash = ? AND status != 'error'
+                       ORDER BY updated_at DESC
+                       LIMIT 1""",
+                    (list_id, filters_hash),
+                )
+
             result = cursor.fetchone()
             return result if result else None
     except Exception as e:
