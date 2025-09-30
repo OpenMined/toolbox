@@ -14,12 +14,15 @@ from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 from omni.data_fetchers.job_queue import DataFetcherJobQueue
 from omni.data_fetchers.x_utils import parse_tweets_json, parse_user_tweets_json
 from omni.db import get_tweet_store
+from omni.settings import settings
 from omni.vectorstore_models import Tweet
 
 BASE_DIR = Path.home() / ".omni"
 DATA_FETCHER_DIR = BASE_DIR / "scraper_data"
 COOKIES_FILE = DATA_FETCHER_DIR / "x_cookies.json"
 DATA_DIR = DATA_FETCHER_DIR / "data"
+
+settings.use_cached_x_cookies
 
 
 def cookie_to_playwright_cookie(cookie: Cookie) -> dict:
@@ -68,10 +71,12 @@ def load_cookies_from_file() -> list[dict] | None:
     return
 
 
-def get_cookies_for_playwright(reload: bool = True) -> list[dict]:
+def get_cookies_for_playwright(
+    use_cached_x_cookies: bool = settings.use_cached_x_cookies,
+) -> list[dict]:
     """Get cookies in Playwright format"""
     cookies = load_cookies_from_file()
-    if cookies is not None and not reload:
+    if cookies is not None and use_cached_x_cookies:
         return cookies
 
     x_cookies = get_cookies_from_brave()

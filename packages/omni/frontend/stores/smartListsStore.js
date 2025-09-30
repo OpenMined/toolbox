@@ -119,7 +119,12 @@ export const useSmartListsStore = defineStore("smartLists", {
 
     async createSmartList(listData) {
       try {
-        const result = await apiClient.createSmartList(listData);
+        // Get current user email from user store
+        const { useUserStore } = await import("./userStore.js");
+        const userStore = useUserStore();
+        const userEmail = userStore.userEmail || "dev@example.com";
+
+        const result = await apiClient.createSmartList(listData, userEmail);
 
         // Refresh the followed smart lists to get the newly created list
         await this.fetchSmartLists();

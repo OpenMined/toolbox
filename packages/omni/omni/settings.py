@@ -8,6 +8,7 @@ class Settings(BaseSettings):
         7200,
         14400,
     ]  # every 2-4 hours
+    use_cached_x_cookies: bool = True
 
 
 settings = Settings()

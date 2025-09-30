@@ -40,6 +40,7 @@ dev:
     trap 'just kill-dev' EXIT
     echo "Starting backend server..."
     export USE_ANTHROPIC=True
+    export USE_CACHED_X_COOKIES=False
     cd omni && python app.py &
     BACKEND_PID=$!
     echo "Backend started with PID: $BACKEND_PID"

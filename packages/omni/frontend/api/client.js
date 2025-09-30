@@ -72,8 +72,8 @@ class APIClient {
     return this.request(`/chats/${listId}`);
   }
 
-  async createSmartList(listData) {
-    return this.request("/smart-lists", {
+  async createSmartList(listData, userEmail = "dev@example.com") {
+    return this.request(`/smart-lists?user_email=${userEmail}`, {
       method: "POST",
       body: JSON.stringify(listData),
     });
