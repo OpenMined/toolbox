@@ -1,12 +1,12 @@
 [project]
 name = "toolbox_store"
-version = "0.1.0"
+version = "0.1.1"
 description = "Add your description here"
 readme = "README.md"
 authors = [{ name = "eelcovdw", email = "eelcovdw@gmail.com" }]
 requires-python = ">=3.12"
 dependencies = [
-    "httpx>=0.28.1",
+    "httpx>=0.28.1,<0.29",
     "importlib>=1.0.4",
     "numpy>=2.3.2",
     "packaging>=25.0",
@@ -15,7 +15,7 @@ dependencies = [
     "rerankers[transformers]>=0.10.0",
     "semantic-text-splitter>=0.28.0",
     "sqlite-vec==0.1.7a2",
-    "torch==2.2.2",
+    "torch>=2.2.2",
     "transformers>=4.56",
 ]
 

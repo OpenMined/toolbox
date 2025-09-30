@@ -2,8 +2,11 @@
 
 set -eo pipefail
 
+TOOLBOX_DIR="${TOOLBOX_DIR:-/Users/koen/workspace/toolbox}"
 
-cd /Users/koen/workspace/toolbox/packages/omni
+echo "Deploying from $TOOLBOX_DIR/packages/omni to toolbox-prod"
+
+cd "$TOOLBOX_DIR/packages/omni"
 ssh toolbox-prod "rm -rf /home/azureuser/omni"
 zip -r - .  -x "**.venv/*" -x ".git/*" -x "data/*" -x "node_modules/*" | ssh toolbox-prod "cat > /home/azureuser/archive.zip && rm -rf /home/azureuser/omni && unzip /home/azureuser/archive.zip -d /home/azureuser/omni"
 
@@ -16,7 +19,8 @@ export PATH=/home/azureuser/.local/bin:/home/azureuser/.nvm/versions/node/v20.19
 cd /home/azureuser/omni
 uv venv
 source .venv/bin/activate
-uv pip install -e . || true
+# uv cache clean
+uv pip install --refresh --prerelease allow -e . || true
 npm install
 npm install -g serve
 "
