@@ -588,6 +588,7 @@ import { useDataSourcesStore } from "../stores/dataSourcesStore";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import { DATA_SOURCES } from "../constants/dataSources";
 import { apiClient } from "../api/client";
+import posthog from "posthog-js";
 
 export default {
   name: "CreateList",
@@ -643,6 +644,17 @@ export default {
         currentSource.value &&
         !addedSources.value.some((s) => s.id === currentSource.value.id)
       ) {
+        // Track adding data source
+        if (typeof posthog !== "undefined" && posthog.__loaded) {
+          posthog.capture("data_source_added", {
+            data_source: currentSource.value.id,
+            authors: sourceFilters[currentSource.value.id]?.authors || [],
+            has_rag_filter:
+              !!sourceFilters[currentSource.value.id]?.ragFilter?.query,
+            has_llm_filter: !!sourceFilters[currentSource.value.id]?.llmFilter,
+          });
+        }
+
         addedSources.value.push({
           ...currentSource.value,
           filters: { ...sourceFilters[currentSource.value.id] },
@@ -680,6 +692,17 @@ export default {
         sourceFilters[sourceId] &&
         !sourceFilters[sourceId].authors.includes(author)
       ) {
+        // Track author addition
+        if (typeof posthog !== "undefined" && posthog.__loaded) {
+          posthog.capture("author_added", {
+            data_source: sourceId,
+            author: author,
+            validation_passed:
+              sourceId !== "twitter" ||
+              authorValidation[sourceId]?.isValid !== false,
+          });
+        }
+
         sourceFilters[sourceId].authors.push(author);
         newAuthor[sourceId] = "";
         // Reset validation state
@@ -899,6 +922,25 @@ export default {
           return sum + (previewResults[source.id]?.length || 0);
         }, 0),
       };
+
+      // Track list creation in PostHog
+      if (typeof posthog !== "undefined" && posthog.__loaded) {
+        posthog.capture("list_created", {
+          list_name: newList.name,
+          authors: addedSources.value.flatMap(
+            (source) => sourceFilters[source.id]?.authors || [],
+          ),
+          rag_query: newList.listSources
+            .map((ls) => ls.filters.ragQuery)
+            .filter((q) => q)
+            .join(", "),
+          data_sources: addedSources.value.map((source) => source.id),
+          source_count: addedSources.value.length,
+          total_authors: addedSources.value.reduce((sum, source) => {
+            return sum + (sourceFilters[source.id]?.authors?.length || 0);
+          }, 0),
+        });
+      }
 
       smartListsStore.createSmartList(newList);
       dataSourcesStore.closeDashboard();
