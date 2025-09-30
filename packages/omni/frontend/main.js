@@ -9,8 +9,8 @@ if (
   import.meta.env.VITE_POSTHOG_API_KEY &&
   import.meta.env.MODE === "production"
 ) {
-  posthog.init(import.meta.env.VITE_POSTHOG_API_KEY, {
-    api_host: "https://us.posthog.com",
+  posthog.init("phc_TropYqZrmdCFGIawoLCB7auDIfBMwjTNJlJbd4EJuQg", {
+    api_host: "https://us.i.posthog.com",
   });
 }
 
