@@ -675,7 +675,9 @@ export default {
           isAddingAuthor.value = true;
           try {
             const isValid = await validateTwitterAccount(author);
-            if (!isValid) {
+            // Only show error if validation explicitly returned false
+            // Don't show error if isValid is null (error_checking=true)
+            if (isValid === false) {
               alert(
                 `Twitter account @${author} does not exist or is not accessible.`,
               );
@@ -860,9 +862,12 @@ export default {
       const author = newAuthor[sourceId]?.trim();
       if (!author) return false;
 
-      // For Twitter, allow adding if we haven't validated yet, or if validation passed
+      // For Twitter, allow adding if we haven't validated yet, validation passed, or there was an error checking
       if (sourceId === "twitter") {
-        return authorValidation[sourceId]?.isValid !== false;
+        const validationResult = authorValidation[sourceId]?.isValid;
+        // Allow if validation is null (error checking), true (valid), or undefined (not validated yet)
+        // Only block if validation is explicitly false
+        return validationResult !== false;
       }
 
       return true;
@@ -874,6 +879,12 @@ export default {
       try {
         const cleanHandle = handle.replace("@", "");
         const response = await apiClient.checkTwitterAccount(cleanHandle);
+
+        // If there was an error checking the account, return null to avoid styling
+        if (response.error_checking === true) {
+          return null;
+        }
+
         return response.exists;
       } catch (error) {
         console.error("Error validating Twitter account:", error);

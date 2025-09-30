@@ -239,6 +239,7 @@ class TwitterAccountCheckRequest(BaseModel):
 class TwitterAccountCheckResponse(BaseModel):
     handle: str
     exists: bool
+    error_checking: bool = False
 
 
 class TweetCountRequest(BaseModel):

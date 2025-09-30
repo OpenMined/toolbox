@@ -347,8 +347,13 @@ async def ask_question(list_id: int, request: QuestionRequest):
 @app.post("/twitter/check-account", response_model=TwitterAccountCheckResponse)
 async def check_twitter_account(request: TwitterAccountCheckRequest):
     """Check if a Twitter account exists by handle"""
-    cookie_value, expires = get_guest_token()
-    exists = account_exists(request.handle, cookie_value)
+    try:
+        cookie_value, expires = get_guest_token()
+        exists = account_exists(request.handle, cookie_value)
+    except Exception:
+        return TwitterAccountCheckResponse(
+            handle=request.handle, exists=False, error_checking=True
+        )
     return TwitterAccountCheckResponse(handle=request.handle, exists=exists)
 
 
