@@ -4,8 +4,9 @@
     <div class="p-6 border-b border-gray-200">
       <div class="flex items-center justify-between">
         <h2 class="text-2xl font-bold text-gray-900">Create New List</h2>
-        <button
-          @click="dataSourcesStore.closeDashboard()"
+        <a
+          href="#"
+          @click.prevent="dataSourcesStore.closeDashboard()"
           class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full"
         >
           <svg
@@ -21,7 +22,7 @@
               d="M6 18L18 6M6 6l12 12"
             ></path>
           </svg>
-        </button>
+        </a>
       </div>
     </div>
 
@@ -93,13 +94,15 @@
 
           <!-- Create List Button -->
           <div class="ml-8">
-            <button
-              @click="createList"
-              :disabled="!canCreate"
-              class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+            <a
+              href="#"
+              @click.prevent="createList"
+              :class="{ 'pointer-events-none': !canCreate }"
+              class="inline-block px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              :aria-disabled="!canCreate"
             >
               Create List
-            </button>
+            </a>
           </div>
         </div>
       </div>
@@ -227,13 +230,14 @@
                   {{ currentSource.name }} Filters
                 </h3>
               </div>
-              <button
+              <a
                 v-if="!addedSources.some((s) => s.id === currentSource.id)"
-                @click="addCurrentSource"
-                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                href="#"
+                @click.prevent="addCurrentSource"
+                class="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
               >
                 Add to List
-              </button>
+              </a>
               <div v-else class="flex items-center text-green-600">
                 <svg
                   class="w-5 h-5 mr-2"
@@ -259,20 +263,150 @@
                   >Authors</label
                 >
                 <div class="flex space-x-2">
-                  <input
-                    v-model="newAuthor[currentSource.id]"
-                    type="text"
-                    class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    placeholder="Add author (default: any author)"
-                    @keyup.enter="addAuthor(currentSource.id)"
-                  />
-                  <button
-                    @click="addAuthor(currentSource.id)"
-                    :disabled="!newAuthor[currentSource.id]?.trim()"
-                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  <div class="flex-1 relative">
+                    <div
+                      class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 pointer-events-none"
+                    >
+                      @
+                    </div>
+                    <input
+                      v-model="newAuthor[currentSource.id]"
+                      type="text"
+                      class="w-full pl-8 pr-16 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      :class="{
+                        'border-green-500 focus:ring-green-500':
+                          authorValidation[currentSource.id]?.isValid,
+                        'border-red-500 focus:ring-red-500':
+                          authorValidation[currentSource.id]?.isValid === false,
+                      }"
+                      placeholder="Add author (default: any author)"
+                      @keyup.enter="addAuthor(currentSource.id)"
+                      @input="onAuthorInput(currentSource.id)"
+                    />
+                    <!-- Validation status icons -->
+                    <div
+                      class="absolute right-12 top-1/2 transform -translate-y-1/2 flex items-center"
+                    >
+                      <!-- Loading spinner -->
+                      <div
+                        v-if="authorValidation[currentSource.id]?.isLoading"
+                        class="animate-spin h-4 w-4"
+                      >
+                        <svg
+                          class="w-4 h-4 text-blue-500"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                        >
+                          <circle
+                            class="opacity-25"
+                            cx="12"
+                            cy="12"
+                            r="10"
+                            stroke="currentColor"
+                            stroke-width="4"
+                          ></circle>
+                          <path
+                            class="opacity-75"
+                            fill="currentColor"
+                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                          ></path>
+                        </svg>
+                      </div>
+                      <!-- Valid checkmark -->
+                      <div
+                        v-else-if="authorValidation[currentSource.id]?.isValid"
+                        class="text-green-500"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <!-- Invalid X -->
+                      <div
+                        v-else-if="
+                          authorValidation[currentSource.id]?.isValid === false
+                        "
+                        class="text-red-500"
+                      >
+                        <svg
+                          class="w-4 h-4"
+                          fill="currentColor"
+                          viewBox="0 0 20 20"
+                        >
+                          <path
+                            fill-rule="evenodd"
+                            d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                            clip-rule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                    <!-- Twitter profile link button -->
+                    <a
+                      v-if="
+                        newAuthor[currentSource.id]?.trim() &&
+                        currentSource.id === 'twitter'
+                      "
+                      href="#"
+                      @click.prevent="
+                        openTwitterProfile(newAuthor[currentSource.id])
+                      "
+                      class="absolute right-3 top-1/2 transform -translate-y-1/2 text-blue-500 hover:text-blue-700 p-1"
+                      title="View Twitter profile"
+                    >
+                      <svg
+                        class="w-4 h-4"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"
+                        />
+                        <path
+                          d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"
+                        />
+                      </svg>
+                    </a>
+                  </div>
+                  <a
+                    href="#"
+                    @click.prevent="addAuthor(currentSource.id)"
+                    :class="{
+                      'pointer-events-none':
+                        !canAddAuthor(currentSource.id) || isAddingAuthor,
+                    }"
+                    class="inline-flex px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed items-center"
                   >
-                    Add
-                  </button>
+                    <div
+                      v-if="isAddingAuthor"
+                      class="animate-spin h-4 w-4 mr-2"
+                    >
+                      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24">
+                        <circle
+                          class="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          stroke-width="4"
+                        ></circle>
+                        <path
+                          class="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
+                      </svg>
+                    </div>
+                    {{ isAddingAuthor ? "Checking..." : "Add" }}
+                  </a>
                 </div>
                 <div
                   v-if="sourceFilters[currentSource.id]?.authors?.length"
@@ -284,13 +418,34 @@
                     :key="index"
                     class="inline-flex items-center px-2 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
                   >
-                    {{ author }}
-                    <button
-                      @click="removeAuthor(currentSource.id, index)"
+                    @{{ author }}
+                    <a
+                      v-if="currentSource.id === 'twitter'"
+                      href="#"
+                      @click.prevent="openTwitterProfile(author)"
+                      class="ml-1 text-blue-600 hover:text-blue-800"
+                      title="View Twitter profile"
+                    >
+                      <svg
+                        class="w-3 h-3"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path
+                          d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z"
+                        />
+                        <path
+                          d="M5 5a2 2 0 00-2 2v8a2 2 0 002 2h8a2 2 0 002-2v-1a1 1 0 10-2 0v1H5V7h1a1 1 0 000-2H5z"
+                        />
+                      </svg>
+                    </a>
+                    <a
+                      href="#"
+                      @click.prevent="removeAuthor(currentSource.id, index)"
                       class="ml-1 text-blue-600 hover:text-blue-800"
                     >
                       ×
-                    </button>
+                    </a>
                   </span>
                 </div>
               </div>
@@ -312,8 +467,9 @@
 
               <!-- Advanced Options -->
               <div>
-                <button
-                  @click="toggleAdvanced(currentSource.id)"
+                <a
+                  href="#"
+                  @click.prevent="toggleAdvanced(currentSource.id)"
                   class="inline-flex items-center space-x-1 text-sm text-blue-600 hover:text-blue-800 transition-colors"
                 >
                   <span>Advanced Options</span>
@@ -331,7 +487,7 @@
                       d="M19 9l-7 7-7-7"
                     />
                   </svg>
-                </button>
+                </a>
 
                 <div
                   v-if="showAdvanced[currentSource.id]"
@@ -393,12 +549,13 @@
                   <h4 class="text-sm font-medium text-gray-900">
                     Preview Results
                   </h4>
-                  <button
-                    @click="refreshPreview(currentSource.id)"
+                  <a
+                    href="#"
+                    @click.prevent="refreshPreview(currentSource.id)"
                     class="text-sm text-blue-600 hover:text-blue-800"
                   >
                     Refresh
-                  </button>
+                  </a>
                 </div>
                 <div
                   v-if="previewResults[currentSource.id]?.length"
@@ -443,6 +600,8 @@ import { ref, computed, reactive, watch } from "vue";
 import { useDataSourcesStore } from "../stores/dataSourcesStore";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import { DATA_SOURCES } from "../constants/dataSources";
+import { apiClient } from "../api/client";
+import posthog from "posthog-js";
 
 export default {
   name: "CreateList",
@@ -455,6 +614,9 @@ export default {
     const currentSource = ref(null);
     const addedSources = ref([]);
     const newAuthor = reactive({});
+    const isAddingAuthor = ref(false);
+    const authorValidation = reactive({});
+    const validationTimeouts = reactive({});
 
     const globalFilters = reactive({
       startDate: "",
@@ -495,6 +657,17 @@ export default {
         currentSource.value &&
         !addedSources.value.some((s) => s.id === currentSource.value.id)
       ) {
+        // Track adding data source
+        if (typeof posthog !== "undefined" && posthog.__loaded) {
+          posthog.capture("data_source_added", {
+            data_source: currentSource.value.id,
+            authors: sourceFilters[currentSource.value.id]?.authors || [],
+            has_rag_filter:
+              !!sourceFilters[currentSource.value.id]?.ragFilter?.query,
+            has_llm_filter: !!sourceFilters[currentSource.value.id]?.llmFilter,
+          });
+        }
+
         addedSources.value.push({
           ...currentSource.value,
           filters: { ...sourceFilters[currentSource.value.id] },
@@ -504,15 +677,54 @@ export default {
       }
     };
 
-    const addAuthor = (sourceId) => {
+    const addAuthor = async (sourceId) => {
       const author = newAuthor[sourceId]?.trim();
+      if (!canAddAuthor(sourceId) || isAddingAuthor.value) return;
+
+      // For Twitter, validate the account before adding if not already validated
+      if (sourceId === "twitter" && author) {
+        // If we don't have a validation result yet, validate now
+        if (authorValidation[sourceId]?.isValid !== true) {
+          isAddingAuthor.value = true;
+          try {
+            const isValid = await validateTwitterAccount(author);
+            // Only show error if validation explicitly returned false
+            // Don't show error if isValid is null (error_checking=true)
+            if (isValid === false) {
+              alert(
+                `Twitter account @${author} does not exist or is not accessible.`,
+              );
+              return;
+            }
+          } finally {
+            isAddingAuthor.value = false;
+          }
+        }
+      }
+
       if (
         author &&
         sourceFilters[sourceId] &&
         !sourceFilters[sourceId].authors.includes(author)
       ) {
+        // Track author addition
+        if (typeof posthog !== "undefined" && posthog.__loaded) {
+          posthog.capture("author_added", {
+            data_source: sourceId,
+            author: author,
+            validation_passed:
+              sourceId !== "twitter" ||
+              authorValidation[sourceId]?.isValid !== false,
+          });
+        }
+
         sourceFilters[sourceId].authors.push(author);
         newAuthor[sourceId] = "";
+        // Reset validation state
+        if (authorValidation[sourceId]) {
+          authorValidation[sourceId].isValid = null;
+          authorValidation[sourceId].isLoading = false;
+        }
         generateMockPreview(sourceId);
       }
     };
@@ -621,6 +833,83 @@ export default {
       showAdvanced[sourceId] = !showAdvanced[sourceId];
     };
 
+    const onAuthorInput = (sourceId) => {
+      const author = newAuthor[sourceId]?.trim();
+
+      // Initialize validation state if not exists
+      if (!authorValidation[sourceId]) {
+        authorValidation[sourceId] = {
+          isValid: null,
+          isLoading: false,
+        };
+      }
+
+      // Clear existing timeout
+      if (validationTimeouts[sourceId]) {
+        clearTimeout(validationTimeouts[sourceId]);
+      }
+
+      // Reset validation state immediately when user types
+      authorValidation[sourceId].isValid = null;
+      authorValidation[sourceId].isLoading = false;
+
+      if (!author || sourceId !== "twitter") {
+        return;
+      }
+
+      // Debounce validation for 5 seconds
+      validationTimeouts[sourceId] = setTimeout(async () => {
+        authorValidation[sourceId].isLoading = true;
+        try {
+          const isValid = await validateTwitterAccount(author);
+          authorValidation[sourceId].isValid = isValid;
+        } catch (error) {
+          authorValidation[sourceId].isValid = false;
+        } finally {
+          authorValidation[sourceId].isLoading = false;
+        }
+      }, 5000);
+    };
+
+    const canAddAuthor = (sourceId) => {
+      const author = newAuthor[sourceId]?.trim();
+      if (!author) return false;
+
+      // For Twitter, allow adding if we haven't validated yet, validation passed, or there was an error checking
+      if (sourceId === "twitter") {
+        const validationResult = authorValidation[sourceId]?.isValid;
+        // Allow if validation is null (error checking), true (valid), or undefined (not validated yet)
+        // Only block if validation is explicitly false
+        return validationResult !== false;
+      }
+
+      return true;
+    };
+
+    const validateTwitterAccount = async (handle) => {
+      if (!handle?.trim()) return false;
+
+      try {
+        const cleanHandle = handle.replace("@", "");
+        const response = await apiClient.checkTwitterAccount(cleanHandle);
+
+        // If there was an error checking the account, return null to avoid styling
+        if (response.error_checking === true) {
+          return null;
+        }
+
+        return response.exists;
+      } catch (error) {
+        console.error("Error validating Twitter account:", error);
+        return false;
+      }
+    };
+
+    const openTwitterProfile = (handle) => {
+      const cleanHandle = handle.replace("@", "");
+      window.open(`https://twitter.com/${cleanHandle}`, "_blank");
+    };
+
     // Watch for changes in list name and update RAG filter queries
     watch(listName, (newListName) => {
       const trimmedName = newListName.trim();
@@ -658,8 +947,30 @@ export default {
         }, 0),
       };
 
-      smartListsStore.createSmartList(newList);
-      dataSourcesStore.closeDashboard();
+      // Track list creation in PostHog
+      if (typeof posthog !== "undefined" && posthog.__loaded) {
+        posthog.capture("list_created", {
+          list_name: newList.name,
+          authors: addedSources.value.flatMap(
+            (source) => sourceFilters[source.id]?.authors || [],
+          ),
+          rag_query: newList.listSources
+            .map((ls) => ls.filters.ragQuery)
+            .filter((q) => q)
+            .join(", "),
+          data_sources: addedSources.value.map((source) => source.id),
+          source_count: addedSources.value.length,
+          total_authors: addedSources.value.reduce((sum, source) => {
+            return sum + (sourceFilters[source.id]?.authors?.length || 0);
+          }, 0),
+        });
+      }
+
+      smartListsStore.createSmartList(newList).then(() => {
+        // Clear current list to show welcome page
+        smartListsStore.currentListId = null;
+        dataSourcesStore.closeDashboard();
+      });
     };
 
     return {
@@ -682,6 +993,11 @@ export default {
       toggleAdvanced,
       canCreate,
       createList,
+      isAddingAuthor,
+      authorValidation,
+      onAuthorInput,
+      canAddAuthor,
+      openTwitterProfile,
     };
   },
 };

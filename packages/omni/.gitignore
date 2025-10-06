@@ -14,3 +14,6 @@ pnpm-debug.log*
 .DS_Store
 .vscode
 *.local
+examples/twitter/
+settings.local.json
+

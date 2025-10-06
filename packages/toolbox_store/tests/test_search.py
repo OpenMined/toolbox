@@ -14,7 +14,7 @@ def test_semantic_search(tb_store: ToolboxStore, sample_docs: list[TBDocument]) 
 
     # Test semantic search with filters
     sample_docs[0].metadata["category"] = "category1"
-    tb_store.insert_docs([sample_docs[0]], create_embeddings=False)
+    tb_store.insert_docs([sample_docs[0]], create_embeddings=False, overwrite=True)
 
     results_with_filter = (
         tb_store.search_chunks()

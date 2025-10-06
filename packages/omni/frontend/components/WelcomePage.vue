@@ -266,7 +266,7 @@
 </template>
 
 <script>
-import { computed, ref, onMounted } from "vue";
+import { computed, ref, onMounted, watch } from "vue";
 import { useDataSourcesStore } from "../stores/dataSourcesStore";
 import { useSmartListsStore } from "../stores/smartListsStore";
 import { useNewChatStore } from "../stores/newChatStore";
@@ -322,8 +322,6 @@ export default {
         ...followedCommunityLists,
         ...ownedUnfollowedLists,
       ];
-
-      // return [...ownedLists, ...followedCommunityLists];
     });
 
     // Get community lists (unfollowed lists not created by current user)
@@ -470,13 +468,18 @@ export default {
       await chatStore.updateConversationsForList(listId);
     };
 
-    onMounted(async () => {
-      // Fetch all lists, owned lists, and followed list IDs when component mounts
+    const refreshData = async () => {
       await Promise.all([
         fetchAllLists(),
         fetchMyOwnedLists(),
         fetchFollowedListIds(),
       ]);
+    };
+
+    onMounted(async () => {
+      // Fetch all lists, owned lists, and followed list IDs when component mounts
+      // This will run every time the component is shown (including after creating a list)
+      await refreshData();
     });
 
     return {

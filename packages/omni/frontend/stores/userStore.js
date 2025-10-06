@@ -1,5 +1,6 @@
 import { defineStore } from "pinia";
 import { apiClient } from "../api/client.js";
+import posthog from "posthog-js";
 
 export const useUserStore = defineStore("user", {
   state: () => ({
@@ -30,6 +31,14 @@ export const useUserStore = defineStore("user", {
           if (user) {
             this.currentUser = user;
             this.isAuthenticated = true;
+
+            // Identify user in PostHog
+            if (typeof posthog !== "undefined" && posthog.__loaded) {
+              posthog.identify(user.id || storedEmail, {
+                email: storedEmail,
+                name: user.name || null,
+              });
+            }
           } else {
             // Clear invalid stored email
             localStorage.removeItem("userEmail");
@@ -63,6 +72,14 @@ export const useUserStore = defineStore("user", {
 
         // Store in localStorage
         localStorage.setItem("userEmail", email);
+
+        // Identify user in PostHog
+        if (typeof posthog !== "undefined" && posthog.__loaded) {
+          posthog.identify(user.id || email, {
+            email: email,
+            name: user.name || null,
+          });
+        }
 
         // Close login modal
         this.showLoginModal = false;
@@ -106,6 +123,14 @@ export const useUserStore = defineStore("user", {
 
         // Store in localStorage
         localStorage.setItem("userEmail", email);
+
+        // Identify user in PostHog
+        if (typeof posthog !== "undefined" && posthog.__loaded) {
+          posthog.identify(user.id || email, {
+            email: email,
+            name: user.name || null,
+          });
+        }
 
         // Close login modal
         this.showLoginModal = false;
