@@ -89,6 +89,11 @@ try {
   delete navigator.webdriver;
 } catch (e) {}
 
+// then redefine it
+Object.defineProperty(navigator, 'webdriver', {
+    get: () => false
+});
+
 // 3. Plugins - use native-looking array
 try {
   const createPlugin = (name, desc, filename) => {
