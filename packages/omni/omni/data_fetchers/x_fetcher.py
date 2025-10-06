@@ -11,6 +11,11 @@ from typing import Any, Callable
 import browser_cookie3
 from playwright.async_api import Browser, BrowserContext, Page, async_playwright
 
+from omni.data_fetchers.browser_stealth import (
+    BROWSER_ARGS,
+    USER_AGENT,
+    apply_stealth_mode,
+)
 from omni.data_fetchers.job_queue import DataFetcherJobQueue
 from omni.data_fetchers.x_utils import parse_tweets_json, parse_user_tweets_json
 from omni.db import get_tweet_store
@@ -71,6 +76,32 @@ def load_cookies_from_file() -> list[dict] | None:
     return
 
 
+async def simulate_user_activity(page: Page) -> None:
+    """Simulate user activity to bypass hasBeenActive detection"""
+    try:
+        await page.mouse.move(random.randint(100, 500), random.randint(100, 500))
+
+        # Random keypress
+        safe_keys = [
+            "Tab",
+            "Shift",
+            "Escape",
+            "ArrowDown",
+            "ArrowUp",
+            "ArrowLeft",
+            "ArrowRight",
+            "Home",
+        ]
+        await page.keyboard.press(random.choice(safe_keys))
+
+        # Small scroll
+        await page.mouse.wheel(0, random.randint(5, 25))
+
+    except Exception as e:
+        print(f"simulate_user_activity error: {e}")
+        pass
+
+
 def get_cookies_for_playwright(
     use_cached_x_cookies: bool = settings.use_cached_x_cookies,
 ) -> list[dict]:
@@ -93,8 +124,19 @@ async def setup_browser(
     """Setup browser with authentication cookies"""
 
     p = await async_playwright().start()
-    browser = await p.chromium.launch(headless=headless)
-    context = await browser.new_context()
+    browser = await p.chromium.launch(
+        headless=headless,
+        args=BROWSER_ARGS,
+    )
+
+    # Create context
+    context = await browser.new_context(
+        viewport={"width": 1920, "height": 1080},
+        user_agent=USER_AGENT,
+    )
+
+    # Apply stealth measures
+    await apply_stealth_mode(context)
 
     # Set cookies before navigating
     await context.add_cookies(x_cookies)
@@ -106,6 +148,7 @@ async def setup_browser(
         print(cookie)
 
     page = await context.new_page()
+    await simulate_user_activity(page)
 
     return browser, context, page
 
@@ -178,6 +221,7 @@ async def fetch_timeline(
 
     # Navigate to X.com
     await page.goto("https://x.com")
+    await simulate_user_activity(page)
     await asyncio.sleep(3)
 
     # Click "Following" to switch to chronological timeline
@@ -275,6 +319,7 @@ async def follow_user(
     # Navigate to user's profile
     profile_url = f"https://x.com/{handle.lstrip('@')}"
     await page.goto(profile_url)
+    await simulate_user_activity(page)
     await asyncio.sleep(3)
 
     # Find follow button for this specific user using partial aria-label (for localization)
