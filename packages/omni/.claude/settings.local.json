@@ -1,0 +1,32 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(/Users/koen/workspace/toolbox/data/**)",
+      "Read(/Users/koen/workspace/toolbox/data/**)",
+      "Read(/Users/koen/workspace/toolbox/data/**)",
+      "Read(/Users/koen/workspace/toolbox/packages/discord_mcp/discord_mcp/**)",
+      "Bash(curl:*)",
+      "Bash(python:*)",
+      "Read(/Users/koen/workspace/toolbox/data/**)",
+      "Bash(sqlite3:*)",
+      "Read(/Users/koen/workspace/toolbox/data/**)",
+      "Read(/Users/koen/workspace/toolbox/data/**)",
+      "Read(/Users/koen/workspace/toolbox/data/**)",
+      "Read(/Users/koen/workspace/toolbox/packages/toolbox_store/tests/**)",
+      "Read(/Users/koen/workspace/toolbox/**)",
+      "Read(/Users/koen/workspace/toolbox/packages/toolbox_store/src/toolbox_store/**)",
+      "Read(/Users/koen/workspace/toolbox/packages/toolbox_store/src/toolbox_store/**)",
+      "Read(/Users/koen/workspace/toolbox/packages/toolbox_store/src/toolbox_store/**)",
+      "Read(/Users/koen/workspace/toolbox/packages/toolbox_store/src/toolbox_store/**)",
+      "Read(/Users/koen/workspace/toolbox/data/**)",
+      "Read(/Users/koen/workspace/toolbox/**)",
+      "Read(/Users/koen/workspace/toolbox/data/**)",
+      "Read(/Users/koen/workspace/toolbox/packages/toolbox_store/tests/**)",
+      "Read(/Users/koen/workspace/toolbox/packages/toolbox_store/tests/**)",
+      "Read(/Users/koen/workspace/toolbox/packages/toolbox_store/tests/**)",
+      "Read(/Users/koen/workspace/toolbox/data/**)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

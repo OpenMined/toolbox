@@ -1,0 +1,363 @@
+<template>
+  <div class="p-4 hover:bg-gray-50 transition-colors">
+    <!-- Repost indicator -->
+    <div
+      v-if="item.tweet_type === 'repost'"
+      class="flex items-center space-x-2 mb-2 text-gray-500 text-sm"
+    >
+      <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+        <path
+          d="M17.65 6.35A7.958 7.958 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"
+        />
+      </svg>
+      <span>{{ item.author.name }} reposted</span>
+    </div>
+
+    <div class="flex space-x-3">
+      <!-- Author profile image - show original author for reposts -->
+      <img
+        :src="getDisplayAuthorAvatar()"
+        :alt="`${getDisplayAuthorName()} avatar`"
+        class="w-10 h-10 rounded-full flex-shrink-0"
+        @error="onImageError"
+      />
+
+      <!-- Tweet content -->
+      <div class="flex-1 min-w-0">
+        <!-- Author info - show original author for reposts -->
+        <div class="flex items-center space-x-2 mb-2">
+          <a
+            @click="openAuthorProfile"
+            class="font-medium text-gray-900 hover:text-blue-600 cursor-pointer transition-colors"
+            >{{ getDisplayAuthorName() }}</a
+          >
+          <a
+            @click="openAuthorProfile"
+            class="text-gray-500 hover:text-blue-600 cursor-pointer transition-colors"
+            >{{ getDisplayAuthorHandle() }}</a
+          >
+          <span class="text-gray-500">·</span>
+          <span class="text-gray-500 text-sm">{{ item.timestamp }}</span>
+          <span v-if="item.similarity_score" class="text-gray-500">·</span>
+          <span
+            v-if="item.similarity_score"
+            class="text-xs text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full"
+          >
+            {{ Math.round(item.similarity_score * 100) }}% match
+          </span>
+        </div>
+
+        <!-- Tweet text -->
+        <div class="text-gray-900 mb-3 leading-relaxed">
+          <p v-html="displayContentWithoutMedia"></p>
+          <button
+            v-if="isTruncated && !showFullContent"
+            @click="showFullContent = true"
+            class="text-blue-500 hover:text-blue-600 text-sm mt-1 font-medium"
+          >
+            Show more
+          </button>
+        </div>
+
+        <!-- Tweet media (images, videos, GIFs) -->
+        <TweetMedia :media-data="item.media" :tweet-url="getTweetUrl()" />
+
+        <!-- Quoted tweet display -->
+        <div
+          v-if="
+            item.tweet_type === 'quote' &&
+            item.interaction_context?.quoted_tweet
+          "
+          class="border border-gray-200 rounded-lg p-3 mb-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition-colors"
+          @click="openQuotedTweet"
+        >
+          <div class="flex items-center space-x-2 mb-2">
+            <img
+              :src="getQuotedAuthorAvatar()"
+              :alt="`${
+                item.interaction_context.quoted_tweet.author?.name || 'Unknown'
+              } avatar`"
+              class="w-6 h-6 rounded-full"
+            />
+            <a
+              @click="openQuotedAuthorProfile"
+              class="font-medium text-gray-900 text-sm hover:text-blue-600 cursor-pointer transition-colors"
+            >
+              {{
+                item.interaction_context.quoted_tweet.author?.name || "Unknown"
+              }}
+            </a>
+            <a
+              @click="openQuotedAuthorProfile"
+              class="text-gray-500 text-sm hover:text-blue-600 cursor-pointer transition-colors"
+            >
+              @{{
+                item.interaction_context.quoted_tweet.author?.screen_name ||
+                "unknown"
+              }}
+            </a>
+          </div>
+          <p
+            class="text-gray-900 text-sm"
+            v-html="item.interaction_context.quoted_tweet.content"
+          ></p>
+        </div>
+
+        <!-- Engagement metrics -->
+        <div class="flex items-center space-x-6 text-sm text-gray-500">
+          <!-- Twitter logo -->
+          <div class="flex items-center">
+            <a
+              :href="getTweetUrl()"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="hover:text-blue-600 transition-colors"
+            >
+              <svg
+                class="w-4 h-4 text-blue-500 hover:text-blue-600 cursor-pointer"
+                fill="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"
+                />
+              </svg>
+            </a>
+          </div>
+
+          <div class="flex items-center space-x-1">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
+              />
+            </svg>
+            <span>{{ item.likes }}</span>
+          </div>
+
+          <div class="flex items-center space-x-1">
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+              />
+            </svg>
+            <span>{{ item.reactions }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { ref, computed } from "vue";
+import TweetMedia from "./TweetMedia.vue";
+
+export default {
+  name: "TweetItem",
+  components: {
+    TweetMedia,
+  },
+  props: {
+    item: {
+      type: Object,
+      required: true,
+    },
+  },
+  setup(props) {
+    const showFullContent = ref(false);
+    const TRUNCATE_LENGTH = 280;
+
+    const isTruncated = computed(() => {
+      return props.item.content && props.item.content.length > TRUNCATE_LENGTH;
+    });
+
+    const displayContent = computed(() => {
+      if (!props.item.content) return "";
+
+      let content = props.item.content;
+
+      if (isTruncated.value && !showFullContent.value) {
+        content = content.substring(0, TRUNCATE_LENGTH) + "...";
+      }
+
+      // Convert newlines to HTML breaks
+      return content.replace(/\n/g, "<br>");
+    });
+
+    const displayContentWithoutMedia = computed(() => {
+      if (!props.item.content) return "";
+
+      let content = props.item.content;
+
+      // Remove t.co media links from the displayed text
+      const tcoPattern = /https:\/\/t\.co\/\w+/g;
+      content = content.replace(tcoPattern, "").trim();
+
+      if (isTruncated.value && !showFullContent.value) {
+        content = content.substring(0, TRUNCATE_LENGTH) + "...";
+      }
+
+      // Convert newlines to HTML breaks
+      return content.replace(/\n/g, "<br>");
+    });
+
+    const getDisplayAuthorName = () => {
+      // For reposts, show original author name
+      if (
+        props.item.tweet_type === "repost" &&
+        props.item.interaction_context?.original_author
+      ) {
+        return props.item.interaction_context.original_author.name || "Unknown";
+      }
+      return props.item.author.name;
+    };
+
+    const getDisplayAuthorHandle = () => {
+      // For reposts, show original author handle
+      if (
+        props.item.tweet_type === "repost" &&
+        props.item.interaction_context?.original_author
+      ) {
+        return `@${
+          props.item.interaction_context.original_author.screen_name ||
+          "unknown"
+        }`;
+      }
+      return props.item.author.handle;
+    };
+
+    const getAuthorAvatarUrl = (author) => {
+      // Use the real avatar URL from data if available, otherwise use pravatar fallback with unique seed
+      if (author.avatarUrl) {
+        return author.avatarUrl;
+      }
+      // Use the handle as a seed to get consistent but unique avatars
+      const seed = author.handle.replace("@", "");
+      return `https://i.pravatar.cc/128?u=${seed}`;
+    };
+
+    const getDisplayAuthorAvatar = () => {
+      // For reposts, show original author avatar
+      if (
+        props.item.tweet_type === "repost" &&
+        props.item.interaction_context?.original_author
+      ) {
+        return (
+          props.item.interaction_context.original_author.avatar_url ||
+          `https://i.pravatar.cc/128?u=${props.item.interaction_context.original_author.screen_name}`
+        );
+      }
+      return getAuthorAvatarUrl(props.item.author);
+    };
+
+    const getQuotedAuthorAvatar = () => {
+      const quotedAuthor = props.item.interaction_context?.quoted_tweet?.author;
+      if (quotedAuthor?.avatar_url) {
+        return quotedAuthor.avatar_url;
+      }
+      const seed = quotedAuthor?.screen_name || "unknown";
+      return `https://i.pravatar.cc/128?u=${seed}`;
+    };
+
+    return {
+      showFullContent,
+      isTruncated,
+      displayContent,
+      displayContentWithoutMedia,
+      getDisplayAuthorName,
+      getDisplayAuthorHandle,
+      getDisplayAuthorAvatar,
+      getQuotedAuthorAvatar,
+      getAuthorAvatarUrl,
+    };
+  },
+  methods: {
+    onImageError(event) {
+      // Fallback to pravatar with a seed based on the author name
+      const seed = this.item.author.handle.replace("@", "");
+      event.target.src = `https://i.pravatar.cc/128?u=${seed}`;
+    },
+    getTweetUrl() {
+      // Generate Twitter URL based on handle and tweet ID
+      const handle = this.item.author.handle.replace("@", "");
+
+      // Check if this is a real tweet ID (long numeric string) or mock ID
+      const tweetId = this.item.id;
+
+      // If it's a mock ID (starts with "mock_" or is a small number), return a placeholder
+      if (
+        String(tweetId).startsWith("mock_") ||
+        (typeof tweetId === "number" && tweetId < 1000)
+      ) {
+        // For mock data, return a generic Twitter profile URL instead
+        return `https://twitter.com/${handle}`;
+      }
+
+      // For real tweet IDs, return the actual tweet URL
+      return `https://twitter.com/${handle}/status/${tweetId}`;
+    },
+    openAuthorProfile() {
+      // Get the display author (original author for reposts)
+      let handle;
+      if (
+        this.item.tweet_type === "repost" &&
+        this.item.interaction_context?.original_author
+      ) {
+        handle = this.item.interaction_context.original_author.screen_name;
+      } else {
+        handle = this.item.author.handle.replace("@", "");
+      }
+
+      window.open(
+        `https://twitter.com/${handle}`,
+        "_blank",
+        "noopener,noreferrer",
+      );
+    },
+    openQuotedTweet(event) {
+      // Prevent the quoted tweet container click from bubbling up
+      event.stopPropagation();
+
+      const quotedTweet = this.item.interaction_context?.quoted_tweet;
+      if (quotedTweet && quotedTweet.id && quotedTweet.author?.screen_name) {
+        const handle = quotedTweet.author.screen_name;
+        const tweetId = quotedTweet.id;
+        window.open(
+          `https://twitter.com/${handle}/status/${tweetId}`,
+          "_blank",
+          "noopener,noreferrer",
+        );
+      }
+    },
+    openQuotedAuthorProfile(event) {
+      // Prevent bubbling to the quoted tweet container
+      event.stopPropagation();
+
+      const quotedAuthor = this.item.interaction_context?.quoted_tweet?.author;
+      if (quotedAuthor?.screen_name) {
+        window.open(
+          `https://twitter.com/${quotedAuthor.screen_name}`,
+          "_blank",
+          "noopener,noreferrer",
+        );
+      }
+    },
+  },
+};
+</script>

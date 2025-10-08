@@ -52,10 +52,18 @@ class ToolboxStore(Generic[T]):
         self.db.create_schema()
         self.embedder = get_embedder(self.config)
 
-    def insert_docs(self, docs: list[T], create_embeddings: bool = True) -> None:
-        self.db.insert_documents(docs)
+    def insert_docs(
+        self,
+        docs: list[T],
+        create_embeddings: bool = True,
+        overwrite: bool = False,
+    ) -> None:
+        insert_info = self.db.insert_documents(docs, overwrite=overwrite)
+
         if create_embeddings:
-            chunks = self.embed_documents(docs)
+            ids_to_embed = insert_info["inserted"] + insert_info["updated"]
+            docs_to_embed = [doc for doc in docs if doc.id in ids_to_embed]
+            chunks = self.embed_documents(docs_to_embed)
             self.insert_chunks(chunks)
 
     def insert_chunks(self, chunks: list[TBDocumentChunk]) -> None:
@@ -73,11 +81,11 @@ class ToolboxStore(Generic[T]):
     def search_documents(self) -> DocumentQueryBuilder[T]:
         return DocumentQueryBuilder[T](self, self.document_class)
 
-    def stop(self) -> None:
+    def close(self) -> None:
         self.db.close()
 
     def __enter__(self) -> Self:
         return self
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:
-        self.stop()
+        self.close()

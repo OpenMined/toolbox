@@ -17,6 +17,7 @@ class DocumentQueryBuilder(Generic[T]):
         self._filters: dict[str, Any] | None = None
         self._limit: int | None = None
         self._offset: int = 0
+        self._score_threshold: float | None = None
 
         self._order_by: str = "id"
         self._sort_ascending: bool = True
@@ -70,8 +71,16 @@ class ChunkQueryBuilder(Generic[T]):
         self._semantic_weight: float = 1.0
         self._keyword_weight: float = 1.0
 
-    def semantic(self, query: str | list[float]) -> Self:
+        self._rerank_query: str | None = None
+        self._rerank_model_name: str | None = None
+        self._rerank_model_type: str | None = None
+        self._rerank_model_kwargs: dict[str, Any] | None = None
+
+    def semantic(
+        self, query: str | list[float], score_threshold: float | None = None
+    ) -> Self:
         self._semantic_query = query
+        self._score_threshold = score_threshold
         return self
 
     def keyword(self, query: str) -> Self:
@@ -120,6 +129,27 @@ class ChunkQueryBuilder(Generic[T]):
             raise ValueError(f"Unsupported hybrid method: {method}")
         return self
 
+    def rerank(
+        self,
+        rerank_query: str | None = None,
+        model_name: str = "answerdotai/answerai-colbert-small-v1",
+        model_type: str = "colbert",
+        **model_kwargs: Any,
+    ) -> Self:
+        """Rerank the final chunks using a specified reranker model."""
+        if rerank_query is None:
+            if not isinstance(self._semantic_query, str):
+                raise ValueError(
+                    "Rerank query must be provided if semantic query is not a string."
+                )
+            rerank_query = self._semantic_query
+
+        self._rerank_query = rerank_query
+        self._rerank_model_name = model_name
+        self._rerank_model_type = model_type
+        self._rerank_model_kwargs = model_kwargs
+        return self
+
     def _execute_semantic_search(
         self,
         query: str | list[float],
@@ -141,6 +171,8 @@ class ChunkQueryBuilder(Generic[T]):
             query_args["offset"] = offset
         if self._filters is not None:
             query_args["filters"] = self._filters
+        if self._score_threshold is not None:
+            query_args["score_threshold"] = self._score_threshold
 
         return self.store.db.semantic_search(**query_args)
 
@@ -188,35 +220,48 @@ class ChunkQueryBuilder(Generic[T]):
 
             # Apply final limit and offset
             end = offset + limit
-            return combined[offset:end]
+            chunks = combined[offset:end]
 
         # Single search mode
-        if self._semantic_query:
-            return self._execute_semantic_search(
+        elif self._semantic_query:
+            chunks = self._execute_semantic_search(
                 self._semantic_query, limit=self._chunk_limit, offset=self._chunk_offset
             )
 
-        if self._keyword_query:
-            return self._execute_keyword_search(
+        elif self._keyword_query:
+            chunks = self._execute_keyword_search(
                 self._keyword_query, limit=self._chunk_limit, offset=self._chunk_offset
             )
 
-        # Should never reach here given the initial check
-        return []
+        else:
+            chunks = []
+
+        if self._rerank_query is not None and len(chunks) > 0:
+            from toolbox_store.reranking import rerank_chunks
+
+            chunks = rerank_chunks(
+                chunks,
+                query=self._rerank_query,
+                model_name=self._rerank_model_name,
+                model_type=self._rerank_model_type,
+                **(self._rerank_model_kwargs or {}),
+            )
+
+        return chunks
 
     def get_documents(self) -> list[T]:
         chunks = self.get()
         chunks_by_doc_id = {}
-        min_distance_by_doc_id = {}
+        max_score_by_doc_id = {}
 
-        # Group chunks by document and track minimum distance
+        # Group chunks by document and track maximum score
         for chunk in chunks:
             if chunk.document_id not in chunks_by_doc_id:
                 chunks_by_doc_id[chunk.document_id] = []
-                min_distance_by_doc_id[chunk.document_id] = chunk.distance
+                max_score_by_doc_id[chunk.document_id] = chunk.score
             chunks_by_doc_id[chunk.document_id].append(chunk)
-            min_distance_by_doc_id[chunk.document_id] = min(
-                min_distance_by_doc_id[chunk.document_id], chunk.distance
+            max_score_by_doc_id[chunk.document_id] = max(
+                max_score_by_doc_id[chunk.document_id], chunk.score
             )
 
         # Get documents from database
@@ -227,8 +272,10 @@ class ChunkQueryBuilder(Generic[T]):
         for doc in documents:
             doc.chunks = chunks_by_doc_id.get(doc.id, [])
 
-        # Sort documents by minimum chunk distance
-        documents.sort(key=lambda doc: min_distance_by_doc_id.get(doc.id, float("inf")))
+        # Sort documents by maximum chunk score (descending)
+        documents.sort(
+            key=lambda doc: max_score_by_doc_id.get(doc.id, float("-inf")), reverse=True
+        )
 
         return documents
 
@@ -263,7 +310,7 @@ def combine_rrf(
         )
 
     # Calculate RRF scores
-    rrf_scores = {}
+    rrf_scores: dict[tuple[str, int], float] = {}
 
     # Add weighted scores from each result set
     for weight, results in zip(weights, result_sets):
@@ -272,7 +319,7 @@ def combine_rrf(
             rrf_scores[key] = rrf_scores.get(key, 0) + weight * (1 / (k + rank))
 
     # Build a map of keys to chunks (first occurrence wins)
-    chunk_map = {}
+    chunk_map: dict[tuple[str, int], RetrievedChunk] = {}
     for results in result_sets:
         for chunk in results:
             key = (chunk.document_id, chunk.chunk_idx)
@@ -285,8 +332,7 @@ def combine_rrf(
     results = []
     for key, score in sorted_keys:
         chunk = chunk_map[key]
-        # Store RRF score as negative distance (so higher score = lower distance)
-        chunk.distance = -score
+        chunk.score = score
         results.append(chunk)
 
     return results
