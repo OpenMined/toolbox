@@ -510,21 +510,43 @@
                         </option>
                       </select>
                     </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-2">
                     <div>
                       <label
                         class="block text-xs font-medium text-gray-600 mb-1"
-                        >Threshold</label
+                        >Cosine Threshold</label
                       >
                       <input
                         v-model.number="
-                          sourceFilters[currentSource.id].ragFilter.threshold
+                          sourceFilters[currentSource.id].ragFilter
+                            .cosineThreshold
                         "
                         type="number"
                         step="0.01"
                         min="0"
                         max="1"
                         class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
-                        placeholder="0.7"
+                        placeholder="0.4"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        class="block text-xs font-medium text-gray-600 mb-1"
+                        >Reranking Threshold</label
+                      >
+                      <input
+                        v-model.number="
+                          sourceFilters[currentSource.id].ragFilter
+                            .rerankingThreshold
+                        "
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        max="1"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                        placeholder="0.82"
                       />
                     </div>
                   </div>
@@ -635,7 +657,8 @@ export default {
           ragFilter: {
             query: listName.value.trim(),
             model: "ollama/embeddinggemma:latest",
-            threshold: 0.4,
+            cosineThreshold: 0.4,
+            rerankingThreshold: 0.82,
           },
         };
       }
@@ -938,7 +961,10 @@ export default {
               to: globalFilters.endDate,
             },
             ragQuery: sourceFilters[source.id]?.ragFilter?.query || "",
-            threshold: sourceFilters[source.id]?.ragFilter?.threshold || 0.4,
+            cosine_threshold:
+              sourceFilters[source.id]?.ragFilter?.cosineThreshold || 0.4,
+            reranking_threshold:
+              sourceFilters[source.id]?.ragFilter?.rerankingThreshold || 0.82,
             authors: sourceFilters[source.id]?.authors || [],
           },
         })),

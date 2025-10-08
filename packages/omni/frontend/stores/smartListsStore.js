@@ -80,7 +80,7 @@ export const useSmartListsStore = defineStore("smartLists", {
       }
     },
 
-    async fetchListItems(listId) {
+    async fetchListItems(listId, options = {}) {
       if (!listId) return;
 
       // Set loading state for this specific list
@@ -88,7 +88,17 @@ export const useSmartListsStore = defineStore("smartLists", {
       this.listLoadingStartTimes[listId] = Date.now();
 
       try {
-        const items = await apiClient.getSmartListItems(listId);
+        // Get reranking threshold from the list if not provided in options
+        if (!options.rerankingThreshold) {
+          const list = this.getListById(listId);
+          if (list?.listSources && list.listSources.length > 0) {
+            const filters = list.listSources[0].filters;
+            options.rerankingThreshold =
+              options.rerankingThreshold ?? filters?.reranking_threshold;
+          }
+        }
+
+        const items = await apiClient.getSmartListItems(listId, options);
         this.computedItemsCache[listId] = items;
       } catch (error) {
         console.error(`Failed to fetch items for list ${listId}:`, error);

@@ -59,7 +59,8 @@ class ListFilterDB(BaseModel):
     date_range_from: Optional[str] = None
     date_range_to: Optional[str] = None
     rag_query: Optional[str] = None
-    threshold: float = 0.6
+    cosine_threshold: float = 0.4
+    reranking_threshold: float = 0.82
 
     @classmethod
     def from_sql_row(cls, row):
@@ -70,7 +71,12 @@ class ListFilterDB(BaseModel):
             date_range_from=row["date_range_from"],
             date_range_to=row["date_range_to"],
             rag_query=row["rag_query"],
-            threshold=row["threshold"],
+            cosine_threshold=row["cosine_threshold"]
+            if "cosine_threshold" in row.keys()
+            else 0.4,
+            reranking_threshold=row["reranking_threshold"]
+            if "reranking_threshold" in row.keys()
+            else 0.82,
         )
 
 
@@ -91,7 +97,8 @@ class DatasourceAuthorDB(BaseModel):
 class SmartListFilter(BaseModel):
     dateRange: Dict[str, str]
     ragQuery: str
-    threshold: float
+    cosine_threshold: float = 0.4
+    reranking_threshold: float = 0.82
     authors: List[str] = []
 
 
@@ -136,7 +143,12 @@ class SmartListAPIResult(BaseModel):
                             "to": row["date_range_to"],
                         },
                         "ragQuery": row["rag_query"] or "",
-                        "threshold": row["threshold"] or 0.6,
+                        "cosine_threshold": row["cosine_threshold"]
+                        if "cosine_threshold" in row.keys()
+                        else 0.4,
+                        "reranking_threshold": row["reranking_threshold"]
+                        if "reranking_threshold" in row.keys()
+                        else 0.82,
                         "authors": [],
                     },
                 }
@@ -248,3 +260,9 @@ class TweetCountRequest(BaseModel):
 
 class TweetCountResponse(BaseModel):
     tweet_counts: Dict[str, int]
+
+
+class FollowUserRequest(BaseModel):
+    handles: List[str]
+    scrolls_per_user: int = 0
+    fetch_timeline_duration: int = 0

@@ -15,7 +15,8 @@ def search_tweets(
     author_screen_names: Optional[List[str]] = None,
     start_date: Optional[datetime] = None,
     end_date: Optional[datetime] = None,
-    similarity_threshold: float = 0.4,
+    cosine_threshold: float = 0.4,
+    reranking_threshold: float = 0.82,
     limit: int = 50,
 ) -> List[TweetItem]:
     """Unified tweet search function that returns TweetItem objects"""
@@ -49,7 +50,8 @@ def search_tweets(
         print(author_screen_names)
         print(start_date)
         print(end_date)
-        print(similarity_threshold)
+        print(f"cosine_threshold: {cosine_threshold}")
+        print(f"reranking_threshold: {reranking_threshold}")
         print(limit)
         query = store.search_documents()
         if author_screen_names:
@@ -65,16 +67,17 @@ def search_tweets(
             res_documents = (
                 store.search_chunks()
                 .where({"id__in": [doc.id for doc in documents]})
-                .semantic(query_text)
+                .semantic(query_text, score_threshold=cosine_threshold)
                 .chunk_limit(limit * 10)
-                .rerank()
+                .rerank(score_threshold=reranking_threshold)
                 .get_documents()
             )
+            print("RES DOCUMENTS", len(res_documents))
             documents = []
             similarities = []
             for doc in res_documents:
                 max_doc_score = max(chunk.score for chunk in doc.chunks)
-                if max_doc_score >= similarity_threshold:
+                if max_doc_score >= reranking_threshold:
                     documents.append(doc)
                     similarities.append(max_doc_score)
 

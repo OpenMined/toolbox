@@ -313,6 +313,7 @@ def is_usertweet_url(url: str) -> bool:
 async def follow_user(
     page: Page,
     handle: str,
+    scrolls: int = 0,
 ):
     """Follow a specific user by their handle"""
 
@@ -339,16 +340,23 @@ async def follow_user(
         print(f"Already following {handle}")
     else:
         print(f"Could not find follow button for {handle}, user may not exist.")
+    print("Scrolls: ", scrolls)
+    for _ in range(scrolls):
+        print("Scrolling...")
+        await scroll_vertical_mousewheel(page, 10)
 
 
 async def follow_users(
-    page: Page, handles: list[str], delay_range: tuple[float, float] = (2, 5)
+    page: Page,
+    handles: list[str],
+    delay_range: tuple[float, float] = (2, 5),
+    scrolls_per_user: int = 0,
 ):
     """Follow multiple users with random delays between each"""
 
     for i, handle in enumerate(handles):
         print(f"\n[{i + 1}/{len(handles)}] Processing {handle}")
-        await follow_user(page, handle)
+        await follow_user(page, handle, scrolls_per_user)
 
         # Add random delay between follows (except after the last one)
         if i < len(handles) - 1:
@@ -364,6 +372,7 @@ async def run_x_fetcher(
     handles_to_follow: list[str] = None,
     headless: bool = False,
     timeline_save_fn: Callable[[Any], None] = save_home_timeline,
+    scrolls_per_user: int = 0,
 ):
     """Run the X data fetcher.
 
@@ -390,7 +399,9 @@ async def run_x_fetcher(
 
     try:
         if handles_to_follow:
-            await follow_users(page, handles_to_follow)
+            await follow_users(
+                page, handles_to_follow, scrolls_per_user=scrolls_per_user
+            )
         if fetch_timeline_duration:
             if handles_to_follow:
                 print("Waiting before starting timeline fetching...")
@@ -466,13 +477,17 @@ class XDataFetcher(DataFetcherJobQueue):
         return super().start()
 
     def add_follow_users_job(
-        self, handles: list[str], fetch_timeline_duration: int = 0
+        self,
+        handles: list[str],
+        fetch_timeline_duration: int = 0,
+        scrolls_per_user: int = 0,
     ):
         self.add_job(
             func=self._follow_users_job,
             kwargs={
                 "handles": handles,
                 "fetch_timeline_duration": fetch_timeline_duration,
+                "scrolls_per_user": scrolls_per_user,
             },
         )
 
@@ -482,7 +497,6 @@ class XDataFetcher(DataFetcherJobQueue):
             func=self._fetch_timeline_job,
             kwargs={"fetch_timeline_duration": fetch_timeline_duration},
             allow_duplicates=False,
-            timeline_save_fn=self.timeline_save_fn,
         )
 
     def _fetch_timeline_job(self, fetch_timeline_duration: int = 30):
@@ -495,13 +509,19 @@ class XDataFetcher(DataFetcherJobQueue):
             )
         )
 
-    def _follow_users_job(self, handles: list[str], fetch_timeline_duration: int = 0):
+    def _follow_users_job(
+        self,
+        handles: list[str],
+        fetch_timeline_duration: int = 0,
+        scrolls_per_user: int = 0,
+    ):
         asyncio.run(
             run_x_fetcher(
                 fetch_timeline_duration=fetch_timeline_duration,
                 handles_to_follow=handles,
                 headless=self.headless,
                 timeline_save_fn=self.timeline_save_fn,
+                scrolls_per_user=scrolls_per_user,
             )
         )
 

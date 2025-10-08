@@ -88,7 +88,8 @@ def create_tables(conn):
         date_range_from TEXT,
         date_range_to TEXT,
         rag_query TEXT,
-        threshold REAL DEFAULT 0.6,
+        cosine_threshold REAL DEFAULT 0.4,
+        reranking_threshold REAL DEFAULT 0.82,
         FOREIGN KEY (list_source_id) REFERENCES list_sources (id) ON DELETE CASCADE
     )
     """)
@@ -455,17 +456,25 @@ def insert_list_filters(
     date_range_from: str = None,
     date_range_to: str = None,
     rag_query: str = None,
-    threshold: float = 0.6,
+    cosine_threshold: float = 0.4,
+    reranking_threshold: float = 0.82,
 ):
     """Insert filters for a list source"""
     cursor = conn.cursor()
 
     cursor.execute(
         """
-        INSERT INTO list_filters (list_source_id, date_range_from, date_range_to, rag_query, threshold)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO list_filters (list_source_id, date_range_from, date_range_to, rag_query, cosine_threshold, reranking_threshold)
+        VALUES (?, ?, ?, ?, ?, ?)
     """,
-        (list_source_id, date_range_from, date_range_to, rag_query, threshold),
+        (
+            list_source_id,
+            date_range_from,
+            date_range_to,
+            rag_query,
+            cosine_threshold,
+            reranking_threshold,
+        ),
     )
 
     conn.commit()
@@ -502,7 +511,7 @@ def _get_smart_lists_api_result(
         SELECT
             sl.id, sl.name, sl.item_count, sl.created_at, sl.user_email,
             ls.id as source_id, ls.data_source_id,
-            lf.date_range_from, lf.date_range_to, lf.rag_query, lf.threshold,
+            lf.date_range_from, lf.date_range_to, lf.rag_query, lf.cosine_threshold, lf.reranking_threshold,
             da.author
         FROM smart_lists sl
         LEFT JOIN list_sources ls ON sl.id = ls.list_id
@@ -613,7 +622,8 @@ def create_smart_list_from_request(
             filters.dateRange.get("from"),
             filters.dateRange.get("to"),
             filters.ragQuery,
-            filters.threshold,
+            filters.cosine_threshold,
+            filters.reranking_threshold,
         )
 
         # Insert authors
@@ -660,7 +670,8 @@ def initialize_mock_smart_lists():
                     filters["dateRange"].get("from"),
                     filters["dateRange"].get("to"),
                     filters.get("ragQuery"),
-                    filters.get("threshold", 0.6),
+                    filters.get("cosine_threshold", 0.4),
+                    filters.get("reranking_threshold", 0.82),
                 )
 
                 # Insert authors if they exist

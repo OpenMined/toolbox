@@ -64,8 +64,34 @@ class APIClient {
     );
   }
 
-  async getSmartListItems(listId) {
-    return this.request(`/smart-lists/${listId}/items`);
+  async getSmartListItems(listId, options = {}) {
+    const { rerankingThreshold } = options;
+    let url = `/smart-lists/${listId}/items`;
+
+    const params = new URLSearchParams();
+    if (rerankingThreshold !== undefined && rerankingThreshold !== null) {
+      params.append("reranking_threshold", rerankingThreshold);
+    }
+
+    if (params.toString()) {
+      url += `?${params.toString()}`;
+    }
+
+    return this.request(url);
+  }
+
+  async updateListThreshold(listId, rerankingThreshold, ragQuery = null) {
+    const params = new URLSearchParams();
+    params.append("reranking_threshold", rerankingThreshold);
+    if (ragQuery !== null) {
+      params.append("rag_query", ragQuery);
+    }
+    return this.request(
+      `/smart-lists/${listId}/threshold?${params.toString()}`,
+      {
+        method: "PATCH",
+      },
+    );
   }
 
   async getChats(listId) {

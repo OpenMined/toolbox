@@ -67,3 +67,16 @@ clean-install:
     rm -rf node_modules package-lock.json
     npm install
     uv pip install -e .
+
+log:
+    #!/bin/bash
+    ssh toolbox-prod "tail -f /home/azureuser/omni/output_omni_backend.log"
+
+print-local-cookie:
+    #!/bin/bash
+    python scripts/print_local_cookie.py
+
+print-local-cookie-and-save:
+    #!/bin/bash
+    python scripts/print_local_cookie_and_save.py
+    scp ~/.omni/scraper_data/x_cookies.json toolbox-prod:/home/azureuser/.omni/scraper_data/x_cookies.json

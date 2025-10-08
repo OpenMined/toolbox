@@ -1,5 +1,5 @@
 from contextlib import asynccontextmanager
-from typing import List
+from typing import List, Optional
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
@@ -34,6 +34,7 @@ from omni.models import (
     Chat,
     DataCollection,
     DataSource,
+    FollowUserRequest,
     QuestionRequest,
     SmartListAPIResult,
     SmartListCreate,
@@ -254,7 +255,7 @@ async def create_smart_list(
 
 
 @app.get("/smart-lists/{list_id}/items", response_model=List[TweetItem])
-async def get_smart_list_items(list_id: int):
+async def get_smart_list_items(list_id: int, reranking_threshold: float = None):
     # Get smart list configuration
     with get_omni_connection() as conn:
         smart_list = get_smart_list_api_result_by_id(conn, list_id)
@@ -265,11 +266,57 @@ async def get_smart_list_items(list_id: int):
         # Check if this list has Twitter sources with real data
         for list_source in smart_list.listSources:
             if list_source.dataSourceId == "twitter":
+                # Override reranking threshold if provided in query params
+                # Cosine threshold is always taken from the database
+                if reranking_threshold is not None:
+                    list_source.filters.reranking_threshold = reranking_threshold
+
                 # Use real Twitter data
                 items = query_twitter_data(list_source)
                 return items
 
         return []
+
+
+@app.patch("/smart-lists/{list_id}/threshold")
+async def update_list_threshold(
+    list_id: int, reranking_threshold: float, rag_query: Optional[str] = None
+):
+    """Update the reranking threshold and optionally RAG query for all sources in a list"""
+    with get_omni_connection() as conn:
+        cursor = conn.cursor()
+
+        # Build update query based on what's being updated
+        if rag_query is not None:
+            cursor.execute(
+                """
+                UPDATE list_filters
+                SET reranking_threshold = ?, rag_query = ?
+                WHERE list_source_id IN (
+                    SELECT id FROM list_sources WHERE list_id = ?
+                )
+            """,
+                (reranking_threshold, rag_query, list_id),
+            )
+        else:
+            cursor.execute(
+                """
+                UPDATE list_filters
+                SET reranking_threshold = ?
+                WHERE list_source_id IN (
+                    SELECT id FROM list_sources WHERE list_id = ?
+                )
+            """,
+                (reranking_threshold, list_id),
+            )
+
+        conn.commit()
+
+        return {
+            "message": "Settings updated successfully",
+            "reranking_threshold": reranking_threshold,
+            "rag_query": rag_query,
+        }
 
 
 @app.get("/smart-lists/{list_id}/summary", response_model=SummaryResponse)
@@ -362,6 +409,34 @@ async def get_tweet_counts(request: TweetCountRequest):
     """Get tweet counts for a list of handles from the vectorstore"""
     tweet_counts = get_tweet_counts_by_handles(request.handles)
     return TweetCountResponse(tweet_counts=tweet_counts)
+
+
+@app.post("/twitter/trigger-scrape")
+async def trigger_timeline_scrape(
+    x_data_fetcher: XDataFetcher = Depends(get_x_data_fetcher),
+    duration: int = 60,
+):
+    """Manually trigger the timeline scraper"""
+    x_data_fetcher.add_fetch_timeline_job(fetch_timeline_duration=duration)
+    return {"message": f"Timeline scrape triggered for {duration} seconds"}
+
+
+@app.post("/twitter/follow-users")
+async def follow_users(
+    request: FollowUserRequest,
+    x_data_fetcher: XDataFetcher = Depends(get_x_data_fetcher),
+):
+    """Follow Twitter users and optionally fetch their timelines"""
+    x_data_fetcher.add_follow_users_job(
+        handles=request.handles,
+        scrolls_per_user=request.scrolls_per_user,
+        fetch_timeline_duration=request.fetch_timeline_duration,
+    )
+    return {
+        "message": f"Follow job queued for {len(request.handles)} user(s)",
+        "handles": request.handles,
+        "scrolls_per_user": request.scrolls_per_user,
+    }
 
 
 if __name__ == "__main__":

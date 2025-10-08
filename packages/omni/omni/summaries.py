@@ -203,7 +203,12 @@ def _generate_smart_list_summary_internal(list_source):
             author_screen_names=authors,
             start_date=start_date,
             end_date=end_date,
-            similarity_threshold=filters.get("threshold", 0.4) if query_text else 0.0,
+            cosine_threshold=filters.get("cosine_threshold", 0.4)
+            if query_text
+            else 0.0,
+            reranking_threshold=filters.get("reranking_threshold", 0.82)
+            if query_text
+            else 0.0,
             limit=50,
         )
 

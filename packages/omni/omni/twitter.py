@@ -42,13 +42,15 @@ def query_twitter_data(list_source) -> list[dict]:
         return []
 
     try:
+        cosine_threshold = filters.reranking_threshold * 0.4
         # Use the unified search function
         tweet_items = search_tweets(
             query_text=query_text,
             author_screen_names=authors,
             start_date=start_date,
             end_date=end_date,
-            similarity_threshold=filters.threshold,
+            cosine_threshold=cosine_threshold,
+            reranking_threshold=filters.reranking_threshold,
             limit=20,  # Limit to 20 for display
         )
 
